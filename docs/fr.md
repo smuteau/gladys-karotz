@@ -22,10 +22,15 @@ LED, oreilles, caméra, sommeil et tags RFID. Pas de compte, pas de cloud.
    que sa caméra. Ajoutez-les.
 
 Vous ne connaissez pas son adresse ? Un Karotz ne s'annonce pas sur le réseau,
-Gladys ne peut donc pas le trouver tout seul. Utilisez le bouton **Chercher sur
-mon réseau** : saisissez les trois premiers nombres de vos adresses locales
-(ex. `192.168.1`), l'intégration interroge les 254 adresses et liste les lapins
-qui ont répondu. Copiez l'adresse trouvée dans le champ, enregistrez.
+mais l'intégration peut le chercher. Cliquez sur **Chercher sur mon réseau**,
+sans rien saisir : Gladys repère votre réseau local grâce aux appareils qui s'y
+annoncent (box, téléviseur, NAS…), puis l'intégration interroge ses 254
+adresses et liste les lapins qui ont répondu. Copiez l'adresse trouvée dans le
+champ, enregistrez.
+
+Si le réseau n'a pas pu être déterminé, le bouton vous le dit : saisissez alors
+les trois premiers nombres de vos adresses locales (ex. `192.168.1`) dans le
+champ **Réseau local** et relancez la recherche.
 
 Les autres réglages :
 
@@ -61,6 +66,8 @@ historique, ses scènes et ses tableaux de bord si son adresse IP change.
 - **Identifier un lapin** — le lapin choisi clignote en bleu et bouge les
   oreilles quelques secondes.
 - **Redémarrer un lapin** — il revient au bout d'une minute environ.
+
+Un succès s'affiche en vert, une erreur en rouge.
 
 ## Scènes
 

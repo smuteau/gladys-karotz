@@ -51,7 +51,7 @@ src/widgets.js                    dashboard widget handlers (manifest `widgets`)
 src/actions.js                    Configuration buttons (manifest `actions`), network search
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
 gladys-assistant-integration.json manifest: name, config_schema, actions, image...
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys (en, fr mandatory)
 test/                             node --test: SDK fake Gladys + test/helpers/fakeKarotz.js
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
@@ -83,7 +83,8 @@ test/                             node --test: SDK fake Gladys + test/helpers/fa
   code (defaults, action, scene and widget handlers): change both sides
   together.
 - **User-facing text** is bilingual (English and French): action messages,
-  manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
+  manifest texts. The user documentation exists in four languages, kept in
+  sync: `docs/en.md`, `docs/fr.md`, `docs/de.md`, `docs/es.md`.
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 - **A rabbit is identified by its MAC**, read from `/cgi-bin/status` (Wi-Fi
@@ -104,6 +105,12 @@ test/                             node --test: SDK fake Gladys + test/helpers/fa
   endpoint only some of them have is feature-detected (see `hasVolume`).
 - **No "RFID tag presented" trigger**: the rabbit would have to call the
   integration, which the sandbox does not allow. Do not fake it by polling.
+- **The network search finds the LAN through Gladys.** The container is on a
+  Docker bridge: its own address is useless, and Gladys does not expose its
+  own. `findLocalSubnets` asks the core for an SSDP search (manifest
+  `network_discovery`) and takes the /24 of whoever answers, plus those of the
+  configured rabbits; the typed network is only the fallback. At most three
+  networks are searched, to stay inside the timeout of the button.
 - **The network search only scans private /24 ranges** (`parseSubnet`), and
   hosts from the configuration are validated before they reach a URL
   (`parseHosts`). Keep both.

@@ -9,7 +9,8 @@ The rabbit must run **OpenKarotz**, either on the original firmware or on top
 of [Free Rabbits OS](https://www.freerabbits.nl/fros/) (FROS). Everything is
 local: no account, no cloud, works in any country.
 
-> User documentation: [English](docs/en.md) · [Français](docs/fr.md)
+> User documentation: [English](docs/en.md) · [Français](docs/fr.md) ·
+> [Deutsch](docs/de.md) · [Español](docs/es.md)
 
 ## What you get in Gladys
 
@@ -47,8 +48,11 @@ Gladys' network discovery has nothing to capture. What it does expose is its
 MAC address, in `/cgi-bin/status`. Hence:
 
 - the user enters the **IP address or host name** (several, comma-separated);
-- the **Search my network** button asks the 254 addresses of a private /24 for
-  an OpenKarotz status, and lists the rabbits that answered;
+- the **Search my network** button works out the local network by itself (the
+  container sits on a Docker bridge and cannot see it, so Gladys runs an SSDP
+  search from the host and the answering neighbours give the /24 away), asks
+  its 254 addresses for an OpenKarotz status, and lists the rabbits that
+  answered. The network can still be typed when nothing answers SSDP;
 - the device identifier is the **MAC address**, so a rabbit keeps its history,
   scenes and dashboards when its IP address changes.
 
@@ -80,7 +84,7 @@ src/scenes.js                     scene actions
 src/widgets.js                    dashboard widgets
 src/actions.js                    Configuration buttons, network search
 src/config.js                     defaults + normalization
-docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys
+docs/{en,fr,de,es}.md             user documentation, re-hosted by Gladys
 test/                             node --test, SDK fake Gladys + in-memory Karotz
 gladys-assistant-integration.json manifest
 ```

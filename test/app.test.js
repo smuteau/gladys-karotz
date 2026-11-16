@@ -240,6 +240,11 @@ test('configuration buttons succeed (green) when the operation worked', async ()
   assert.equal(ack.success, true);
   assert.match(JSON.stringify(ack.data), /192\.168\.1\.70 \(OpenKarotz 2\.0\.5\)/);
 
+  // Nothing typed: the network of the configured rabbit is searched.
+  ack = await gladys.fake.action('find_rabbits', {});
+  assert.equal(ack.success, true);
+  assert.match(JSON.stringify(ack.data), /192\.168\.1\.70 \(OpenKarotz 2\.0\.5\)/);
+
   ack = await gladys.fake.action('identify', { rabbit: RABBIT });
   assert.equal(ack.success, true);
   // Blue pulse, then back to the previous LED.

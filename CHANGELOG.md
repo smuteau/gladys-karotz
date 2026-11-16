@@ -23,6 +23,8 @@ the notes of the version's GitHub Release.
   RFID tag recorded.
 - Dashboard widgets: `Karotz` and `Karotz camera`.
 - Configuration buttons: test the connection, search the local network,
-  identify a rabbit, restart a rabbit.
+  identify a rabbit, restart a rabbit. The network search works out the local
+  network by itself.
+- User documentation in English, French, German and Spanish.
 
 [Unreleased]: https://github.com/smuteau/gladys-openkarotz-freerabbits/commits/main

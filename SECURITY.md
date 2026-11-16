@@ -44,3 +44,6 @@ rabbit's firmware, not a vulnerability of this integration.
 
 The integration itself stores no secret, only talks to the hosts typed in its
 configuration, and its network search is limited to private address ranges.
+To work out which range that is, it asks Gladys for one SSDP search (declared
+in the manifest and shown on the install screen) and only keeps the addresses
+of the devices that answered; nothing about them is stored.

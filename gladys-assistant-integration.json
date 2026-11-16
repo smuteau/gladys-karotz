@@ -12,6 +12,7 @@
   "cover_image": "https://raw.githubusercontent.com/smuteau/gladys-openkarotz-freerabbits/main/cover.png",
   "categories": ["multimedia"],
   "transports": ["local"],
+  "network_discovery": [{ "type": "ssdp", "st": "ssdp:all" }],
   "config_schema": [
     {
       "key": "intro",
@@ -90,13 +91,13 @@
         {
           "key": "subnet",
           "type": "string",
-          "label": { "en": "Local network", "fr": "Réseau local" },
+          "label": { "en": "Local network (optional)", "fr": "Réseau local (facultatif)" },
           "description": {
-            "en": "The first three numbers of your local addresses. The 254 addresses of that network are asked for a Karotz.",
-            "fr": "Les trois premiers nombres de vos adresses locales. Les 254 adresses de ce réseau sont interrogées à la recherche d'un Karotz."
+            "en": "Leave empty: the network is worked out automatically. If nothing is found, enter the first three numbers of your local addresses.",
+            "fr": "Laissez vide : le réseau est déterminé automatiquement. Si rien n'est trouvé, saisissez les trois premiers nombres de vos adresses locales."
           },
           "placeholder": { "en": "e.g. 192.168.1", "fr": "ex. 192.168.1" },
-          "required": true
+          "required": false
         }
       ]
     },

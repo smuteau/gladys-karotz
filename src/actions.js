@@ -10,8 +10,12 @@
 import * as commands from './commands.js';
 import { looksLikeStatus, parseStatus } from './rabbits.js';
 
-const SCAN_CONCURRENCY = 32;
+const SCAN_CONCURRENCY = 64;
 const SCAN_TIMEOUT_MS = 2500;
+// How long Gladys listens for the neighbours of the rabbit, and how many
+// networks are then searched: three /24 fit in the timeout of the button.
+const NEIGHBOUR_SCAN_SECONDS = 4;
+const MAX_SUBNETS = 3;
 
 /**
  * `192.168.1`, `192.168.1.0`, `192.168.1.0/24` or `192.168.1.42` -> `192.168.1`.
@@ -30,6 +34,44 @@ export function parseSubnet(raw) {
   }
   const isPrivate = a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168);
   return isPrivate ? `${a}.${b}.${c}` : null;
+}
+
+/**
+ * The private /24 networks a list of addresses belongs to, the one with the
+ * most distinct addresses first. Host names and public addresses are ignored.
+ */
+export function subnetsOf(addresses) {
+  const counts = new Map();
+  for (const address of new Set(addresses)) {
+    const subnet = parseSubnet(String(address ?? '').replace(/:\d+$/, ''));
+    if (subnet) {
+      counts.set(subnet, (counts.get(subnet) ?? 0) + 1);
+    }
+  }
+  return [...counts].sort((x, y) => y[1] - x[1]).map(([subnet]) => subnet);
+}
+
+/**
+ * Work out the local network without asking the user. The container sits on
+ * a Docker bridge: its own address says nothing about the LAN, and Gladys does
+ * not expose its own. But Gladys can run an SSDP search from the host network
+ * (manifest `network_discovery`): whoever answers — the router, a TV, a NAS —
+ * lives on the network the rabbit is on. The rabbits already configured count
+ * too. A Karotz itself never answers SSDP.
+ */
+export async function findLocalSubnets(ctx) {
+  const addresses = ctx.rabbits.map((rabbit) => rabbit.host);
+  try {
+    const neighbours = await ctx.gladys.scanNetwork('ssdp', {
+      timeoutSeconds: NEIGHBOUR_SCAN_SECONDS,
+    });
+    addresses.push(...neighbours.map((neighbour) => neighbour.source_ip));
+  } catch (err) {
+    // Rate limit (one scan per 10 s) or a core that refuses: not a failure by
+    // itself, the user can still type the network.
+    ctx.logger.warn(`Network search: the SSDP scan failed: ${err.message}`);
+  }
+  return subnetsOf(addresses).slice(0, MAX_SUBNETS);
 }
 
 async function probe(fetchImpl, ip) {
@@ -110,18 +152,35 @@ export const ACTIONS = {
   },
 
   async find_rabbits(ctx, fields) {
-    const subnet = parseSubnet(fields.subnet);
-    if (!subnet) {
-      fail({
-        en: 'Enter the first three numbers of your local network, e.g. 192.168.1',
-        fr: 'Saisissez les trois premiers nombres de votre réseau local, ex. 192.168.1',
-      });
+    const typed = String(fields.subnet ?? '').trim();
+    let subnets;
+    if (typed) {
+      const subnet = parseSubnet(typed);
+      if (!subnet) {
+        fail({
+          en: 'Enter the first three numbers of your local network, e.g. 192.168.1, or leave the field empty.',
+          fr: 'Saisissez les trois premiers nombres de votre réseau local, ex. 192.168.1, ou laissez le champ vide.',
+        });
+      }
+      subnets = [subnet];
+    } else {
+      subnets = await findLocalSubnets(ctx);
+      if (subnets.length === 0) {
+        fail({
+          en: 'Your local network could not be worked out. Enter its first three numbers, e.g. 192.168.1, then search again.',
+          fr: "Votre réseau local n'a pas pu être déterminé. Saisissez ses trois premiers nombres, ex. 192.168.1, puis relancez la recherche.",
+        });
+      }
     }
-    const found = await scanSubnet(ctx.fetch, subnet);
+    const found = [];
+    for (const subnet of subnets) {
+      found.push(...(await scanSubnet(ctx.fetch, subnet)));
+    }
+    const searched = subnets.map((subnet) => `${subnet}.x`).join(', ');
     if (found.length === 0) {
       fail({
-        en: `No rabbit answered on ${subnet}.x. Is it powered, and is its web page reachable?`,
-        fr: `Aucun lapin n'a répondu sur ${subnet}.x. Est-il allumé, sa page web est-elle joignable ?`,
+        en: `No rabbit answered on ${searched}. Is it powered, and is its web page reachable?`,
+        fr: `Aucun lapin n'a répondu sur ${searched}. Est-il allumé, sa page web est-elle joignable ?`,
       });
     }
     const list = found

@@ -22,10 +22,15 @@ LED, ears, camera, sleep and RFID tags. No account, no cloud.
    camera. Add them.
 
 You do not know its address? A Karotz does not announce itself on the network,
-so Gladys cannot find it on its own. Use the **Search my network** button:
-enter the first three numbers of your local addresses (e.g. `192.168.1`), the
-integration asks the 254 addresses and lists the rabbits that answered. Copy
-the address into the field and save.
+but the integration can look for it. Click **Search my network**, without
+typing anything: Gladys spots your local network from the devices that announce
+themselves on it (router, TV, NAS…), then the integration asks its 254
+addresses and lists the rabbits that answered. Copy the address into the field
+and save.
+
+If the network could not be worked out, the button says so: enter the first
+three numbers of your local addresses (e.g. `192.168.1`) in the **Local
+network** field and search again.
 
 The other settings:
 
@@ -60,6 +65,8 @@ history, scenes and dashboards when its IP address changes.
 - **Identify a rabbit** — the chosen rabbit pulses blue and moves its ears for
   a few seconds.
 - **Restart a rabbit** — it is back after about a minute.
+
+A success is shown in green, a failure in red.
 
 ## Scenes
 

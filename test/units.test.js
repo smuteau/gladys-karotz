@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { DEFAULT_CONFIG, normalizeConfig, parseHosts } from '../src/config.js';
 import { ERROR_KINDS, createKarotzClient, parseAnswer, toHexColor } from '../src/karotz/client.js';
 import { parseStatus } from '../src/rabbits.js';
-import { parseSubnet } from '../src/actions.js';
+import { findLocalSubnets, parseSubnet, subnetsOf } from '../src/actions.js';
 
 test('hosts are cleaned, de-duplicated, and anything odd is dropped', () => {
   assert.deepEqual(parseHosts('192.168.1.70, http://Karotz.local/ ;192.168.1.70 10.0.0.5:8080'), [
@@ -97,4 +97,36 @@ test('only private /24 networks are searched', () => {
   assert.equal(parseSubnet('172.20.3'), '172.20.3');
   assert.equal(parseSubnet('8.8.8'), null);
   assert.equal(parseSubnet('192.168'), null);
+});
+
+test('the local network is deduced from the neighbours Gladys hears', async () => {
+  assert.deepEqual(
+    subnetsOf([
+      '192.168.0.1',
+      '192.168.0.1',
+      '10.0.0.5:8080',
+      '192.168.0.9',
+      'karotz.local',
+      '8.8.8.8',
+    ]),
+    ['192.168.0', '10.0.0'],
+  );
+
+  const logger = { warn() {} };
+  const neighbours = [{ source_ip: '192.168.0.1' }, { source_ip: '192.168.0.20' }];
+  let ctx = {
+    rabbits: [{ host: '10.0.0.5' }],
+    logger,
+    gladys: { scanNetwork: async () => neighbours },
+  };
+  assert.deepEqual(await findLocalSubnets(ctx), ['192.168.0', '10.0.0']);
+
+  // A refused scan is not fatal: the configured rabbits still tell the network.
+  const refused = async () => {
+    throw new Error('403');
+  };
+  ctx = { rabbits: [{ host: '10.0.0.5' }], logger, gladys: { scanNetwork: refused } };
+  assert.deepEqual(await findLocalSubnets(ctx), ['10.0.0']);
+  ctx = { rabbits: [], logger, gladys: { scanNetwork: refused } };
+  assert.deepEqual(await findLocalSubnets(ctx), []);
 });
