@@ -4,7 +4,9 @@
   "name": "OpenKarotz / Free Rabbits",
   "description": {
     "en": "Control your Karotz rabbit locally: speech, sounds, LED, ears, camera, sleep and RFID tags.",
-    "fr": "Pilotez votre lapin Karotz en local : voix, sons, LED, oreilles, caméra, sommeil et tags RFID."
+    "fr": "Pilotez votre lapin Karotz en local : voix, sons, LED, oreilles, caméra, sommeil et tags RFID.",
+    "de": "Steuern Sie Ihren Karotz-Hasen lokal: Sprache, Töne, LED, Ohren, Kamera, Schlaf und RFID-Tags.",
+    "es": "Controle su conejo Karotz en local: voz, sonidos, LED, orejas, cámara, sueño y etiquetas RFID."
   },
   "version": "0.1.0",
   "docker_image": "ghcr.io/smuteau/gladys-openkarotz-freerabbits:0.1.0",
@@ -12,41 +14,77 @@
   "cover_image": "https://raw.githubusercontent.com/smuteau/gladys-openkarotz-freerabbits/main/cover.png",
   "categories": ["multimedia"],
   "transports": ["local"],
-  "network_discovery": [{ "type": "ssdp", "st": "ssdp:all" }],
+  "network_discovery": [
+    {
+      "type": "ssdp",
+      "st": "ssdp:all"
+    }
+  ],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Connect your rabbit", "fr": "Connecter votre lapin" },
+      "label": {
+        "en": "Connect your rabbit",
+        "fr": "Connecter votre lapin",
+        "de": "Ihren Hasen verbinden",
+        "es": "Conectar su conejo"
+      },
       "description": {
         "en": "Your Karotz must run OpenKarotz (on the original firmware or on Free Rabbits OS) and be on the same network as Gladys. A Karotz does not announce itself on the network: enter its address below, or use the \"Search my network\" button. No account, no cloud: everything stays local.",
-        "fr": "Votre Karotz doit faire tourner OpenKarotz (sur le firmware d'origine ou sur Free Rabbits OS) et être sur le même réseau que Gladys. Un Karotz ne s'annonce pas sur le réseau : saisissez son adresse ci-dessous, ou utilisez le bouton « Chercher sur mon réseau ». Pas de compte, pas de cloud : tout reste en local."
+        "fr": "Votre Karotz doit faire tourner OpenKarotz (sur le firmware d'origine ou sur Free Rabbits OS) et être sur le même réseau que Gladys. Un Karotz ne s'annonce pas sur le réseau : saisissez son adresse ci-dessous, ou utilisez le bouton « Chercher sur mon réseau ». Pas de compte, pas de cloud : tout reste en local.",
+        "de": "Auf Ihrem Karotz muss OpenKarotz laufen (auf der Original-Firmware oder auf Free Rabbits OS), und er muss im selben Netzwerk wie Gladys sein. Ein Karotz meldet sich nicht im Netzwerk an: Tragen Sie seine Adresse unten ein oder nutzen Sie die Schaltfläche „Mein Netzwerk durchsuchen“. Kein Konto, keine Cloud: Alles bleibt lokal.",
+        "es": "Su Karotz debe ejecutar OpenKarotz (sobre el firmware original o sobre Free Rabbits OS) y estar en la misma red que Gladys. Un Karotz no se anuncia en la red: introduzca su dirección más abajo o use el botón «Buscar en mi red». Sin cuenta, sin nube: todo se queda en local."
       },
       "links": [
         {
           "url": "https://www.freerabbits.nl/fros/",
-          "label": { "en": "Install Free Rabbits OS", "fr": "Installer Free Rabbits OS" }
+          "label": {
+            "en": "Install Free Rabbits OS",
+            "fr": "Installer Free Rabbits OS",
+            "de": "Free Rabbits OS installieren",
+            "es": "Instalar Free Rabbits OS"
+          }
         }
       ]
     },
     {
       "key": "hosts",
       "type": "string",
-      "label": { "en": "Rabbit addresses", "fr": "Adresses des lapins" },
+      "label": {
+        "en": "Rabbit addresses",
+        "fr": "Adresses des lapins",
+        "de": "Adressen der Hasen",
+        "es": "Direcciones de los conejos"
+      },
       "description": {
         "en": "IP address or host name of your Karotz. Several rabbits: separate them with commas. Give it a fixed IP address (Free Rabbits OS only supports that anyway).",
-        "fr": "Adresse IP ou nom d'hôte de votre Karotz. Plusieurs lapins : séparez-les par des virgules. Donnez-lui une adresse IP fixe (Free Rabbits OS ne gère de toute façon que cela)."
+        "fr": "Adresse IP ou nom d'hôte de votre Karotz. Plusieurs lapins : séparez-les par des virgules. Donnez-lui une adresse IP fixe (Free Rabbits OS ne gère de toute façon que cela).",
+        "de": "IP-Adresse oder Hostname Ihres Karotz. Mehrere Hasen: mit Kommas trennen. Geben Sie ihm eine feste IP-Adresse (Free Rabbits OS unterstützt ohnehin nur das).",
+        "es": "Dirección IP o nombre de host de su Karotz. Varios conejos: sepárelos con comas. Dele una dirección IP fija (Free Rabbits OS solo admite eso de todos modos)."
       },
-      "placeholder": { "en": "e.g. 192.168.1.70", "fr": "ex. 192.168.1.70" },
+      "placeholder": {
+        "en": "e.g. 192.168.1.70",
+        "fr": "ex. 192.168.1.70",
+        "de": "z. B. 192.168.1.70",
+        "es": "p. ej. 192.168.1.70"
+      },
       "required": true
     },
     {
       "key": "poll_interval",
       "type": "number",
-      "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
+      "label": {
+        "en": "Refresh interval (s)",
+        "fr": "Intervalle de rafraîchissement (s)",
+        "de": "Aktualisierungsintervall (s)",
+        "es": "Intervalo de actualización (s)"
+      },
       "description": {
         "en": "How often each rabbit is read, in seconds. A Karotz is a small machine: 60 seconds is a good value.",
-        "fr": "Fréquence de lecture de chaque lapin, en secondes. Un Karotz est une petite machine : 60 secondes est une bonne valeur."
+        "fr": "Fréquence de lecture de chaque lapin, en secondes. Un Karotz est une petite machine : 60 secondes est une bonne valeur.",
+        "de": "Wie oft jeder Hase abgefragt wird, in Sekunden. Ein Karotz ist eine kleine Maschine: 60 Sekunden sind ein guter Wert.",
+        "es": "Cada cuánto se consulta cada conejo, en segundos. Un Karotz es una máquina pequeña: 60 segundos es un buen valor."
       },
       "required": false,
       "default": 60,
@@ -56,22 +94,41 @@
     {
       "key": "tts_voice",
       "type": "string",
-      "label": { "en": "Default voice", "fr": "Voix par défaut" },
+      "label": {
+        "en": "Default voice",
+        "fr": "Voix par défaut",
+        "de": "Standardstimme",
+        "es": "Voz por defecto"
+      },
       "description": {
         "en": "Voice identifier used when the rabbit speaks, as listed in the Karotz web page (a number on recent firmwares: 5 = US English male, 6 = female). Empty: the rabbit's own default.",
-        "fr": "Identifiant de la voix utilisée quand le lapin parle, tel que listé dans la page web du Karotz (un nombre sur les firmwares récents : 1 = voix française masculine, 2 = féminine). Vide : la voix par défaut du lapin."
+        "fr": "Identifiant de la voix utilisée quand le lapin parle, tel que listé dans la page web du Karotz (un nombre sur les firmwares récents : 1 = voix française masculine, 2 = féminine). Vide : la voix par défaut du lapin.",
+        "de": "Kennung der Stimme, mit der der Hase spricht, wie auf der Webseite des Karotz aufgeführt (bei neueren Firmwares eine Zahl). Leer: die eigene Standardstimme des Hasen.",
+        "es": "Identificador de la voz que usa el conejo al hablar, tal como aparece en la página web del Karotz (un número en los firmwares recientes). Vacío: la voz por defecto del propio conejo."
       },
-      "placeholder": { "en": "e.g. 6", "fr": "ex. 2" },
+      "placeholder": {
+        "en": "e.g. 6",
+        "fr": "ex. 2",
+        "de": "z. B. 6",
+        "es": "p. ej. 6"
+      },
       "required": false,
       "default": ""
     },
     {
       "key": "camera",
       "type": "boolean",
-      "label": { "en": "Camera", "fr": "Caméra" },
+      "label": {
+        "en": "Camera",
+        "fr": "Caméra",
+        "de": "Kamera",
+        "es": "Cámara"
+      },
       "description": {
         "en": "Add a camera device per rabbit. Every picture is also kept on the rabbit's small storage: delete them from time to time with the camera widget.",
-        "fr": "Ajoute un appareil caméra par lapin. Chaque photo reste aussi sur le petit stockage du lapin : effacez-les de temps en temps avec le widget caméra."
+        "fr": "Ajoute un appareil caméra par lapin. Chaque photo reste aussi sur le petit stockage du lapin : effacez-les de temps en temps avec le widget caméra.",
+        "de": "Fügt pro Hase ein Kameragerät hinzu. Jedes Foto bleibt auch auf dem kleinen Speicher des Hasen: Löschen Sie sie von Zeit zu Zeit mit dem Kamera-Widget.",
+        "es": "Añade un dispositivo de cámara por conejo. Cada foto se queda también en el pequeño almacenamiento del conejo: bórrelas de vez en cuando con el widget de cámara."
       },
       "required": false,
       "default": true
@@ -80,51 +137,93 @@
   "actions": [
     {
       "key": "test_connection",
-      "label": { "en": "Test the connection", "fr": "Tester la connexion" },
+      "label": {
+        "en": "Test the connection",
+        "fr": "Tester la connexion",
+        "de": "Verbindung testen",
+        "es": "Probar la conexión"
+      },
       "timeout_seconds": 30
     },
     {
       "key": "find_rabbits",
-      "label": { "en": "Search my network", "fr": "Chercher sur mon réseau" },
+      "label": {
+        "en": "Search my network",
+        "fr": "Chercher sur mon réseau",
+        "de": "Mein Netzwerk durchsuchen",
+        "es": "Buscar en mi red"
+      },
       "timeout_seconds": 60,
       "fields": [
         {
           "key": "subnet",
           "type": "string",
-          "label": { "en": "Local network (optional)", "fr": "Réseau local (facultatif)" },
+          "label": {
+            "en": "Local network (optional)",
+            "fr": "Réseau local (facultatif)",
+            "de": "Lokales Netzwerk (optional)",
+            "es": "Red local (opcional)"
+          },
           "description": {
             "en": "Leave empty: the network is worked out automatically. If nothing is found, enter the first three numbers of your local addresses.",
-            "fr": "Laissez vide : le réseau est déterminé automatiquement. Si rien n'est trouvé, saisissez les trois premiers nombres de vos adresses locales."
+            "fr": "Laissez vide : le réseau est déterminé automatiquement. Si rien n'est trouvé, saisissez les trois premiers nombres de vos adresses locales.",
+            "de": "Leer lassen: Das Netzwerk wird automatisch ermittelt. Wird nichts gefunden, tragen Sie die ersten drei Zahlen Ihrer lokalen Adressen ein.",
+            "es": "Déjelo vacío: la red se determina automáticamente. Si no se encuentra nada, introduzca los tres primeros números de sus direcciones locales."
           },
-          "placeholder": { "en": "e.g. 192.168.1", "fr": "ex. 192.168.1" },
+          "placeholder": {
+            "en": "e.g. 192.168.1",
+            "fr": "ex. 192.168.1",
+            "de": "z. B. 192.168.1",
+            "es": "p. ej. 192.168.1"
+          },
           "required": false
         }
       ]
     },
     {
       "key": "identify",
-      "label": { "en": "Identify a rabbit", "fr": "Identifier un lapin" },
+      "label": {
+        "en": "Identify a rabbit",
+        "fr": "Identifier un lapin",
+        "de": "Einen Hasen identifizieren",
+        "es": "Identificar un conejo"
+      },
       "timeout_seconds": 30,
       "fields": [
         {
           "key": "rabbit",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "label": {
+            "en": "Rabbit",
+            "fr": "Lapin",
+            "de": "Hase",
+            "es": "Conejo"
+          },
           "required": true
         }
       ]
     },
     {
       "key": "reboot",
-      "label": { "en": "Restart a rabbit", "fr": "Redémarrer un lapin" },
+      "label": {
+        "en": "Restart a rabbit",
+        "fr": "Redémarrer un lapin",
+        "de": "Einen Hasen neu starten",
+        "es": "Reiniciar un conejo"
+      },
       "timeout_seconds": 20,
       "fields": [
         {
           "key": "rabbit",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "label": {
+            "en": "Rabbit",
+            "fr": "Lapin",
+            "de": "Hase",
+            "es": "Conejo"
+          },
           "required": true
         }
       ]
@@ -133,96 +232,211 @@
   "scene_triggers": [
     {
       "key": "rabbit_offline",
-      "label": { "en": "Rabbit unreachable", "fr": "Lapin injoignable" },
+      "label": {
+        "en": "Rabbit unreachable",
+        "fr": "Lapin injoignable",
+        "de": "Hase nicht erreichbar",
+        "es": "Conejo inaccesible"
+      },
       "description": {
         "en": "A rabbit stopped answering (unplugged, Wi-Fi lost, frozen).",
-        "fr": "Un lapin ne répond plus (débranché, Wi-Fi perdu, planté)."
+        "fr": "Un lapin ne répond plus (débranché, Wi-Fi perdu, planté).",
+        "de": "Ein Hase antwortet nicht mehr (ausgesteckt, WLAN verloren, abgestürzt).",
+        "es": "Un conejo ha dejado de responder (desenchufado, Wi-Fi perdido, bloqueado)."
       },
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Rabbit", "fr": "Lapin" }
+          "label": {
+            "en": "Rabbit",
+            "fr": "Lapin",
+            "de": "Hase",
+            "es": "Conejo"
+          }
         }
       ],
       "variables": [
-        { "key": "host", "type": "string", "label": { "en": "Address", "fr": "Adresse" } }
+        {
+          "key": "host",
+          "type": "string",
+          "label": {
+            "en": "Address",
+            "fr": "Adresse",
+            "de": "Adresse",
+            "es": "Dirección"
+          }
+        }
       ]
     },
     {
       "key": "rabbit_online",
-      "label": { "en": "Rabbit back online", "fr": "Lapin de nouveau joignable" },
+      "label": {
+        "en": "Rabbit back online",
+        "fr": "Lapin de nouveau joignable",
+        "de": "Hase wieder erreichbar",
+        "es": "Conejo accesible de nuevo"
+      },
       "description": {
         "en": "A rabbit that was unreachable answers again.",
-        "fr": "Un lapin qui était injoignable répond à nouveau."
+        "fr": "Un lapin qui était injoignable répond à nouveau.",
+        "de": "Ein Hase, der nicht erreichbar war, antwortet wieder.",
+        "es": "Un conejo que estaba inaccesible vuelve a responder."
       },
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Rabbit", "fr": "Lapin" }
+          "label": {
+            "en": "Rabbit",
+            "fr": "Lapin",
+            "de": "Hase",
+            "es": "Conejo"
+          }
         }
       ],
       "variables": [
-        { "key": "host", "type": "string", "label": { "en": "Address", "fr": "Adresse" } }
+        {
+          "key": "host",
+          "type": "string",
+          "label": {
+            "en": "Address",
+            "fr": "Adresse",
+            "de": "Adresse",
+            "es": "Dirección"
+          }
+        }
       ]
     },
     {
       "key": "sleep_changed",
-      "label": { "en": "Rabbit fell asleep or woke up", "fr": "Lapin endormi ou réveillé" },
+      "label": {
+        "en": "Rabbit fell asleep or woke up",
+        "fr": "Lapin endormi ou réveillé",
+        "de": "Hase eingeschlafen oder aufgewacht",
+        "es": "Conejo dormido o despierto"
+      },
       "description": {
         "en": "A rabbit went to sleep or woke up by itself, from its web page or its own schedule.",
-        "fr": "Un lapin s'est endormi ou réveillé de lui-même, depuis sa page web ou sa propre programmation."
+        "fr": "Un lapin s'est endormi ou réveillé de lui-même, depuis sa page web ou sa propre programmation.",
+        "de": "Ein Hase ist von selbst eingeschlafen oder aufgewacht, über seine Webseite oder seinen eigenen Zeitplan.",
+        "es": "Un conejo se ha dormido o despertado por sí mismo, desde su página web o su propia programación."
       },
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Rabbit", "fr": "Lapin" }
+          "label": {
+            "en": "Rabbit",
+            "fr": "Lapin",
+            "de": "Hase",
+            "es": "Conejo"
+          }
         },
         {
           "key": "state",
           "type": "multi_select",
-          "label": { "en": "New state", "fr": "Nouvel état" },
+          "label": {
+            "en": "New state",
+            "fr": "Nouvel état",
+            "de": "Neuer Zustand",
+            "es": "Nuevo estado"
+          },
           "options": [
-            { "value": "asleep", "label": { "en": "Asleep", "fr": "Endormi" } },
-            { "value": "awake", "label": { "en": "Awake", "fr": "Réveillé" } }
+            {
+              "value": "asleep",
+              "label": {
+                "en": "Asleep",
+                "fr": "Endormi",
+                "de": "Schläft",
+                "es": "Dormido"
+              }
+            },
+            {
+              "value": "awake",
+              "label": {
+                "en": "Awake",
+                "fr": "Réveillé",
+                "de": "Wach",
+                "es": "Despierto"
+              }
+            }
           ]
         }
       ],
       "variables": [
-        { "key": "state", "type": "string", "label": { "en": "New state", "fr": "Nouvel état" } }
+        {
+          "key": "state",
+          "type": "string",
+          "label": {
+            "en": "New state",
+            "fr": "Nouvel état",
+            "de": "Neuer Zustand",
+            "es": "Nuevo estado"
+          }
+        }
       ]
     },
     {
       "key": "rfid_tag_added",
-      "label": { "en": "New RFID tag recorded", "fr": "Nouveau tag RFID enregistré" },
+      "label": {
+        "en": "New RFID tag recorded",
+        "fr": "Nouveau tag RFID enregistré",
+        "de": "Neuer RFID-Tag gespeichert",
+        "es": "Nueva etiqueta RFID registrada"
+      },
       "description": {
         "en": "A new RFID tag (Flatnanoz, Nanoztag, Ztamps) was recorded on a rabbit.",
-        "fr": "Un nouveau tag RFID (Flatnanoz, Nanoztag, Ztamps) a été enregistré sur un lapin."
+        "fr": "Un nouveau tag RFID (Flatnanoz, Nanoztag, Ztamps) a été enregistré sur un lapin.",
+        "de": "Ein neuer RFID-Tag (Flatnanoz, Nanoztag, Ztamps) wurde auf einem Hasen gespeichert.",
+        "es": "Se ha registrado una nueva etiqueta RFID (Flatnanoz, Nanoztag, Ztamps) en un conejo."
       },
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Rabbit", "fr": "Lapin" }
+          "label": {
+            "en": "Rabbit",
+            "fr": "Lapin",
+            "de": "Hase",
+            "es": "Conejo"
+          }
         }
       ],
       "variables": [
         {
           "key": "tag_id",
           "type": "string",
-          "label": { "en": "Tag identifier", "fr": "Identifiant du tag" }
+          "label": {
+            "en": "Tag identifier",
+            "fr": "Identifiant du tag",
+            "de": "Kennung des Tags",
+            "es": "Identificador de la etiqueta"
+          }
         },
-        { "key": "tag_name", "type": "string", "label": { "en": "Tag name", "fr": "Nom du tag" } },
+        {
+          "key": "tag_name",
+          "type": "string",
+          "label": {
+            "en": "Tag name",
+            "fr": "Nom du tag",
+            "de": "Name des Tags",
+            "es": "Nombre de la etiqueta"
+          }
+        },
         {
           "key": "tag_color",
           "type": "string",
-          "label": { "en": "Tag color", "fr": "Couleur du tag" }
+          "label": {
+            "en": "Tag color",
+            "fr": "Couleur du tag",
+            "de": "Farbe des Tags",
+            "es": "Color de la etiqueta"
+          }
         }
       ]
     }
@@ -230,10 +444,17 @@
   "scene_actions": [
     {
       "key": "speak",
-      "label": { "en": "Make the rabbit speak", "fr": "Faire parler le lapin" },
+      "label": {
+        "en": "Make the rabbit speak",
+        "fr": "Faire parler le lapin",
+        "de": "Den Hasen sprechen lassen",
+        "es": "Hacer hablar al conejo"
+      },
       "description": {
         "en": "The rabbit says a sentence with its text-to-speech.",
-        "fr": "Le lapin prononce une phrase avec sa synthèse vocale."
+        "fr": "Le lapin prononce une phrase avec sa synthèse vocale.",
+        "de": "Der Hase spricht einen Satz mit seiner Sprachausgabe.",
+        "es": "El conejo pronuncia una frase con su síntesis de voz."
       },
       "timeout_seconds": 60,
       "fields": [
@@ -241,23 +462,45 @@
           "key": "rabbit",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "label": {
+            "en": "Rabbit",
+            "fr": "Lapin",
+            "de": "Hase",
+            "es": "Conejo"
+          },
           "required": true
         },
         {
           "key": "text",
           "type": "string",
-          "label": { "en": "Sentence", "fr": "Phrase" },
-          "placeholder": { "en": "e.g. Dinner is ready!", "fr": "ex. À table !" },
+          "label": {
+            "en": "Sentence",
+            "fr": "Phrase",
+            "de": "Satz",
+            "es": "Frase"
+          },
+          "placeholder": {
+            "en": "e.g. Dinner is ready!",
+            "fr": "ex. À table !",
+            "de": "z. B. Essen ist fertig!",
+            "es": "p. ej. ¡A comer!"
+          },
           "required": true
         },
         {
           "key": "voice",
           "type": "string",
-          "label": { "en": "Voice (optional)", "fr": "Voix (facultatif)" },
+          "label": {
+            "en": "Voice (optional)",
+            "fr": "Voix (facultatif)",
+            "de": "Stimme (optional)",
+            "es": "Voz (opcional)"
+          },
           "description": {
             "en": "Empty: the default voice of the configuration.",
-            "fr": "Vide : la voix par défaut de la configuration."
+            "fr": "Vide : la voix par défaut de la configuration.",
+            "de": "Leer: die Standardstimme der Konfiguration.",
+            "es": "Vacío: la voz por defecto de la configuración."
           },
           "required": false
         }
@@ -265,10 +508,17 @@
     },
     {
       "key": "play_sound",
-      "label": { "en": "Play a sound or a radio", "fr": "Jouer un son ou une radio" },
+      "label": {
+        "en": "Play a sound or a radio",
+        "fr": "Jouer un son ou une radio",
+        "de": "Einen Ton oder ein Radio abspielen",
+        "es": "Reproducir un sonido o una radio"
+      },
       "description": {
         "en": "Play a sound stored on the rabbit (its identifier) or an MP3 / web radio (its http address).",
-        "fr": "Joue un son stocké sur le lapin (son identifiant) ou un MP3 / une webradio (son adresse http)."
+        "fr": "Joue un son stocké sur le lapin (son identifiant) ou un MP3 / une webradio (son adresse http).",
+        "de": "Spielt einen auf dem Hasen gespeicherten Ton (seine Kennung) oder eine MP3-Datei / ein Webradio (die http-Adresse) ab.",
+        "es": "Reproduce un sonido guardado en el conejo (su identificador) o un MP3 / una radio web (su dirección http)."
       },
       "timeout_seconds": 60,
       "fields": [
@@ -276,16 +526,28 @@
           "key": "rabbit",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "label": {
+            "en": "Rabbit",
+            "fr": "Lapin",
+            "de": "Hase",
+            "es": "Conejo"
+          },
           "required": true
         },
         {
           "key": "sound",
           "type": "string",
-          "label": { "en": "Sound identifier or URL", "fr": "Identifiant du son ou URL" },
+          "label": {
+            "en": "Sound identifier or URL",
+            "fr": "Identifiant du son ou URL",
+            "de": "Kennung des Tons oder URL",
+            "es": "Identificador del sonido o URL"
+          },
           "placeholder": {
             "en": "e.g. bip1 or http://…/radio.mp3",
-            "fr": "ex. bip1 ou http://…/radio.mp3"
+            "fr": "ex. bip1 ou http://…/radio.mp3",
+            "de": "z. B. bip1 oder http://…/radio.mp3",
+            "es": "p. ej. bip1 o http://…/radio.mp3"
           },
           "required": true
         }
@@ -293,10 +555,17 @@
     },
     {
       "key": "stop_sound",
-      "label": { "en": "Stop the radio", "fr": "Arrêter la radio" },
+      "label": {
+        "en": "Stop the radio",
+        "fr": "Arrêter la radio",
+        "de": "Das Radio stoppen",
+        "es": "Detener la radio"
+      },
       "description": {
         "en": "Stop the stream the rabbit is playing.",
-        "fr": "Arrête le flux que le lapin est en train de jouer."
+        "fr": "Arrête le flux que le lapin est en train de jouer.",
+        "de": "Stoppt den Stream, den der Hase gerade abspielt.",
+        "es": "Detiene el flujo que el conejo está reproduciendo."
       },
       "timeout_seconds": 15,
       "fields": [
@@ -304,17 +573,29 @@
           "key": "rabbit",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "label": {
+            "en": "Rabbit",
+            "fr": "Lapin",
+            "de": "Hase",
+            "es": "Conejo"
+          },
           "required": true
         }
       ]
     },
     {
       "key": "play_mood",
-      "label": { "en": "Play a mood", "fr": "Jouer une humeur" },
+      "label": {
+        "en": "Play a mood",
+        "fr": "Jouer une humeur",
+        "de": "Eine Stimmung abspielen",
+        "es": "Reproducir un estado de ánimo"
+      },
       "description": {
         "en": "The rabbit says one of its moods, a random one when no number is given.",
-        "fr": "Le lapin exprime une de ses humeurs, au hasard si aucun numéro n'est donné."
+        "fr": "Le lapin exprime une de ses humeurs, au hasard si aucun numéro n'est donné.",
+        "de": "Der Hase äußert eine seiner Stimmungen, eine zufällige, wenn keine Nummer angegeben ist.",
+        "es": "El conejo expresa uno de sus estados de ánimo, al azar si no se indica ningún número."
       },
       "timeout_seconds": 60,
       "fields": [
@@ -322,28 +603,54 @@
           "key": "rabbit",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "label": {
+            "en": "Rabbit",
+            "fr": "Lapin",
+            "de": "Hase",
+            "es": "Conejo"
+          },
           "required": true
         },
         {
           "key": "mood",
           "type": "number",
-          "label": { "en": "Mood number (optional)", "fr": "Numéro de l'humeur (facultatif)" },
+          "label": {
+            "en": "Mood number (optional)",
+            "fr": "Numéro de l'humeur (facultatif)",
+            "de": "Nummer der Stimmung (optional)",
+            "es": "Número del estado de ánimo (opcional)"
+          },
           "required": false,
           "min": 1,
           "max": 400
         }
       ],
       "outputs": [
-        { "key": "mood", "type": "string", "label": { "en": "Mood played", "fr": "Humeur jouée" } }
+        {
+          "key": "mood",
+          "type": "string",
+          "label": {
+            "en": "Mood played",
+            "fr": "Humeur jouée",
+            "de": "Abgespielte Stimmung",
+            "es": "Estado de ánimo reproducido"
+          }
+        }
       ]
     },
     {
       "key": "say_time",
-      "label": { "en": "Tell the time", "fr": "Dire l'heure" },
+      "label": {
+        "en": "Tell the time",
+        "fr": "Dire l'heure",
+        "de": "Die Uhrzeit ansagen",
+        "es": "Decir la hora"
+      },
       "description": {
         "en": "The rabbit announces the current hour (clock application).",
-        "fr": "Le lapin annonce l'heure courante (application horloge)."
+        "fr": "Le lapin annonce l'heure courante (application horloge).",
+        "de": "Der Hase sagt die aktuelle Stunde an (Uhr-Anwendung).",
+        "es": "El conejo anuncia la hora actual (aplicación de reloj)."
       },
       "timeout_seconds": 60,
       "fields": [
@@ -351,17 +658,29 @@
           "key": "rabbit",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "label": {
+            "en": "Rabbit",
+            "fr": "Lapin",
+            "de": "Hase",
+            "es": "Conejo"
+          },
           "required": true
         }
       ]
     },
     {
       "key": "set_led",
-      "label": { "en": "Set the LED", "fr": "Régler la LED" },
+      "label": {
+        "en": "Set the LED",
+        "fr": "Régler la LED",
+        "de": "Die LED einstellen",
+        "es": "Ajustar el LED"
+      },
       "description": {
         "en": "Color of the belly LED, steady or pulsing between two colors.",
-        "fr": "Couleur de la LED du ventre, fixe ou pulsée entre deux couleurs."
+        "fr": "Couleur de la LED du ventre, fixe ou pulsée entre deux couleurs.",
+        "de": "Farbe der Bauch-LED, dauerhaft oder zwischen zwei Farben pulsierend.",
+        "es": "Color del LED del vientre, fijo o pulsante entre dos colores."
       },
       "timeout_seconds": 15,
       "fields": [
@@ -369,28 +688,53 @@
           "key": "rabbit",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "label": {
+            "en": "Rabbit",
+            "fr": "Lapin",
+            "de": "Hase",
+            "es": "Conejo"
+          },
           "required": true
         },
         {
           "key": "color",
           "type": "string",
-          "label": { "en": "Color (hexadecimal)", "fr": "Couleur (hexadécimal)" },
-          "placeholder": { "en": "e.g. FF0000 for red", "fr": "ex. FF0000 pour rouge" },
+          "label": {
+            "en": "Color (hexadecimal)",
+            "fr": "Couleur (hexadécimal)",
+            "de": "Farbe (hexadezimal)",
+            "es": "Color (hexadecimal)"
+          },
+          "placeholder": {
+            "en": "e.g. FF0000 for red",
+            "fr": "ex. FF0000 pour rouge",
+            "de": "z. B. FF0000 für Rot",
+            "es": "p. ej. FF0000 para rojo"
+          },
           "required": true,
           "default": "00FF00"
         },
         {
           "key": "pulse",
           "type": "boolean",
-          "label": { "en": "Pulse", "fr": "Pulsation" },
+          "label": {
+            "en": "Pulse",
+            "fr": "Pulsation",
+            "de": "Pulsieren",
+            "es": "Pulsación"
+          },
           "required": false,
           "default": false
         },
         {
           "key": "speed",
           "type": "number",
-          "label": { "en": "Pulse period (ms)", "fr": "Période de pulsation (ms)" },
+          "label": {
+            "en": "Pulse period (ms)",
+            "fr": "Période de pulsation (ms)",
+            "de": "Pulsperiode (ms)",
+            "es": "Periodo de pulsación (ms)"
+          },
           "required": false,
           "default": 700,
           "min": 100,
@@ -401,19 +745,33 @@
           "type": "string",
           "label": {
             "en": "Second pulse color (optional)",
-            "fr": "Seconde couleur de pulsation (facultatif)"
+            "fr": "Seconde couleur de pulsation (facultatif)",
+            "de": "Zweite Pulsfarbe (optional)",
+            "es": "Segundo color de pulsación (opcional)"
           },
-          "placeholder": { "en": "e.g. 0000FF", "fr": "ex. 0000FF" },
+          "placeholder": {
+            "en": "e.g. 0000FF",
+            "fr": "ex. 0000FF",
+            "de": "z. B. 0000FF",
+            "es": "p. ej. 0000FF"
+          },
           "required": false
         }
       ]
     },
     {
       "key": "move_ears",
-      "label": { "en": "Move the ears", "fr": "Bouger les oreilles" },
+      "label": {
+        "en": "Move the ears",
+        "fr": "Bouger les oreilles",
+        "de": "Die Ohren bewegen",
+        "es": "Mover las orejas"
+      },
       "description": {
         "en": "Put the ears at a position (0 to 16), at random, or back to rest.",
-        "fr": "Place les oreilles à une position (0 à 16), au hasard, ou les remet au repos."
+        "fr": "Place les oreilles à une position (0 à 16), au hasard, ou les remet au repos.",
+        "de": "Stellt die Ohren auf eine Position (0 bis 16), zufällig oder zurück in die Ruhestellung.",
+        "es": "Coloca las orejas en una posición (0 a 16), al azar, o las devuelve al reposo."
       },
       "timeout_seconds": 30,
       "fields": [
@@ -421,25 +779,64 @@
           "key": "rabbit",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "label": {
+            "en": "Rabbit",
+            "fr": "Lapin",
+            "de": "Hase",
+            "es": "Conejo"
+          },
           "required": true
         },
         {
           "key": "mode",
           "type": "select",
-          "label": { "en": "Movement", "fr": "Mouvement" },
+          "label": {
+            "en": "Movement",
+            "fr": "Mouvement",
+            "de": "Bewegung",
+            "es": "Movimiento"
+          },
           "required": true,
           "default": "position",
           "options": [
-            { "value": "position", "label": { "en": "To a position", "fr": "Vers une position" } },
-            { "value": "random", "label": { "en": "Random", "fr": "Au hasard" } },
-            { "value": "reset", "label": { "en": "Back to rest", "fr": "Retour au repos" } }
+            {
+              "value": "position",
+              "label": {
+                "en": "To a position",
+                "fr": "Vers une position",
+                "de": "Auf eine Position",
+                "es": "A una posición"
+              }
+            },
+            {
+              "value": "random",
+              "label": {
+                "en": "Random",
+                "fr": "Au hasard",
+                "de": "Zufällig",
+                "es": "Al azar"
+              }
+            },
+            {
+              "value": "reset",
+              "label": {
+                "en": "Back to rest",
+                "fr": "Retour au repos",
+                "de": "Zurück in die Ruhestellung",
+                "es": "Vuelta al reposo"
+              }
+            }
           ]
         },
         {
           "key": "left",
           "type": "number",
-          "label": { "en": "Left ear (0-16)", "fr": "Oreille gauche (0-16)" },
+          "label": {
+            "en": "Left ear (0-16)",
+            "fr": "Oreille gauche (0-16)",
+            "de": "Linkes Ohr (0-16)",
+            "es": "Oreja izquierda (0-16)"
+          },
           "required": false,
           "default": 0,
           "min": 0,
@@ -448,7 +845,12 @@
         {
           "key": "right",
           "type": "number",
-          "label": { "en": "Right ear (0-16)", "fr": "Oreille droite (0-16)" },
+          "label": {
+            "en": "Right ear (0-16)",
+            "fr": "Oreille droite (0-16)",
+            "de": "Rechtes Ohr (0-16)",
+            "es": "Oreja derecha (0-16)"
+          },
           "required": false,
           "default": 0,
           "min": 0,
@@ -458,10 +860,17 @@
     },
     {
       "key": "take_snapshot",
-      "label": { "en": "Take a picture", "fr": "Prendre une photo" },
+      "label": {
+        "en": "Take a picture",
+        "fr": "Prendre une photo",
+        "de": "Ein Foto aufnehmen",
+        "es": "Tomar una foto"
+      },
       "description": {
         "en": "Take a picture with the rabbit's webcam; it becomes the image of its camera device.",
-        "fr": "Prend une photo avec la webcam du lapin ; elle devient l'image de son appareil caméra."
+        "fr": "Prend une photo avec la webcam du lapin ; elle devient l'image de son appareil caméra.",
+        "de": "Nimmt ein Foto mit der Webcam des Hasen auf; es wird zum Bild seines Kamerageräts.",
+        "es": "Toma una foto con la webcam del conejo; se convierte en la imagen de su dispositivo de cámara."
       },
       "timeout_seconds": 45,
       "fields": [
@@ -469,13 +878,23 @@
           "key": "rabbit",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "label": {
+            "en": "Rabbit",
+            "fr": "Lapin",
+            "de": "Hase",
+            "es": "Conejo"
+          },
           "required": true
         },
         {
           "key": "silent",
           "type": "boolean",
-          "label": { "en": "Without the shutter sound", "fr": "Sans le bruit de déclencheur" },
+          "label": {
+            "en": "Without the shutter sound",
+            "fr": "Sans le bruit de déclencheur",
+            "de": "Ohne Auslösegeräusch",
+            "es": "Sin el sonido del obturador"
+          },
           "required": false,
           "default": true
         }
@@ -484,7 +903,12 @@
         {
           "key": "filename",
           "type": "string",
-          "label": { "en": "File name on the rabbit", "fr": "Nom du fichier sur le lapin" }
+          "label": {
+            "en": "File name on the rabbit",
+            "fr": "Nom du fichier sur le lapin",
+            "de": "Dateiname auf dem Hasen",
+            "es": "Nombre del archivo en el conejo"
+          }
         }
       ]
     }
@@ -492,10 +916,17 @@
   "widgets": [
     {
       "key": "karotz",
-      "label": { "en": "Karotz", "fr": "Karotz" },
+      "label": {
+        "en": "Karotz",
+        "fr": "Karotz",
+        "de": "Karotz",
+        "es": "Karotz"
+      },
       "description": {
         "en": "State of a rabbit, with buttons to wake it, make it speak, play a mood or tell the time.",
-        "fr": "État d'un lapin, avec des boutons pour le réveiller, le faire parler, jouer une humeur ou dire l'heure."
+        "fr": "État d'un lapin, avec des boutons pour le réveiller, le faire parler, jouer une humeur ou dire l'heure.",
+        "de": "Zustand eines Hasen, mit Schaltflächen zum Wecken, Sprechen, für Stimmung und Uhrzeit.",
+        "es": "Estado de un conejo, con botones para despertarlo, hacerlo hablar, un estado de ánimo o la hora."
       },
       "icon": "smile",
       "settings": [
@@ -503,7 +934,12 @@
           "key": "rabbit",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "label": {
+            "en": "Rabbit",
+            "fr": "Lapin",
+            "de": "Hase",
+            "es": "Conejo"
+          },
           "required": false
         }
       ],
@@ -511,10 +947,17 @@
     },
     {
       "key": "karotz_camera",
-      "label": { "en": "Karotz camera", "fr": "Caméra du Karotz" },
+      "label": {
+        "en": "Karotz camera",
+        "fr": "Caméra du Karotz",
+        "de": "Karotz-Kamera",
+        "es": "Cámara del Karotz"
+      },
       "description": {
         "en": "Last picture taken by a rabbit, and a button to take a new one.",
-        "fr": "Dernière photo prise par un lapin, et un bouton pour en prendre une nouvelle."
+        "fr": "Dernière photo prise par un lapin, et un bouton pour en prendre une nouvelle.",
+        "de": "Letztes Foto eines Hasen und eine Schaltfläche für ein neues.",
+        "es": "Última foto tomada por un conejo, y un botón para tomar una nueva."
       },
       "icon": "camera",
       "settings": [
@@ -522,7 +965,12 @@
           "key": "rabbit",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "label": {
+            "en": "Rabbit",
+            "fr": "Lapin",
+            "de": "Hase",
+            "es": "Conejo"
+          },
           "required": false
         }
       ],

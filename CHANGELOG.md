@@ -25,6 +25,7 @@ the notes of the version's GitHub Release.
 - Configuration buttons: test the connection, search the local network,
   identify a rabbit, restart a rabbit. The network search works out the local
   network by itself.
-- User documentation in English, French, German and Spanish.
+- Everything the user reads is in English, French, German and Spanish: the
+  integration itself and its documentation.
 
 [Unreleased]: https://github.com/smuteau/gladys-openkarotz-freerabbits/commits/main

@@ -2,13 +2,16 @@
 // Buttons of the Configuration screen (manifest `actions`).
 //
 // The Configuration screen shows a RESOLVED message as a success (green) and a
-// THROWN error as a failure (red). So a handler resolves its bilingual message
+// THROWN error as a failure (red). So a handler resolves its multi-language message
 // only when the operation worked, and calls `fail` for everything else: a
 // rabbit that does not answer, nothing found, an invalid input.
 // -----------------------------------------------------------------------------
 
 import * as commands from './commands.js';
 import { looksLikeStatus, parseStatus } from './rabbits.js';
+
+/** Every user-facing text exists in these languages. */
+export const LANGUAGES = ['en', 'fr', 'de', 'es'];
 
 const SCAN_CONCURRENCY = 64;
 const SCAN_TIMEOUT_MS = 2500;
@@ -110,25 +113,32 @@ export async function scanSubnet(fetchImpl, subnet) {
 
 function describeRabbit(rabbit) {
   if (!rabbit.online) {
-    return { en: `${rabbit.host}: no answer`, fr: `${rabbit.host} : pas de réponse` };
+    return {
+      en: `${rabbit.host}: no answer`,
+      fr: `${rabbit.host} : pas de réponse`,
+      de: `${rabbit.host}: keine Antwort`,
+      es: `${rabbit.host}: sin respuesta`,
+    };
   }
   const version = rabbit.status.version ?? '?';
   const sleeping = rabbit.status.sleeping;
   return {
     en: `${rabbit.host}: OpenKarotz ${version}, ${sleeping ? 'asleep' : 'awake'}`,
     fr: `${rabbit.host} : OpenKarotz ${version}, ${sleeping ? 'endormi' : 'réveillé'}`,
+    de: `${rabbit.host}: OpenKarotz ${version}, ${sleeping ? 'schläft' : 'wach'}`,
+    es: `${rabbit.host}: OpenKarotz ${version}, ${sleeping ? 'dormido' : 'despierto'}`,
   };
 }
 
 /**
  * Fail the action: the message is displayed in red under the button. Gladys
- * relays an error as a plain string (never a multi-language object), so both
- * languages travel in it.
- * @param {{ en: string, fr: string }} message
+ * relays an error as a plain string (never a multi-language object), so the
+ * four languages travel in it.
+ * @param {{ en: string, fr: string, de: string, es: string }} message
  * @returns {never}
  */
 export function fail(message) {
-  throw new Error(`${message.fr} / ${message.en}`);
+  throw new Error(LANGUAGES.map((lang) => message[lang]).join(' / '));
 }
 
 const join = (messages, lang) => messages.map((message) => message[lang]).join(' — ');
@@ -139,11 +149,13 @@ export const ACTIONS = {
       fail({
         en: 'Enter the address of your rabbit first, then save.',
         fr: "Saisissez d'abord l'adresse de votre lapin, puis enregistrez.",
+        de: 'Tragen Sie zuerst die Adresse Ihres Hasen ein und speichern Sie.',
+        es: 'Introduzca primero la dirección de su conejo y guarde.',
       });
     }
     await ctx.readAll();
     const lines = ctx.rabbits.map(describeRabbit);
-    const message = { en: join(lines, 'en'), fr: join(lines, 'fr') };
+    const message = Object.fromEntries(LANGUAGES.map((lang) => [lang, join(lines, lang)]));
     // One silent rabbit is enough to make the test a failure.
     if (ctx.rabbits.some((rabbit) => !rabbit.online)) {
       fail(message);
@@ -160,6 +172,8 @@ export const ACTIONS = {
         fail({
           en: 'Enter the first three numbers of your local network, e.g. 192.168.1, or leave the field empty.',
           fr: 'Saisissez les trois premiers nombres de votre réseau local, ex. 192.168.1, ou laissez le champ vide.',
+          de: 'Tragen Sie die ersten drei Zahlen Ihres lokalen Netzwerks ein, z. B. 192.168.1, oder lassen Sie das Feld leer.',
+          es: 'Introduzca los tres primeros números de su red local, p. ej. 192.168.1, o deje el campo vacío.',
         });
       }
       subnets = [subnet];
@@ -169,6 +183,8 @@ export const ACTIONS = {
         fail({
           en: 'Your local network could not be worked out. Enter its first three numbers, e.g. 192.168.1, then search again.',
           fr: "Votre réseau local n'a pas pu être déterminé. Saisissez ses trois premiers nombres, ex. 192.168.1, puis relancez la recherche.",
+          de: 'Ihr lokales Netzwerk konnte nicht ermittelt werden. Tragen Sie seine ersten drei Zahlen ein, z. B. 192.168.1, und suchen Sie erneut.',
+          es: 'No se ha podido determinar su red local. Introduzca sus tres primeros números, p. ej. 192.168.1, y repita la búsqueda.',
         });
       }
     }
@@ -181,6 +197,8 @@ export const ACTIONS = {
       fail({
         en: `No rabbit answered on ${searched}. Is it powered, and is its web page reachable?`,
         fr: `Aucun lapin n'a répondu sur ${searched}. Est-il allumé, sa page web est-elle joignable ?`,
+        de: `Kein Hase hat auf ${searched} geantwortet. Ist er eingeschaltet, ist seine Webseite erreichbar?`,
+        es: `Ningún conejo ha respondido en ${searched}. ¿Está encendido, se puede abrir su página web?`,
       });
     }
     const list = found
@@ -189,6 +207,8 @@ export const ACTIONS = {
     return {
       en: `Found: ${list}. Copy the address into "Rabbit addresses" and save.`,
       fr: `Trouvé : ${list}. Copiez l'adresse dans « Adresses des lapins » et enregistrez.`,
+      de: `Gefunden: ${list}. Kopieren Sie die Adresse in „Adressen der Hasen“ und speichern Sie.`,
+      es: `Encontrado: ${list}. Copie la dirección en «Direcciones de los conejos» y guarde.`,
     };
   },
 
@@ -202,6 +222,8 @@ export const ACTIONS = {
     return {
       en: 'Look around: the rabbit pulses blue and moves its ears.',
       fr: 'Regardez autour de vous : le lapin clignote en bleu et bouge les oreilles.',
+      de: 'Schauen Sie sich um: Der Hase pulsiert blau und bewegt die Ohren.',
+      es: 'Mire a su alrededor: el conejo parpadea en azul y mueve las orejas.',
     };
   },
 
@@ -215,6 +237,8 @@ export const ACTIONS = {
     return {
       en: 'The rabbit restarts: it will be back in about a minute.',
       fr: 'Le lapin redémarre : il sera de retour dans une minute environ.',
+      de: 'Der Hase startet neu: In etwa einer Minute ist er wieder da.',
+      es: 'El conejo se reinicia: volverá en un minuto aproximadamente.',
     };
   },
 };

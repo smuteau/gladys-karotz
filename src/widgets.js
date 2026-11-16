@@ -38,6 +38,8 @@ const NO_RABBIT = {
       text: {
         en: 'No rabbit found yet. Enter its address in the integration configuration.',
         fr: "Aucun lapin trouvé pour l'instant. Saisissez son adresse dans la configuration de l'intégration.",
+        de: 'Noch kein Hase gefunden. Tragen Sie seine Adresse in der Konfiguration der Integration ein.',
+        es: 'Todavía no se ha encontrado ningún conejo. Introduzca su dirección en la configuración de la integración.',
       },
     },
   ],
@@ -48,12 +50,12 @@ function heading(ctx, rabbit) {
 }
 
 function stateItem(rabbit) {
-  const label = { en: 'State', fr: 'État' };
+  const label = { en: 'State', fr: 'État', de: 'Zustand', es: 'Estado' };
   if (!rabbit.online) {
     return {
       label,
       icon: 'wifi-off',
-      value: { en: 'Unreachable', fr: 'Injoignable' },
+      value: { en: 'Unreachable', fr: 'Injoignable', de: 'Nicht erreichbar', es: 'Inaccesible' },
       color: WIDGET_COLORS.DANGER,
     };
   }
@@ -61,14 +63,14 @@ function stateItem(rabbit) {
     return {
       label,
       icon: 'moon',
-      value: { en: 'Asleep', fr: 'Endormi' },
+      value: { en: 'Asleep', fr: 'Endormi', de: 'Schläft', es: 'Dormido' },
       color: WIDGET_COLORS.NEUTRAL,
     };
   }
   return {
     label,
     icon: 'sun',
-    value: { en: 'Awake', fr: 'Réveillé' },
+    value: { en: 'Awake', fr: 'Réveillé', de: 'Wach', es: 'Despierto' },
     color: WIDGET_COLORS.SUCCESS,
   };
 }
@@ -78,7 +80,7 @@ function rabbitContent(ctx, rabbit) {
   const items = [
     stateItem(rabbit),
     {
-      label: { en: 'Address', fr: 'Adresse' },
+      label: { en: 'Address', fr: 'Adresse', de: 'Adresse', es: 'Dirección' },
       icon: 'link',
       value: rabbit.host.slice(0, 40),
       color: WIDGET_COLORS.NEUTRAL,
@@ -86,7 +88,7 @@ function rabbitContent(ctx, rabbit) {
   ];
   if (rabbit.status?.version) {
     items.push({
-      label: { en: 'Firmware', fr: 'Firmware' },
+      label: { en: 'Firmware', fr: 'Firmware', de: 'Firmware', es: 'Firmware' },
       icon: 'cpu',
       value: rabbit.status.version.slice(0, 40),
       color: WIDGET_COLORS.NEUTRAL,
@@ -97,12 +99,17 @@ function rabbitContent(ctx, rabbit) {
     // Live tiles: they follow the published states, no refresh involved.
     {
       type: 'gauge',
-      label: { en: 'Storage used', fr: 'Stockage utilisé' },
+      label: {
+        en: 'Storage used',
+        fr: 'Stockage utilisé',
+        de: 'Speicher belegt',
+        es: 'Almacenamiento usado',
+      },
       device_feature: ids.feature(FEATURES.STORAGE_USED),
     },
     {
       type: 'value',
-      label: { en: 'RFID tags', fr: 'Tags RFID' },
+      label: { en: 'RFID tags', fr: 'Tags RFID', de: 'RFID-Tags', es: 'Etiquetas RFID' },
       icon: 'tag',
       device_feature: ids.feature(FEATURES.RFID_TAGS),
     },
@@ -114,7 +121,7 @@ function rabbitContent(ctx, rabbit) {
   if (rabbit.status.sleeping) {
     components.push({
       type: 'button',
-      label: { en: 'Wake up', fr: 'Réveiller' },
+      label: { en: 'Wake up', fr: 'Réveiller', de: 'Aufwecken', es: 'Despertar' },
       icon: 'sun',
       style: 'primary',
       action: { key: ACTIONS.WAKE },
@@ -124,7 +131,7 @@ function rabbitContent(ctx, rabbit) {
   components.push(
     {
       type: 'button',
-      label: { en: 'Speak', fr: 'Faire parler' },
+      label: { en: 'Speak', fr: 'Faire parler', de: 'Sprechen', es: 'Hablar' },
       icon: 'message-circle',
       style: 'primary',
       // Typed input only exists behind a tap: the core opens this form.
@@ -135,28 +142,33 @@ function rabbitContent(ctx, rabbit) {
             key: 'text',
             type: 'string',
             required: true,
-            label: { en: 'Sentence', fr: 'Phrase' },
+            label: { en: 'Sentence', fr: 'Phrase', de: 'Satz', es: 'Frase' },
           },
         ],
       },
     },
     {
       type: 'button',
-      label: { en: 'Mood', fr: 'Humeur' },
+      label: { en: 'Mood', fr: 'Humeur', de: 'Stimmung', es: 'Estado de ánimo' },
       icon: 'smile',
       style: 'secondary',
       action: { key: ACTIONS.MOOD },
     },
     {
       type: 'button',
-      label: { en: 'Tell the time', fr: "Dire l'heure" },
+      label: {
+        en: 'Tell the time',
+        fr: "Dire l'heure",
+        de: 'Uhrzeit ansagen',
+        es: 'Decir la hora',
+      },
       icon: 'clock',
       style: 'secondary',
       action: { key: ACTIONS.TIME },
     },
     {
       type: 'button',
-      label: { en: 'Sleep', fr: 'Endormir' },
+      label: { en: 'Sleep', fr: 'Endormir', de: 'Schlafen legen', es: 'Dormir' },
       icon: 'moon',
       style: 'secondary',
       action: { key: ACTIONS.SLEEP },
@@ -173,13 +185,13 @@ function cameraContent(ctx, rabbit, language) {
       {
         type: 'image',
         key: snapshot.key,
-        alt: { en: 'Last picture', fr: 'Dernière photo' },
+        alt: { en: 'Last picture', fr: 'Dernière photo', de: 'Letztes Foto', es: 'Última foto' },
         fit: 'contain',
       },
       {
         type: 'text',
         variant: 'caption',
-        text: snapshot.takenAt.toLocaleString(language === 'fr' ? 'fr-FR' : 'en-GB'),
+        text: snapshot.takenAt.toLocaleString(LOCALES[language] ?? LOCALES.en),
       },
     );
   } else {
@@ -189,6 +201,8 @@ function cameraContent(ctx, rabbit, language) {
       text: {
         en: 'No picture yet: take the first one.',
         fr: 'Pas encore de photo : prenez la première.',
+        de: 'Noch kein Foto: Nehmen Sie das erste auf.',
+        es: 'Todavía no hay foto: tome la primera.',
       },
     });
   }
@@ -196,14 +210,24 @@ function cameraContent(ctx, rabbit, language) {
     components.push(
       {
         type: 'button',
-        label: { en: 'Take a picture', fr: 'Prendre une photo' },
+        label: {
+          en: 'Take a picture',
+          fr: 'Prendre une photo',
+          de: 'Foto aufnehmen',
+          es: 'Tomar una foto',
+        },
         icon: 'camera',
         style: 'primary',
         action: { key: ACTIONS.SNAPSHOT },
       },
       {
         type: 'button',
-        label: { en: 'Delete pictures', fr: 'Effacer les photos' },
+        label: {
+          en: 'Delete pictures',
+          fr: 'Effacer les photos',
+          de: 'Fotos löschen',
+          es: 'Borrar las fotos',
+        },
         icon: 'trash-2',
         style: 'danger',
         // Deletes every snapshot stored on the rabbit: ask first.
@@ -214,22 +238,36 @@ function cameraContent(ctx, rabbit, language) {
   return { ttl_seconds: 300, components };
 }
 
-const DONE = { en: 'Done.', fr: "C'est fait." };
+const LOCALES = { en: 'en-GB', fr: 'fr-FR', de: 'de-DE', es: 'es-ES' };
+
+const DONE = { en: 'Done.', fr: "C'est fait.", de: 'Erledigt.', es: 'Hecho.' };
 
 async function runAction(ctx, rabbit, actionKey, values) {
   switch (actionKey) {
     case ACTIONS.WAKE:
       await commands.wake(ctx, rabbit, { silent: false });
-      return { en: 'The rabbit is waking up.', fr: 'Le lapin se réveille.' };
+      return {
+        en: 'The rabbit is waking up.',
+        fr: 'Le lapin se réveille.',
+        de: 'Der Hase wacht auf.',
+        es: 'El conejo se despierta.',
+      };
     case ACTIONS.SLEEP:
       await commands.sleep(ctx, rabbit);
-      return { en: 'Good night, rabbit.', fr: 'Bonne nuit, lapin.' };
+      return {
+        en: 'Good night, rabbit.',
+        fr: 'Bonne nuit, lapin.',
+        de: 'Gute Nacht, Hase.',
+        es: 'Buenas noches, conejo.',
+      };
     case ACTIONS.SPEAK:
       // An older core drops the form and relays the action without values.
       if (!values?.text) {
         return {
           en: 'Update Gladys to type a sentence from the dashboard.',
           fr: 'Mettez Gladys à jour pour saisir une phrase depuis le tableau de bord.',
+          de: 'Aktualisieren Sie Gladys, um einen Satz vom Dashboard aus einzugeben.',
+          es: 'Actualice Gladys para escribir una frase desde el panel.',
         };
       }
       await commands.speak(ctx, rabbit, values.text);
@@ -242,10 +280,20 @@ async function runAction(ctx, rabbit, actionKey, values) {
       return DONE;
     case ACTIONS.SNAPSHOT:
       await commands.takeSnapshot(ctx, rabbit, { silent: false });
-      return { en: 'Picture taken.', fr: 'Photo prise.' };
+      return {
+        en: 'Picture taken.',
+        fr: 'Photo prise.',
+        de: 'Foto aufgenommen.',
+        es: 'Foto tomada.',
+      };
     case ACTIONS.CLEAR_SNAPSHOTS:
       await commands.clearSnapshots(ctx, rabbit);
-      return { en: 'Pictures deleted from the rabbit.', fr: 'Photos effacées du lapin.' };
+      return {
+        en: 'Pictures deleted from the rabbit.',
+        fr: 'Photos effacées du lapin.',
+        de: 'Fotos vom Hasen gelöscht.',
+        es: 'Fotos borradas del conejo.',
+      };
     default:
       throw new Error(`Unknown widget action: ${actionKey}`);
   }

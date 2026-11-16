@@ -134,12 +134,16 @@ export function createApp(gladys, options = {}) {
       await gladys.setConnectionStatus(false, {
         en: 'Enter the address of your rabbit.',
         fr: "Saisissez l'adresse de votre lapin.",
+        de: 'Tragen Sie die Adresse Ihres Hasen ein.',
+        es: 'Introduzca la dirección de su conejo.',
       });
     } else if (offline.length > 0) {
       const list = offline.join(', ').slice(0, 150);
       await gladys.setConnectionStatus(false, {
         en: `No answer from ${list}.`,
         fr: `Pas de réponse de ${list}.`,
+        de: `Keine Antwort von ${list}.`,
+        es: `Sin respuesta de ${list}.`,
       });
     } else {
       await gladys.setConnectionStatus(true);
@@ -239,6 +243,8 @@ export function createApp(gladys, options = {}) {
           .setConnectionStatus(false, {
             en: 'Initialization failed, check the integration logs.',
             fr: "L'initialisation a échoué, consultez les logs de l'intégration.",
+            de: 'Die Initialisierung ist fehlgeschlagen, prüfen Sie die Logs der Integration.',
+            es: 'La inicialización ha fallado, consulte los registros de la integración.',
           })
           .catch(() => {});
       }

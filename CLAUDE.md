@@ -74,7 +74,7 @@ test/                             node --test: SDK fake Gladys + test/helpers/fa
   in `CHANGELOG.md` (`### Added`, `Changed`, `Fixed`, `Removed`, `Security`).
   Never write a version heading: the Release workflow moves the section, and it
   becomes the notes of the GitHub Release.
-- **Manifest.** Texts are multi-language objects `{ "en": ..., "fr": ... }`:
+- **Manifest.** Texts are multi-language objects `{ "en", "fr", "de", "es" }`:
   `label`, `description` and `placeholder` alike, never a plain string. The
   catalog `description` holds 10 to 100 characters per language. A field the
   older cores do not know needs a higher `gladys_version` minimum
@@ -82,9 +82,12 @@ test/                             node --test: SDK fake Gladys + test/helpers/fa
   `type: "provider"`: 5.1.0). `test/manifest.test.js` ties the manifest to the
   code (defaults, action, scene and widget handlers): change both sides
   together.
-- **User-facing text** is bilingual (English and French): action messages,
-  manifest texts. The user documentation exists in four languages, kept in
-  sync: `docs/en.md`, `docs/fr.md`, `docs/de.md`, `docs/es.md`.
+- **User-facing text exists in four languages**: English, French, German and
+  Spanish (`LANGUAGES` in `src/actions.js`). That covers the manifest texts
+  (`test/manifest.test.js` checks every one), the messages of the code
+  (Configuration buttons, widgets, errors, connection status) and the user
+  documentation, kept in sync: `docs/en.md`, `docs/fr.md`, `docs/de.md`,
+  `docs/es.md`. A new text is written in the four at once.
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
 - **A rabbit is identified by its MAC**, read from `/cgi-bin/status` (Wi-Fi
@@ -117,5 +120,6 @@ test/                             node --test: SDK fake Gladys + test/helpers/fa
 - **Configuration buttons: green or red.** The Configuration screen shows a
   resolved message as a success and a thrown error as a failure. A handler of
   `src/actions.js` therefore resolves only when the operation worked, and
-  fails with `fail({ en, fr })` otherwise. Gladys relays an error as a plain
-  string, never a multi-language object: `fail` puts both languages in it.
+  fails with `fail({ en, fr, de, es })` otherwise. Gladys relays an error as a
+  plain string, never a multi-language object: `fail` puts the four languages
+  in it.

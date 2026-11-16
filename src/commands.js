@@ -177,22 +177,38 @@ export function describeError(err) {
       return {
         en: 'The rabbit is sleeping: wake it up first.',
         fr: "Le lapin dort : réveillez-le d'abord.",
+        de: 'Der Hase schläft: Wecken Sie ihn zuerst auf.',
+        es: 'El conejo duerme: despiértelo primero.',
       };
     case ERROR_KINDS.EARS_DISABLED:
       return {
         en: 'The ears are disabled in the rabbit settings.',
         fr: 'Les oreilles sont désactivées dans les réglages du lapin.',
+        de: 'Die Ohren sind in den Einstellungen des Hasen deaktiviert.',
+        es: 'Las orejas están desactivadas en los ajustes del conejo.',
       };
     case ERROR_KINDS.UNREACHABLE:
-      return { en: 'The rabbit does not answer.', fr: 'Le lapin ne répond pas.' };
+      return {
+        en: 'The rabbit does not answer.',
+        fr: 'Le lapin ne répond pas.',
+        de: 'Der Hase antwortet nicht.',
+        es: 'El conejo no responde.',
+      };
     case ERROR_KINDS.NOT_SUPPORTED:
       return {
         en: 'This firmware does not support that command.',
         fr: 'Ce firmware ne prend pas en charge cette commande.',
+        de: 'Diese Firmware unterstützt diesen Befehl nicht.',
+        es: 'Este firmware no admite esta orden.',
       };
     default: {
       const detail = String(err?.message ?? 'unknown error').slice(0, 120);
-      return { en: `The rabbit refused: ${detail}`, fr: `Le lapin a refusé : ${detail}` };
+      return {
+        en: `The rabbit refused: ${detail}`,
+        fr: `Le lapin a refusé : ${detail}`,
+        de: `Der Hase hat abgelehnt: ${detail}`,
+        es: `El conejo se ha negado: ${detail}`,
+      };
     }
   }
 }

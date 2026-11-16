@@ -207,3 +207,25 @@ test('the integration is local and worldwide', () => {
   assert.deepEqual(manifest.transports, ['local']);
   assert.equal(manifest.countries, undefined);
 });
+
+test('every text of the manifest exists in English, French, German and Spanish', () => {
+  const languages = ['de', 'en', 'es', 'fr'];
+  let texts = 0;
+  const walk = (node, path) => {
+    if (Array.isArray(node)) {
+      node.forEach((item, index) => walk(item, `${path}[${index}]`));
+    } else if (node && typeof node === 'object') {
+      if (typeof node.en === 'string') {
+        texts += 1;
+        assert.deepEqual(Object.keys(node).sort(), languages, path);
+        for (const lang of languages) {
+          assert.ok(node[lang].trim(), `${path}.${lang} is empty`);
+        }
+      } else {
+        Object.entries(node).forEach(([key, value]) => walk(value, `${path}.${key}`));
+      }
+    }
+  };
+  walk(manifest, 'manifest');
+  assert.ok(texts > 50);
+});

@@ -22,7 +22,7 @@ LED, orejas, cámara, sueño y etiquetas RFID. Sin cuenta, sin nube.
    cámara. Añádalos.
 
 ¿No conoce su dirección? Un Karotz no se anuncia en la red, pero la integración
-puede buscarlo. Pulse **Buscar en mi red** (_Search my network_), sin escribir
+puede buscarlo. Pulse **Buscar en mi red**, sin escribir
 nada: Gladys localiza su red local gracias a los dispositivos que se anuncian
 en ella (router, televisor, NAS…), y después la integración pregunta a sus 254
 direcciones y lista los conejos que han respondido. Copie la dirección
@@ -30,7 +30,7 @@ encontrada en el campo y guarde.
 
 Si no se ha podido determinar la red, el botón se lo indica: introduzca
 entonces los tres primeros números de sus direcciones locales (p. ej.
-`192.168.1`) en el campo **Red local** (_Local network_) y repita la búsqueda.
+`192.168.1`) en el campo **Red local** y repita la búsqueda.
 
 Los demás ajustes:
 
@@ -40,10 +40,6 @@ Los demás ajustes:
   tal como aparece en la página web del Karotz (en los firmwares recientes, un
   número). Vacío: la voz por defecto del propio conejo.
 - **Cámara** — añade un dispositivo de cámara por conejo.
-
-Los textos de la propia integración (botones, mensajes) están disponibles por
-ahora en inglés y en francés; Gladys se los muestra en inglés. Los nombres de
-esta guía son su traducción.
 
 ## Dispositivos
 
@@ -129,7 +125,7 @@ Con varios conejos, elija cuál mostrar en los ajustes del widget.
 
 ## Solución de problemas
 
-- **«No answer» (sin respuesta)** — ¿está encendido el conejo? ¿Se abre su
+- **«Sin respuesta»** — ¿está encendido el conejo? ¿Se abre su
   página web desde un ordenador de la misma red? ¿Ha cambiado su dirección?
 - **El conejo no aparece en Descubrimiento** — debe haber respondido al menos
   una vez: use **Probar la conexión**.

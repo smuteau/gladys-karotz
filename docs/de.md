@@ -23,7 +23,7 @@ LED, Ohren, Kamera, Schlaf und RFID-Tags. Kein Konto, keine Cloud.
 
 Sie kennen seine Adresse nicht? Ein Karotz meldet sich nicht im Netzwerk an,
 aber die Integration kann nach ihm suchen. Klicken Sie auf **Mein Netzwerk
-durchsuchen** (_Search my network_), ohne etwas einzutragen: Gladys erkennt Ihr
+durchsuchen**, ohne etwas einzutragen: Gladys erkennt Ihr
 lokales Netzwerk an den Geräten, die sich dort melden (Router, Fernseher,
 NAS…), dann fragt die Integration dessen 254 Adressen ab und listet die Hasen
 auf, die geantwortet haben. Kopieren Sie die gefundene Adresse in das Feld und
@@ -31,7 +31,7 @@ speichern Sie.
 
 Konnte das Netzwerk nicht ermittelt werden, sagt Ihnen die Schaltfläche das:
 Tragen Sie dann die ersten drei Zahlen Ihrer lokalen Adressen (z. B.
-`192.168.1`) in das Feld **Lokales Netzwerk** (_Local network_) ein und suchen
+`192.168.1`) in das Feld **Lokales Netzwerk** ein und suchen
 Sie erneut.
 
 Die übrigen Einstellungen:
@@ -43,10 +43,6 @@ Die übrigen Einstellungen:
   auf der Webseite des Karotz aufgeführt ist (bei neueren Firmwares eine Zahl).
   Leer: die eigene Standardstimme des Hasen.
 - **Kamera** — fügt pro Hase ein Kameragerät hinzu.
-
-Die Texte der Integration selbst (Schaltflächen, Meldungen) sind derzeit auf
-Englisch und Französisch verfügbar; Gladys zeigt sie Ihnen auf Englisch an.
-Die Namen in dieser Anleitung sind deren Übersetzung.
 
 ## Geräte
 
@@ -137,7 +133,7 @@ wird.
 
 ## Fehlerbehebung
 
-- **„No answer“ (keine Antwort)** — Ist der Hase eingeschaltet? Öffnet sich
+- **„Keine Antwort“** — Ist der Hase eingeschaltet? Öffnet sich
   seine Webseite von einem Computer im selben Netzwerk? Hat sich seine Adresse
   geändert?
 - **Der Hase erscheint nicht unter Erkennung** — er muss mindestens einmal
