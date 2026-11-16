@@ -120,6 +120,7 @@ test/                             node --test: SDK fake Gladys + test/helpers/fa
 - **Configuration buttons: green or red.** The Configuration screen shows a
   resolved message as a success and a thrown error as a failure. A handler of
   `src/actions.js` therefore resolves only when the operation worked, and
-  fails with `fail({ en, fr, de, es })` otherwise. Gladys relays an error as a
-  plain string, never a multi-language object: `fail` puts the four languages
-  in it.
+  fails with `fail({ en, fr, de, es })` otherwise. `fail` throws an
+  `ActionFailure`, an error whose `message` is the multi-language object
+  itself: the SDK relays it as is and the screen shows the user's language.
+  Never join the languages in one string.

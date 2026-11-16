@@ -256,13 +256,14 @@ test('configuration buttons succeed (green) when the operation worked', async ()
   assert.equal(karotz.callsTo('reboot').length, 1);
 });
 
-test('configuration buttons fail (red) with a message in the four languages', async () => {
+test('configuration buttons fail (red) with a message in the language of the user', async () => {
   const { gladys, ctx, karotz } = await createTestApp();
   const failure = async (key, fields, pattern) => {
     const ack = await gladys.fake.action(key, fields);
     assert.equal(ack.success, false, `${key} must fail`);
-    assert.match(ack.error, pattern, key);
-    assert.equal(ack.error.split(' / ').length, 4, 'the four languages in one message');
+    // The error is a multi-language object: Gladys shows the user's language.
+    assert.deepEqual(Object.keys(ack.error).sort(), ['de', 'en', 'es', 'fr'], key);
+    assert.match(`${ack.error.en} ${ack.error.fr}`, pattern, key);
   };
 
   // Public ranges are never scanned, and an empty network is a failure.

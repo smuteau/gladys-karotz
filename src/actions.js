@@ -131,14 +131,32 @@ function describeRabbit(rabbit) {
 }
 
 /**
- * Fail the action: the message is displayed in red under the button. Gladys
- * relays an error as a plain string (never a multi-language object), so the
- * four languages travel in it.
+ * An error whose `message` is a multi-language object instead of a string.
+ * The SDK relays `message` untouched, and the Configuration screen picks the
+ * language of the user in it, exactly as it does for a success message: the
+ * red message is translated too. The logs keep the English text.
+ */
+export class ActionFailure extends Error {
+  /** @param {{ en: string, fr: string, de: string, es: string }} text */
+  constructor(text) {
+    super(text.en);
+    this.name = 'ActionFailure';
+    this.message = text;
+  }
+
+  toString() {
+    return `${this.name}: ${this.message.en}`;
+  }
+}
+
+/**
+ * Fail the action: the message is displayed in red under the button, in the
+ * language of the user.
  * @param {{ en: string, fr: string, de: string, es: string }} message
  * @returns {never}
  */
 export function fail(message) {
-  throw new Error(LANGUAGES.map((lang) => message[lang]).join(' / '));
+  throw new ActionFailure(message);
 }
 
 const join = (messages, lang) => messages.map((message) => message[lang]).join(' — ');
