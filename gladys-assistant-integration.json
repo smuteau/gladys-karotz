@@ -924,7 +924,7 @@
       },
       "description": {
         "en": "State of a rabbit, with buttons to wake it, make it speak, play a mood or tell the time.",
-        "fr": "État d'un lapin, avec des boutons pour le réveiller, le faire parler, jouer une humeur ou dire l'heure.",
+        "fr": "État d'un lapin, avec des boutons pour le réveiller, le faire parler, une humeur ou l'heure.",
         "de": "Zustand eines Hasen, mit Schaltflächen zum Wecken, Sprechen, für Stimmung und Uhrzeit.",
         "es": "Estado de un conejo, con botones para despertarlo, hacerlo hablar, un estado de ánimo o la hora."
       },

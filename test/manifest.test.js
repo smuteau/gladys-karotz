@@ -229,3 +229,24 @@ test('every text of the manifest exists in English, French, German and Spanish',
   walk(manifest, 'manifest');
   assert.ok(texts > 50);
 });
+
+test('texts respect the length limits of the Gladys manifest validator', () => {
+  // Limits of externalIntegration.validateManifest.js in the Gladys core:
+  // an oversized text makes the whole manifest invalid at install time.
+  const check = (text, path, min, max) => {
+    for (const [lang, value] of Object.entries(text ?? {})) {
+      assert.ok(
+        value.length >= min && value.length <= max,
+        `${path}.${lang}: ${value.length} characters, expected ${min}-${max}`,
+      );
+    }
+  };
+  check(manifest.description, 'description', 10, 100);
+  manifest.config_schema
+    .filter((field) => field.type === 'section')
+    .forEach((field) => check(field.description, `${field.key}.description`, 1, 1000));
+  manifest.widgets.forEach((widget) => {
+    check(widget.label, `widgets.${widget.key}.label`, 3, 30);
+    check(widget.description, `widgets.${widget.key}.description`, 1, 100);
+  });
+});
