@@ -1,41 +1,75 @@
 // -----------------------------------------------------------------------------
-// Scene actions (SDK v0.14+, Gladys 5.1+).
+// Scene actions (manifest `scene_actions`).
 //
-// A scene action is an OPERATION a scene author places in a scene, with
-// parameters and a result: "identify this device", "take a snapshot", "clean
-// these rooms". Each one is declared in the manifest `scene_actions` field
-// (key, label, `fields` in the config_schema grammar, scalar `outputs`) and
-// handled here, keyed by that same `key`; index.js registers every entry with
-// `gladys.onSceneAction(key, ...)`.
+// Each handler receives the app context and the RESOLVED fields of the action
+// (scene variables substituted, defaults applied), and returns the declared
+// `outputs`. Throwing fails this action only: the scene logs it and goes on.
 //
-// Scene TRIGGERS are the other direction ("this happened"): they are fired by
-// the device that observes the event, see src/devices/motionSensor.js.
-//
-// The rules that matter:
-//   - `fields` arrive RESOLVED: scene variables substituted, defaults applied,
-//     validated by the core; a `"source": "devices"` field is the chosen
-//     device external_id;
-//   - resolve an object of the declared `outputs` (scalars only), readable by
-//     the following actions of the scene, or `undefined` for none. Keys not
-//     declared in the manifest are dropped by the core;
-//   - throwing fails THIS action only: the scene logs it and continues. A
-//     scene action is never a condition: return an output and let the scene
-//     author gate on it;
-//   - never fire a scene event as a consequence of a received action: a scene
-//     bound to that event would loop through the integration.
+// Sleep, LED on/off and the ears are device features: a scene drives them with
+// the standard "control a device" action. What is here are the operations a
+// feature cannot express (a sentence, a sound, a LED effect in one step...).
 // -----------------------------------------------------------------------------
 
-import { createLogger } from '@gladysassistant/integration-sdk';
-import { signalDevice } from './devices/index.js';
+import * as commands from './commands.js';
 
-const logger = createLogger({ name: 'scenes' });
+const optionalNumber = (value) =>
+  value === undefined || value === null || value === '' ? undefined : Number(value);
 
 export const SCENE_ACTIONS = {
-  // The ack is awaited under the action's `timeout_seconds` (15 s in the
-  // manifest), counted from the moment the scene reaches the action.
-  async identify_device(gladys, { fields, config }) {
-    logger.info(`Scene action identify_device <- ${fields.device}`);
-    const signalled = await signalDevice(gladys, fields.device, config);
-    return { signalled };
+  async speak(ctx, fields) {
+    await commands.speak(ctx, ctx.findRabbit(fields.rabbit), fields.text, fields.voice);
+  },
+
+  async play_sound(ctx, fields) {
+    await commands.playSound(ctx, ctx.findRabbit(fields.rabbit), fields.sound);
+  },
+
+  async stop_sound(ctx, fields) {
+    await commands.stopSound(ctx, ctx.findRabbit(fields.rabbit));
+  },
+
+  async play_mood(ctx, fields) {
+    const answer = await commands.playMood(
+      ctx,
+      ctx.findRabbit(fields.rabbit),
+      optionalNumber(fields.mood),
+    );
+    return { mood: String(answer.moods ?? '') };
+  },
+
+  async say_time(ctx, fields) {
+    await commands.sayTime(ctx, ctx.findRabbit(fields.rabbit));
+  },
+
+  async set_led(ctx, fields) {
+    await commands.setLed(ctx, ctx.findRabbit(fields.rabbit), {
+      color: fields.color,
+      pulse: fields.pulse === true,
+      speed: optionalNumber(fields.speed),
+      color2: fields.color2 || undefined,
+    });
+  },
+
+  async move_ears(ctx, fields) {
+    const rabbit = ctx.findRabbit(fields.rabbit);
+    if (fields.mode === 'random') {
+      await commands.randomEars(ctx, rabbit);
+    } else if (fields.mode === 'reset') {
+      await commands.resetEars(ctx, rabbit);
+    } else {
+      await commands.moveEars(ctx, rabbit, {
+        left: optionalNumber(fields.left),
+        right: optionalNumber(fields.right),
+      });
+    }
+  },
+
+  // The picture itself goes to the rabbit's camera device: the core's "send
+  // camera image" scene action picks it up from there.
+  async take_snapshot(ctx, fields) {
+    const snapshot = await commands.takeSnapshot(ctx, ctx.findRabbit(fields.rabbit), {
+      silent: fields.silent !== false,
+    });
+    return { filename: snapshot.filename };
   },
 };

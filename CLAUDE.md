@@ -16,8 +16,8 @@ its only runtime dependency. It started from the official JavaScript template.
 ```bash
 npm install
 npm test                                  # node --test, the built-in runner
-node --test test/devices.test.js          # one file
-node --test --test-name-pattern "plug"    # tests whose name matches
+node --test test/app.test.js              # one file
+node --test --test-name-pattern "widget"  # tests whose name matches
 npm run lint                              # ESLint
 npm run format:check                      # Prettier, as the CI runs it
 npm run format                            # Prettier, fix in place
@@ -28,19 +28,31 @@ The CI (`.github/workflows/ci.yml`) runs `format:check`, `lint` and `test` on
 Node 22 and 24, and builds the Docker image: run the three commands before
 pushing.
 
+## What it talks to
+
+Karotz rabbits running **OpenKarotz** (stock firmware or Free Rabbits OS):
+unauthenticated HTTP GET on `http://<host>/cgi-bin/<script>`, answers
+`{"return":"0",...}` or `{"return":"1","msg":"..."}`, sometimes invalid JSON.
+A rabbit is a 2011 ARM9 running bash CGI scripts: one request at a time, slow,
+and it answers a sound or speech request only once it has finished playing.
+
 ## Architecture
 
 ```
-index.js                          SDK wiring only: handlers registered before connect()
-src/devices/index.js              registry of the device blueprints + dispatch helpers
-src/devices/<type>.js             one device type per file (buildDevice, onPoll, onSetValue...)
+index.js                          SDK wiring only: createApp(gladys).register(), then connect()
+src/app.js                        ctx (config, rabbits), reading loop, handler registration
+src/karotz/client.js              OpenKarotz HTTP client: tolerant parsing, KarotzError kinds
+src/rabbits.js                    one rabbit: parseStatus, readRabbit -> detected changes
+src/devices.js                    devices, features (FEATURES keys) and states
+src/commands.js                   every operation on a rabbit, shared by all surfaces
+src/triggers.js                   scene triggers, built from the changes of a read
 src/scenes.js                     scene action handlers (manifest `scene_actions`)
 src/widgets.js                    dashboard widget handlers (manifest `widgets`)
+src/actions.js                    Configuration buttons (manifest `actions`), network search
 src/config.js                     DEFAULT_CONFIG (mirrors the manifest defaults) + normalization
-src/weather.js                    example driver (Open-Meteo)
 gladys-assistant-integration.json manifest: name, config_schema, actions, image...
 docs/en.md, docs/fr.md            user documentation, re-hosted by Gladys (mandatory)
-test/                             node --test, against the SDK's fake Gladys (integration-sdk/testing)
+test/                             node --test: SDK fake Gladys + test/helpers/fakeKarotz.js
 .github/scripts/release.mjs       release helpers (manifest bump, changelog), tested in test/
 ```
 
@@ -74,3 +86,29 @@ test/                             node --test, against the SDK's fake Gladys (in
   manifest texts, and `docs/en.md` / `docs/fr.md`, kept in sync.
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
   in English. Tests never touch the network.
+- **A rabbit is identified by its MAC**, read from `/cgi-bin/status` (Wi-Fi
+  first, then Ethernet), never by its host: the host is only how to reach it.
+  Do not change that order, nor the `karotz` / `karotz-camera` device types.
+- **One operation, one function in `src/commands.js`.** Features, scene
+  actions, widgets and Configuration buttons all call it; none talks to the
+  client directly. After a command, `ctx.refresh(rabbit)` reads the rabbit
+  back so Gladys shows the confirmed state.
+- **Scene events come from the reading loop only** (`readAll({ events: true })`),
+  one per transition. Never fire one after a command: a scene bound to it would
+  loop. The first read of a rabbit is a baseline and fires nothing.
+- **Be gentle with the rabbit.** No parallel requests to one rabbit, no extra
+  request per read without a reason (the tag list is only fetched when the
+  count moves), no periodic snapshot: every picture stays on its storage.
+- **A new endpoint must be checked against the CGI scripts of the rabbit**
+  (`/www/cgi-bin/`), on both the stock OpenKarotz and its variants; an
+  endpoint only some of them have is feature-detected (see `hasVolume`).
+- **No "RFID tag presented" trigger**: the rabbit would have to call the
+  integration, which the sandbox does not allow. Do not fake it by polling.
+- **The network search only scans private /24 ranges** (`parseSubnet`), and
+  hosts from the configuration are validated before they reach a URL
+  (`parseHosts`). Keep both.
+- **Configuration buttons: green or red.** The Configuration screen shows a
+  resolved message as a success and a thrown error as a failure. A handler of
+  `src/actions.js` therefore resolves only when the operation worked, and
+  fails with `fail({ en, fr })` otherwise. Gladys relays an error as a plain
+  string, never a multi-language object: `fail` puts both languages in it.

@@ -1,101 +1,129 @@
 {
   "manifest_version": 1,
   "type": "device",
-  "name": "Demo Devices Template",
+  "name": "OpenKarotz / Free Rabbits",
   "description": {
-    "en": "Starter template showing sensors, a switch, a dimmable light and a smart plug.",
-    "fr": "Template de démarrage : capteurs, interrupteur, lampe variable et prise connectée."
+    "en": "Control your Karotz rabbit locally: speech, sounds, LED, ears, camera, sleep and RFID tags.",
+    "fr": "Pilotez votre lapin Karotz en local : voix, sons, LED, oreilles, caméra, sommeil et tags RFID."
   },
-  "version": "1.0.0",
-  "docker_image": "ghcr.io/gladysassistant/integration-template-js:1.0.0",
+  "version": "0.1.0",
+  "docker_image": "ghcr.io/smuteau/gladys-openkarotz-freerabbits:0.1.0",
   "gladys_version": ">=5.1.0",
-  "cover_image": "https://raw.githubusercontent.com/GladysAssistant/integration-template-js/master/cover.png",
-  "categories": ["lighting", "security", "environment"],
-  "transports": ["local", "cloud"],
+  "cover_image": "https://raw.githubusercontent.com/smuteau/gladys-openkarotz-freerabbits/main/cover.png",
+  "categories": ["multimedia"],
+  "transports": ["local"],
   "config_schema": [
     {
       "key": "intro",
       "type": "section",
-      "label": { "en": "Getting started", "fr": "Pour commencer" },
+      "label": { "en": "Connect your rabbit", "fr": "Connecter votre lapin" },
       "description": {
-        "en": "The demo weather station reads real data from the free Open-Meteo API: pick the coordinates to observe. No account, no API key.",
-        "fr": "La station météo de démonstration lit de vraies données via l'API gratuite Open-Meteo : choisissez les coordonnées à observer. Pas de compte, pas de clé d'API."
+        "en": "Your Karotz must run OpenKarotz (on the original firmware or on Free Rabbits OS) and be on the same network as Gladys. A Karotz does not announce itself on the network: enter its address below, or use the \"Search my network\" button. No account, no cloud: everything stays local.",
+        "fr": "Votre Karotz doit faire tourner OpenKarotz (sur le firmware d'origine ou sur Free Rabbits OS) et être sur le même réseau que Gladys. Un Karotz ne s'annonce pas sur le réseau : saisissez son adresse ci-dessous, ou utilisez le bouton « Chercher sur mon réseau ». Pas de compte, pas de cloud : tout reste en local."
       },
       "links": [
         {
-          "url": "https://open-meteo.com/en/docs",
-          "label": { "en": "Open-Meteo documentation", "fr": "Documentation Open-Meteo" }
+          "url": "https://www.freerabbits.nl/fros/",
+          "label": { "en": "Install Free Rabbits OS", "fr": "Installer Free Rabbits OS" }
         }
       ]
     },
     {
-      "key": "latitude",
-      "type": "number",
-      "label": { "en": "Latitude", "fr": "Latitude" },
+      "key": "hosts",
+      "type": "string",
+      "label": { "en": "Rabbit addresses", "fr": "Adresses des lapins" },
       "description": {
-        "en": "Latitude used for the demo weather sensor.",
-        "fr": "Latitude utilisée par le capteur météo de démonstration."
+        "en": "IP address or host name of your Karotz. Several rabbits: separate them with commas. Give it a fixed IP address (Free Rabbits OS only supports that anyway).",
+        "fr": "Adresse IP ou nom d'hôte de votre Karotz. Plusieurs lapins : séparez-les par des virgules. Donnez-lui une adresse IP fixe (Free Rabbits OS ne gère de toute façon que cela)."
       },
-      "placeholder": { "en": "e.g. 48.8566", "fr": "ex. 48.8566" },
-      "required": true,
-      "default": 48.8566,
-      "min": -90,
-      "max": 90
+      "placeholder": { "en": "e.g. 192.168.1.70", "fr": "ex. 192.168.1.70" },
+      "required": true
     },
     {
-      "key": "longitude",
-      "type": "number",
-      "label": { "en": "Longitude", "fr": "Longitude" },
-      "description": {
-        "en": "Longitude used for the demo weather sensor.",
-        "fr": "Longitude utilisée par le capteur météo de démonstration."
-      },
-      "placeholder": { "en": "e.g. 2.3522", "fr": "ex. 2.3522" },
-      "required": true,
-      "default": 2.3522,
-      "min": -180,
-      "max": 180
-    },
-    {
-      "key": "unit",
-      "type": "select",
-      "label": { "en": "Temperature unit", "fr": "Unité de température" },
-      "required": false,
-      "default": "celsius",
-      "options": [
-        { "value": "celsius", "label": { "en": "Celsius", "fr": "Celsius" } },
-        { "value": "fahrenheit", "label": { "en": "Fahrenheit", "fr": "Fahrenheit" } }
-      ]
-    },
-    {
-      "key": "poll_frequency",
+      "key": "poll_interval",
       "type": "number",
       "label": { "en": "Refresh interval (s)", "fr": "Intervalle de rafraîchissement (s)" },
       "description": {
-        "en": "How often sensors are polled, in seconds (one minute minimum).",
-        "fr": "Fréquence d'interrogation des capteurs, en secondes (une minute minimum)."
+        "en": "How often each rabbit is read, in seconds. A Karotz is a small machine: 60 seconds is a good value.",
+        "fr": "Fréquence de lecture de chaque lapin, en secondes. Un Karotz est une petite machine : 60 secondes est une bonne valeur."
       },
       "required": false,
-      "default": 300,
-      "min": 60,
+      "default": 60,
+      "min": 15,
       "max": 3600
+    },
+    {
+      "key": "tts_voice",
+      "type": "string",
+      "label": { "en": "Default voice", "fr": "Voix par défaut" },
+      "description": {
+        "en": "Voice identifier used when the rabbit speaks, as listed in the Karotz web page (a number on recent firmwares: 5 = US English male, 6 = female). Empty: the rabbit's own default.",
+        "fr": "Identifiant de la voix utilisée quand le lapin parle, tel que listé dans la page web du Karotz (un nombre sur les firmwares récents : 1 = voix française masculine, 2 = féminine). Vide : la voix par défaut du lapin."
+      },
+      "placeholder": { "en": "e.g. 6", "fr": "ex. 2" },
+      "required": false,
+      "default": ""
+    },
+    {
+      "key": "camera",
+      "type": "boolean",
+      "label": { "en": "Camera", "fr": "Caméra" },
+      "description": {
+        "en": "Add a camera device per rabbit. Every picture is also kept on the rabbit's small storage: delete them from time to time with the camera widget.",
+        "fr": "Ajoute un appareil caméra par lapin. Chaque photo reste aussi sur le petit stockage du lapin : effacez-les de temps en temps avec le widget caméra."
+      },
+      "required": false,
+      "default": true
     }
   ],
   "actions": [
     {
-      "key": "test_weather",
-      "label": { "en": "Test the weather provider", "fr": "Tester le fournisseur météo" },
+      "key": "test_connection",
+      "label": { "en": "Test the connection", "fr": "Tester la connexion" },
       "timeout_seconds": 30
     },
     {
-      "key": "identify",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
+      "key": "find_rabbits",
+      "label": { "en": "Search my network", "fr": "Chercher sur mon réseau" },
+      "timeout_seconds": 60,
       "fields": [
         {
-          "key": "device",
+          "key": "subnet",
+          "type": "string",
+          "label": { "en": "Local network", "fr": "Réseau local" },
+          "description": {
+            "en": "The first three numbers of your local addresses. The 254 addresses of that network are asked for a Karotz.",
+            "fr": "Les trois premiers nombres de vos adresses locales. Les 254 adresses de ce réseau sont interrogées à la recherche d'un Karotz."
+          },
+          "placeholder": { "en": "e.g. 192.168.1", "fr": "ex. 192.168.1" },
+          "required": true
+        }
+      ]
+    },
+    {
+      "key": "identify",
+      "label": { "en": "Identify a rabbit", "fr": "Identifier un lapin" },
+      "timeout_seconds": 30,
+      "fields": [
+        {
+          "key": "rabbit",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
+          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "required": true
+        }
+      ]
+    },
+    {
+      "key": "reboot",
+      "label": { "en": "Restart a rabbit", "fr": "Redémarrer un lapin" },
+      "timeout_seconds": 20,
+      "fields": [
+        {
+          "key": "rabbit",
+          "type": "select",
+          "source": "devices",
+          "label": { "en": "Rabbit", "fr": "Lapin" },
           "required": true
         }
       ]
@@ -103,75 +131,401 @@
   ],
   "scene_triggers": [
     {
-      "key": "motion_detected",
-      "label": { "en": "Motion detected", "fr": "Mouvement détecté" },
+      "key": "rabbit_offline",
+      "label": { "en": "Rabbit unreachable", "fr": "Lapin injoignable" },
       "description": {
-        "en": "A demo motion sensor saw a person or an animal move.",
-        "fr": "Un détecteur de démonstration a vu bouger une personne ou un animal."
+        "en": "A rabbit stopped answering (unplugged, Wi-Fi lost, frozen).",
+        "fr": "Un lapin ne répond plus (débranché, Wi-Fi perdu, planté)."
       },
       "fields": [
         {
           "key": "device",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Sensor", "fr": "Détecteur" }
+          "label": { "en": "Rabbit", "fr": "Lapin" }
+        }
+      ],
+      "variables": [
+        { "key": "host", "type": "string", "label": { "en": "Address", "fr": "Adresse" } }
+      ]
+    },
+    {
+      "key": "rabbit_online",
+      "label": { "en": "Rabbit back online", "fr": "Lapin de nouveau joignable" },
+      "description": {
+        "en": "A rabbit that was unreachable answers again.",
+        "fr": "Un lapin qui était injoignable répond à nouveau."
+      },
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": { "en": "Rabbit", "fr": "Lapin" }
+        }
+      ],
+      "variables": [
+        { "key": "host", "type": "string", "label": { "en": "Address", "fr": "Adresse" } }
+      ]
+    },
+    {
+      "key": "sleep_changed",
+      "label": { "en": "Rabbit fell asleep or woke up", "fr": "Lapin endormi ou réveillé" },
+      "description": {
+        "en": "A rabbit went to sleep or woke up by itself, from its web page or its own schedule.",
+        "fr": "Un lapin s'est endormi ou réveillé de lui-même, depuis sa page web ou sa propre programmation."
+      },
+      "fields": [
+        {
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": { "en": "Rabbit", "fr": "Lapin" }
         },
         {
-          "key": "target",
+          "key": "state",
           "type": "multi_select",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" },
+          "label": { "en": "New state", "fr": "Nouvel état" },
           "options": [
-            { "value": "person", "label": { "en": "Person", "fr": "Personne" } },
-            { "value": "animal", "label": { "en": "Animal", "fr": "Animal" } }
+            { "value": "asleep", "label": { "en": "Asleep", "fr": "Endormi" } },
+            { "value": "awake", "label": { "en": "Awake", "fr": "Réveillé" } }
           ]
         }
       ],
       "variables": [
+        { "key": "state", "type": "string", "label": { "en": "New state", "fr": "Nouvel état" } }
+      ]
+    },
+    {
+      "key": "rfid_tag_added",
+      "label": { "en": "New RFID tag recorded", "fr": "Nouveau tag RFID enregistré" },
+      "description": {
+        "en": "A new RFID tag (Flatnanoz, Nanoztag, Ztamps) was recorded on a rabbit.",
+        "fr": "Un nouveau tag RFID (Flatnanoz, Nanoztag, Ztamps) a été enregistré sur un lapin."
+      },
+      "fields": [
         {
-          "key": "target",
+          "key": "device",
+          "type": "select",
+          "source": "devices",
+          "label": { "en": "Rabbit", "fr": "Lapin" }
+        }
+      ],
+      "variables": [
+        {
+          "key": "tag_id",
           "type": "string",
-          "label": { "en": "What moved", "fr": "Ce qui a bougé" }
+          "label": { "en": "Tag identifier", "fr": "Identifiant du tag" }
+        },
+        { "key": "tag_name", "type": "string", "label": { "en": "Tag name", "fr": "Nom du tag" } },
+        {
+          "key": "tag_color",
+          "type": "string",
+          "label": { "en": "Tag color", "fr": "Couleur du tag" }
         }
       ]
     }
   ],
   "scene_actions": [
     {
-      "key": "identify_device",
-      "label": { "en": "Identify a device", "fr": "Identifier un appareil" },
+      "key": "speak",
+      "label": { "en": "Make the rabbit speak", "fr": "Faire parler le lapin" },
       "description": {
-        "en": "Make a device signal itself (the demo light blinks).",
-        "fr": "Fait se signaler un appareil (la lampe de démonstration clignote)."
+        "en": "The rabbit says a sentence with its text-to-speech.",
+        "fr": "Le lapin prononce une phrase avec sa synthèse vocale."
+      },
+      "timeout_seconds": 60,
+      "fields": [
+        {
+          "key": "rabbit",
+          "type": "select",
+          "source": "devices",
+          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "required": true
+        },
+        {
+          "key": "text",
+          "type": "string",
+          "label": { "en": "Sentence", "fr": "Phrase" },
+          "placeholder": { "en": "e.g. Dinner is ready!", "fr": "ex. À table !" },
+          "required": true
+        },
+        {
+          "key": "voice",
+          "type": "string",
+          "label": { "en": "Voice (optional)", "fr": "Voix (facultatif)" },
+          "description": {
+            "en": "Empty: the default voice of the configuration.",
+            "fr": "Vide : la voix par défaut de la configuration."
+          },
+          "required": false
+        }
+      ]
+    },
+    {
+      "key": "play_sound",
+      "label": { "en": "Play a sound or a radio", "fr": "Jouer un son ou une radio" },
+      "description": {
+        "en": "Play a sound stored on the rabbit (its identifier) or an MP3 / web radio (its http address).",
+        "fr": "Joue un son stocké sur le lapin (son identifiant) ou un MP3 / une webradio (son adresse http)."
+      },
+      "timeout_seconds": 60,
+      "fields": [
+        {
+          "key": "rabbit",
+          "type": "select",
+          "source": "devices",
+          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "required": true
+        },
+        {
+          "key": "sound",
+          "type": "string",
+          "label": { "en": "Sound identifier or URL", "fr": "Identifiant du son ou URL" },
+          "placeholder": {
+            "en": "e.g. bip1 or http://…/radio.mp3",
+            "fr": "ex. bip1 ou http://…/radio.mp3"
+          },
+          "required": true
+        }
+      ]
+    },
+    {
+      "key": "stop_sound",
+      "label": { "en": "Stop the radio", "fr": "Arrêter la radio" },
+      "description": {
+        "en": "Stop the stream the rabbit is playing.",
+        "fr": "Arrête le flux que le lapin est en train de jouer."
       },
       "timeout_seconds": 15,
       "fields": [
         {
-          "key": "device",
+          "key": "rabbit",
           "type": "select",
           "source": "devices",
-          "label": { "en": "Device", "fr": "Appareil" },
+          "label": { "en": "Rabbit", "fr": "Lapin" },
           "required": true
+        }
+      ]
+    },
+    {
+      "key": "play_mood",
+      "label": { "en": "Play a mood", "fr": "Jouer une humeur" },
+      "description": {
+        "en": "The rabbit says one of its moods, a random one when no number is given.",
+        "fr": "Le lapin exprime une de ses humeurs, au hasard si aucun numéro n'est donné."
+      },
+      "timeout_seconds": 60,
+      "fields": [
+        {
+          "key": "rabbit",
+          "type": "select",
+          "source": "devices",
+          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "required": true
+        },
+        {
+          "key": "mood",
+          "type": "number",
+          "label": { "en": "Mood number (optional)", "fr": "Numéro de l'humeur (facultatif)" },
+          "required": false,
+          "min": 1,
+          "max": 400
+        }
+      ],
+      "outputs": [
+        { "key": "mood", "type": "string", "label": { "en": "Mood played", "fr": "Humeur jouée" } }
+      ]
+    },
+    {
+      "key": "say_time",
+      "label": { "en": "Tell the time", "fr": "Dire l'heure" },
+      "description": {
+        "en": "The rabbit announces the current hour (clock application).",
+        "fr": "Le lapin annonce l'heure courante (application horloge)."
+      },
+      "timeout_seconds": 60,
+      "fields": [
+        {
+          "key": "rabbit",
+          "type": "select",
+          "source": "devices",
+          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "required": true
+        }
+      ]
+    },
+    {
+      "key": "set_led",
+      "label": { "en": "Set the LED", "fr": "Régler la LED" },
+      "description": {
+        "en": "Color of the belly LED, steady or pulsing between two colors.",
+        "fr": "Couleur de la LED du ventre, fixe ou pulsée entre deux couleurs."
+      },
+      "timeout_seconds": 15,
+      "fields": [
+        {
+          "key": "rabbit",
+          "type": "select",
+          "source": "devices",
+          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "required": true
+        },
+        {
+          "key": "color",
+          "type": "string",
+          "label": { "en": "Color (hexadecimal)", "fr": "Couleur (hexadécimal)" },
+          "placeholder": { "en": "e.g. FF0000 for red", "fr": "ex. FF0000 pour rouge" },
+          "required": true,
+          "default": "00FF00"
+        },
+        {
+          "key": "pulse",
+          "type": "boolean",
+          "label": { "en": "Pulse", "fr": "Pulsation" },
+          "required": false,
+          "default": false
+        },
+        {
+          "key": "speed",
+          "type": "number",
+          "label": { "en": "Pulse period (ms)", "fr": "Période de pulsation (ms)" },
+          "required": false,
+          "default": 700,
+          "min": 100,
+          "max": 5000
+        },
+        {
+          "key": "color2",
+          "type": "string",
+          "label": {
+            "en": "Second pulse color (optional)",
+            "fr": "Seconde couleur de pulsation (facultatif)"
+          },
+          "placeholder": { "en": "e.g. 0000FF", "fr": "ex. 0000FF" },
+          "required": false
+        }
+      ]
+    },
+    {
+      "key": "move_ears",
+      "label": { "en": "Move the ears", "fr": "Bouger les oreilles" },
+      "description": {
+        "en": "Put the ears at a position (0 to 16), at random, or back to rest.",
+        "fr": "Place les oreilles à une position (0 à 16), au hasard, ou les remet au repos."
+      },
+      "timeout_seconds": 30,
+      "fields": [
+        {
+          "key": "rabbit",
+          "type": "select",
+          "source": "devices",
+          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "required": true
+        },
+        {
+          "key": "mode",
+          "type": "select",
+          "label": { "en": "Movement", "fr": "Mouvement" },
+          "required": true,
+          "default": "position",
+          "options": [
+            { "value": "position", "label": { "en": "To a position", "fr": "Vers une position" } },
+            { "value": "random", "label": { "en": "Random", "fr": "Au hasard" } },
+            { "value": "reset", "label": { "en": "Back to rest", "fr": "Retour au repos" } }
+          ]
+        },
+        {
+          "key": "left",
+          "type": "number",
+          "label": { "en": "Left ear (0-16)", "fr": "Oreille gauche (0-16)" },
+          "required": false,
+          "default": 0,
+          "min": 0,
+          "max": 16
+        },
+        {
+          "key": "right",
+          "type": "number",
+          "label": { "en": "Right ear (0-16)", "fr": "Oreille droite (0-16)" },
+          "required": false,
+          "default": 0,
+          "min": 0,
+          "max": 16
+        }
+      ]
+    },
+    {
+      "key": "take_snapshot",
+      "label": { "en": "Take a picture", "fr": "Prendre une photo" },
+      "description": {
+        "en": "Take a picture with the rabbit's webcam; it becomes the image of its camera device.",
+        "fr": "Prend une photo avec la webcam du lapin ; elle devient l'image de son appareil caméra."
+      },
+      "timeout_seconds": 45,
+      "fields": [
+        {
+          "key": "rabbit",
+          "type": "select",
+          "source": "devices",
+          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "required": true
+        },
+        {
+          "key": "silent",
+          "type": "boolean",
+          "label": { "en": "Without the shutter sound", "fr": "Sans le bruit de déclencheur" },
+          "required": false,
+          "default": true
         }
       ],
       "outputs": [
         {
-          "key": "signalled",
-          "type": "boolean",
-          "label": { "en": "Device signalled", "fr": "Appareil signalé" }
+          "key": "filename",
+          "type": "string",
+          "label": { "en": "File name on the rabbit", "fr": "Nom du fichier sur le lapin" }
         }
       ]
     }
   ],
   "widgets": [
     {
-      "key": "demo_status",
-      "label": { "en": "Demo status", "fr": "État de la démo" },
+      "key": "karotz",
+      "label": { "en": "Karotz", "fr": "Karotz" },
       "description": {
-        "en": "Live temperature and plug power, plug connection and observed location.",
-        "fr": "Température et puissance en direct, connexion de la prise, position observée."
+        "en": "State of a rabbit, with buttons to wake it, make it speak, play a mood or tell the time.",
+        "fr": "État d'un lapin, avec des boutons pour le réveiller, le faire parler, jouer une humeur ou dire l'heure."
       },
-      "icon": "activity",
-      "action_timeout_seconds": 15
+      "icon": "smile",
+      "settings": [
+        {
+          "key": "rabbit",
+          "type": "select",
+          "source": "devices",
+          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "required": false
+        }
+      ],
+      "action_timeout_seconds": 60
+    },
+    {
+      "key": "karotz_camera",
+      "label": { "en": "Karotz camera", "fr": "Caméra du Karotz" },
+      "description": {
+        "en": "Last picture taken by a rabbit, and a button to take a new one.",
+        "fr": "Dernière photo prise par un lapin, et un bouton pour en prendre une nouvelle."
+      },
+      "icon": "camera",
+      "settings": [
+        {
+          "key": "rabbit",
+          "type": "select",
+          "source": "devices",
+          "label": { "en": "Rabbit", "fr": "Lapin" },
+          "required": false
+        }
+      ],
+      "action_timeout_seconds": 60
     }
   ]
 }

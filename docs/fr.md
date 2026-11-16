@@ -1,67 +1,128 @@
-# Template de démonstration
+# OpenKarotz / Free Rabbits
 
-Ceci est la documentation utilisateur de l'intégration. Gladys ré-héberge ce
-fichier et affiche un lien **Documentation** permanent vers lui dans l'écran
-de configuration (dans la langue de l'utilisateur, avec l'anglais en repli) —
-c'est au moment de configurer que l'utilisateur en a le plus besoin. Gardez
-les courtes indications d'accueil dans les blocs `section` du `config_schema`
-du manifest ; mettez ici le pas-à-pas détaillé (captures d'écran, dépannage…).
+Pilotez votre lapin Karotz depuis Gladys, en local : voix, sons et webradios,
+LED, oreilles, caméra, sommeil et tags RFID. Pas de compte, pas de cloud.
 
-## Ce que vous obtenez
+## Avant de commencer
 
-Six appareils de démonstration apparaissent après l'installation : une
-station météo (vraies données Open-Meteo), un interrupteur, une lampe
-variable, une prise connectée avec mesure de puissance, un détecteur de
-mouvement et une caméra.
+- Votre Karotz doit faire tourner **OpenKarotz**, sur le firmware d'origine ou
+  par-dessus [Free Rabbits OS](https://www.freerabbits.nl/fros/). Vérification
+  rapide : ouvrez `http://<adresse-du-lapin>/` dans un navigateur, vous devez
+  voir la page web d'OpenKarotz.
+- Le lapin et Gladys doivent être sur le **même réseau local**.
+- Donnez au lapin une **adresse IP fixe** (Free Rabbits OS ne gère de toute
+  façon que cela), ou réservez-la dans votre box.
 
 ## Configuration
 
 1. Ouvrez l'onglet **Configuration** de l'intégration.
-2. Renseignez la **latitude** et la **longitude** que la station météo de
-   démonstration doit observer (Paris par défaut), et choisissez votre unité
-   de température. L'**intervalle de rafraîchissement** règle la fréquence
-   de lecture de la station météo et de la puissance de la prise : toutes
-   les 5 minutes par défaut, toutes les minutes au plus.
-3. Enregistrez : les appareils apparaissent dans l'onglet **Découverte**,
-   prêts à être ajoutés.
+2. Saisissez l'**adresse du lapin** : son adresse IP (ex. `192.168.1.70`) ou
+   son nom d'hôte. Plusieurs lapins : séparez-les par des virgules.
+3. Enregistrez, puis ouvrez l'onglet **Découverte** : le lapin apparaît, ainsi
+   que sa caméra. Ajoutez-les.
 
-Le réglage **Préférer la connexion locale** pilote la prise de
-démonstration : elle affiche en badge le canal réellement utilisé (local ou
-cloud), avec un point orange quand elle fonctionne en mode dégradé (local
-refusé, bascule cloud).
+Vous ne connaissez pas son adresse ? Un Karotz ne s'annonce pas sur le réseau,
+Gladys ne peut donc pas le trouver tout seul. Utilisez le bouton **Chercher sur
+mon réseau** : saisissez les trois premiers nombres de vos adresses locales
+(ex. `192.168.1`), l'intégration interroge les 254 adresses et liste les lapins
+qui ont répondu. Copiez l'adresse trouvée dans le champ, enregistrez.
 
-## Actions
+Les autres réglages :
 
-- **Tester le fournisseur météo** — effectue une requête en direct vers
-  Open-Meteo et affiche la température et l'humidité actuelles sous le
-  bouton.
-- **Identifier un appareil** — choisissez un de vos appareils dans la liste
-  et il se signale (la lampe de démonstration « clignote » dans les logs).
+- **Intervalle de rafraîchissement** — fréquence de lecture du lapin (60 s par
+  défaut). Un Karotz est une petite machine : inutile de descendre trop bas.
+- **Voix par défaut** — l'identifiant de voix utilisé quand le lapin parle, tel
+  que listé dans la page web du Karotz (sur les firmwares récents, un nombre :
+  `1` voix française masculine, `2` féminine, `5` et `6` anglais américain…).
+  Vide : la voix par défaut du lapin.
+- **Caméra** — ajoute un appareil caméra par lapin.
+
+## Les appareils
+
+Chaque lapin devient un appareil, reconnu par son adresse MAC : il garde son
+historique, ses scènes et ses tableaux de bord si son adresse IP change.
+
+| Fonctionnalité           | Ce que vous pouvez faire                |
+| ------------------------ | --------------------------------------- |
+| Réveillé                 | réveiller ou endormir le lapin          |
+| LED, couleur de la LED   | allumer, éteindre, choisir la couleur   |
+| Pulsation de la LED      | lumière fixe ou pulsée                  |
+| Oreille gauche / droite  | position de 0 à 16                      |
+| Volume                   | 0 à 100 %, si votre firmware le propose |
+| Stockage, clé USB        | pourcentage utilisé                     |
+| Tags RFID                | nombre de tags enregistrés              |
+| Caméra (appareil séparé) | une photo fraîche à la demande          |
+
+## Boutons de la configuration
+
+- **Tester la connexion** — interroge chaque lapin et affiche sa version et son
+  état.
+- **Chercher sur mon réseau** — voir plus haut.
+- **Identifier un lapin** — le lapin choisi clignote en bleu et bouge les
+  oreilles quelques secondes.
+- **Redémarrer un lapin** — il revient au bout d'une minute environ.
 
 ## Scènes
 
-L'intégration ajoute ses propres cartes à l'éditeur de scènes (Gladys 5.1
-ou plus récent), dans la catégorie **Intégrations** :
+L'intégration ajoute ses propres cartes à l'éditeur de scènes (Gladys 5.1 ou
+plus récent).
 
-- **Mouvement détecté** (déclencheur) — lance la scène quand un détecteur
-  de démonstration voit bouger quelque chose. Choisissez éventuellement le
-  détecteur et ce qui a bougé (personne, animal) ; laissés vides, toute
-  détection correspond. Les actions suivantes peuvent lire ce qui a bougé
-  avec `{{triggerEvent.data.target}}`.
-- **Identifier un appareil** (action) — fait se signaler l'appareil choisi.
-  Elle indique si l'appareil a pu se signaler, pour que les actions
-  suivantes puissent en dépendre.
+**Actions**
 
-## Tableau de bord
+- **Faire parler le lapin** — une phrase, avec la voix de votre choix. Vous
+  pouvez y glisser des variables de la scène.
+- **Jouer un son ou une radio** — l'identifiant d'un son stocké sur le lapin,
+  ou l'adresse `http://` d'un MP3 ou d'une webradio.
+- **Arrêter la radio**.
+- **Jouer une humeur** — au hasard, ou par son numéro.
+- **Dire l'heure**.
+- **Régler la LED** — couleur en hexadécimal (`FF0000` pour rouge), fixe ou
+  pulsée, avec une seconde couleur et une vitesse.
+- **Bouger les oreilles** — vers une position, au hasard, ou retour au repos.
+- **Prendre une photo** — elle devient l'image de l'appareil caméra : enchaînez
+  avec l'action Gladys « envoyer l'image d'une caméra » pour la recevoir.
 
-Ajoutez le widget **État de la démo** à un tableau de bord : il affiche en
-direct la température de la station météo et la puissance de la prise du
-bureau, la connexion utilisée par la prise (en orange si dégradée) et la
-position observée. Son bouton **Identifier la lampe** fait se signaler la
-lampe de démonstration.
+Réveiller, endormir, allumer la LED : ce sont des fonctionnalités de
+l'appareil, utilisez l'action standard « Contrôler un appareil ».
+
+**Déclencheurs**
+
+- **Lapin injoignable** / **Lapin de nouveau joignable**.
+- **Lapin endormi ou réveillé** — quand il change d'état de lui-même (page web
+  du lapin, programmation interne), pas quand c'est Gladys qui le commande.
+- **Nouveau tag RFID enregistré** — avec l'identifiant, le nom et la couleur du
+  tag en variables.
+
+## Widgets du tableau de bord
+
+- **Karotz** — état du lapin, stockage, nombre de tags, et quatre boutons :
+  faire parler (un petit formulaire s'ouvre), humeur, dire l'heure, endormir.
+  Quand il dort, un seul bouton : le réveiller.
+- **Caméra du Karotz** — la dernière photo, un bouton pour en prendre une
+  nouvelle et un bouton pour effacer les photos stockées sur le lapin.
+
+Avec plusieurs lapins, choisissez lequel afficher dans les réglages du widget.
+
+## Limites
+
+- **Passer un tag RFID devant le lapin ne déclenche pas de scène.** OpenKarotz
+  réagit à un tag en appelant une adresse web depuis le lapin, et une
+  intégration Gladys ne peut pas être appelée de cette façon. Le déclencheur
+  disponible concerne l'enregistrement d'un _nouveau_ tag.
+- **Chaque photo reste sur le lapin**, dont le stockage est petit. Effacez-les
+  de temps en temps avec le bouton du widget caméra.
+- **Un lapin endormi refuse** LED, oreilles, sons et voix : réveillez-le
+  d'abord (dans une scène, commencez par l'action « Contrôler un appareil »).
+- La voix dépend du service de synthèse configuré dans votre lapin, qui a
+  besoin d'Internet : si le lapin ne parle plus, testez depuis sa page web.
 
 ## Dépannage
 
-L'intégration journalise tout ce qu'elle fait : consultez les logs de
-l'intégration depuis l'interface Gladys (ou `docker logs` sur l'hôte) avec
-`LOG_LEVEL=debug` pour le détail complet.
+- **« Pas de réponse »** — le lapin est-il allumé ? Sa page web s'ouvre-t-elle
+  depuis un ordinateur du même réseau ? Son adresse a-t-elle changé ?
+- **Le lapin n'apparaît pas dans Découverte** — il doit avoir répondu au moins
+  une fois : utilisez **Tester la connexion**.
+- **Pas de fonctionnalité Volume** — votre firmware n'a pas ce réglage ; c'est
+  normal sur l'OpenKarotz d'origine.
+
+Non affilié à Violet, Mindscape, OpenKarotz ni Free Rabbits.

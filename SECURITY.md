@@ -33,3 +33,14 @@ In scope: the code of this repository and the Docker image it publishes.
 Out of scope: Gladys Assistant itself (see its
 [security policy](https://github.com/GladysAssistant/Gladys/security/policy)),
 and the third-party services and devices the integration talks to.
+
+## Good to know
+
+The OpenKarotz API has no authentication and speaks plain HTTP: anyone on the
+same network as the rabbit can drive it, take pictures with its webcam and
+restart it, with or without this integration. Keep the rabbit on a network you
+trust and never expose its web page to the Internet. That is a property of the
+rabbit's firmware, not a vulnerability of this integration.
+
+The integration itself stores no secret, only talks to the hosts typed in its
+configuration, and its network search is limited to private address ranges.
