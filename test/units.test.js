@@ -192,6 +192,52 @@ test('LapinLibre refusals are read as such', async () => {
   });
 });
 
+test('a silent cached sentence is asked again without the cache', async () => {
+  const answers = [
+    '{"id":"","played":"0","cache":"1","return":"0","voice":"1","mute":"0"}',
+    '{"id":"e5fa23a4","played":"1","cache":"0","return":"0","voice":"1","mute":"0"}',
+  ];
+  const nocache = [];
+  const fetch = async (input) => {
+    nocache.push(new URL(String(input)).searchParams.get('nocache'));
+    return new Response(answers.shift(), { status: 200 });
+  };
+  const client = createKarotzClient('rabbit.test', { fetch });
+  assert.equal((await client.tts('Bonjour')).played, '1');
+  assert.deepEqual(nocache, ['0', '1']);
+
+  // A muted rabbit is silent on purpose: not a failure, no second request.
+  const muted = createKarotzClient('rabbit.test', {
+    fetch: async () => new Response('{"played":"0","return":"0","mute":"1"}', { status: 200 }),
+  });
+  assert.equal((await muted.tts('Bonjour')).mute, '1');
+});
+
+test('a sound URL travels raw, and text is encoded as a browser does', async () => {
+  const sent = [];
+  const fetch = async (input) => {
+    sent.push(String(input));
+    return new Response('{"return":"0"}', { status: 200 });
+  };
+  const client = createKarotzClient('rabbit.test', { fetch });
+  // OpenKarotz's sound script does not decode its url: %3A%2F%2F plays nothing.
+  await client.playUrl('http://192.168.1.10:8080/tts/audio/3f9a.mp3');
+  assert.equal(
+    sent.at(-1),
+    'http://rabbit.test/cgi-bin/sound?url=http://192.168.1.10:8080/tts/audio/3f9a.mp3',
+  );
+  // Spaces and accents as %XX, never +.
+  await client.tts('Bonjour à tous');
+  assert.match(sent.at(-1), /tts\?text=Bonjour%20%C3%A0%20tous&nocache=0$/);
+
+  // What cannot travel raw is refused before any request.
+  const before = sent.length;
+  for (const bad of ['http://a.test/b?c=1&d=2', 'http://a.test/a b.mp3', 'ftp://a.test/x.mp3']) {
+    await assert.rejects(client.playUrl(bad), { kind: ERROR_KINDS.REFUSED });
+  }
+  assert.equal(sent.length, before);
+});
+
 test('a LapinLibre status is recognised, and keeps the Wi-Fi MAC', () => {
   const status = parseStatus({
     version: '4f2c1a0 (0.2.0)',

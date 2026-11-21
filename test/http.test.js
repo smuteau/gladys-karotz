@@ -3,14 +3,16 @@
 //
 // Recorded on 2026-11-21 from a Karotz on Free Rabbits OS: "OpenKarotz
 // WebServer 1.0" ends its status line with CRLF and every header line with a
-// bare LF. The global fetch of Node rejects that answer; rabbitFetch must read
-// it. The server below listens on 127.0.0.1 only: the test stays on the machine.
+// bare LF, and its snapshot script prints the output of dbus-send between the
+// status line and the headers. No HTTP parser of Node reads either; rabbitFetch
+// must. The server below listens on 127.0.0.1 only: the test stays on the
+// machine.
 // -----------------------------------------------------------------------------
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import net from 'node:net';
-import { rabbitFetch } from '../src/karotz/http.js';
+import { parseRawAnswer, rabbitFetch } from '../src/karotz/http.js';
 import { createKarotzClient } from '../src/karotz/client.js';
 import { parseStatus } from '../src/rabbits.js';
 
@@ -31,6 +33,11 @@ const karotzAnswer = (status, body) =>
   'Access-Control-Allow-Origin: *\n' +
   '\n' +
   body;
+
+// What `snapshot` writes when it plays its shutter sound, or runs while the
+// rabbit sleeps: the reply of dbus-send comes before the headers.
+const DBUS_NOISE = 'method return sender=:1.2 -> dest=:1.47 reply_serial=2\n   boolean true\n';
+const snapshotAnswer = (body) => karotzAnswer('200 OK', body).replace('\r\n', `\r\n${DBUS_NOISE}`);
 
 /** A one-shot raw TCP server on 127.0.0.1; `respond(request)` returns the bytes. */
 async function serve(respond) {
@@ -86,7 +93,8 @@ test('rabbitFetch passes a 401 through and sends only the headers it is given', 
     });
     assert.equal(response.status, 401);
     const [request] = server.requests;
-    assert.match(request, /^GET \/cgi-bin\/status HTTP\/1\.1\r\n/);
+    // HTTP/1.0: the rabbit closes the connection, no chunked answer.
+    assert.match(request, /^GET \/cgi-bin\/status HTTP\/1\.0\r\n/);
     assert.match(request, /\r\nAuthorization: Basic YWRtaW46eA==\r\n/i);
     // Nothing LapinLibre would read as a cross-site request.
     assert.doesNotMatch(request, /sec-fetch-site|\r\norigin:|\r\nreferer:/i);
@@ -108,4 +116,36 @@ test('rabbitFetch gives up on a silent rabbit and refuses anything but http', as
     server.close();
   }
   await assert.rejects(rabbitFetch('https://192.168.1.70/cgi-bin/status'), TypeError);
+});
+
+test('rabbitFetch reads a snapshot answer with dbus-send noise before its headers', async () => {
+  const filename = 'snapshot_2026_11_21_17_00_10.jpg';
+  const server = await serve(() =>
+    snapshotAnswer(`{"filename":"${filename}","thumb":"","return":"0"}\n`),
+  );
+  try {
+    const client = createKarotzClient(server.host);
+    assert.equal(await client.snapshot({ silent: false }), filename);
+  } finally {
+    server.close();
+  }
+});
+
+test('the raw answer is split at the first empty line, and a binary body survives', () => {
+  // A JPEG body holding blank-line bytes of its own.
+  const jpeg = Buffer.from([0xff, 0xd8, 0x0a, 0x0a, 0x0d, 0x0a, 0x0d, 0x0a, 0xff, 0xd9]);
+  const head = Buffer.from(
+    'HTTP/1.0 200 OK\r\nServer: OpenKarotz WebServer 1.0\nContent-type: image/jpeg\n\n',
+    'latin1',
+  );
+  const answer = parseRawAnswer(Buffer.concat([head, jpeg]));
+  assert.equal(answer.status, 200);
+  assert.deepEqual(answer.body, jpeg);
+
+  // CRLF everywhere, as LapinLibre's httpd writes it.
+  const crlf = parseRawAnswer(Buffer.from('HTTP/1.1 401 Unauthorized\r\nA: b\r\n\r\nlogin'));
+  assert.deepEqual([crlf.status, crlf.body.toString()], [401, 'login']);
+
+  assert.throws(() => parseRawAnswer(Buffer.from('SSH-2.0-dropbear\r\n')), /Not an HTTP answer/);
+  assert.throws(() => parseRawAnswer(Buffer.from('HTTP/1.0 200 OK\r\nA: b\n')), /Incomplete/);
 });

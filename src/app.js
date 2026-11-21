@@ -14,6 +14,7 @@ import { normalizeConfig } from './config.js';
 import { FEATURES, buildDevices, buildStates, featureKey, findRabbitByDevice } from './devices.js';
 import { ERROR_KINDS, createKarotzClient } from './karotz/client.js';
 import { rabbitFetch } from './karotz/http.js';
+import { createMemory } from './memory.js';
 import { createRabbit, readRabbit } from './rabbits.js';
 import { SCENE_ACTIONS } from './scenes.js';
 import { buildSceneEvents } from './triggers.js';
@@ -28,7 +29,9 @@ const defaultSleepMs = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 /**
  * @param {import('@gladysassistant/integration-sdk').GladysIntegration} gladys
  * @param {{ fetch?: typeof fetch, sleepMs?: (ms: number) => Promise<void>,
- *   createClient?: (host: string) => object }} [options]
+ *   createClient?: (host: string) => object, memoryFile?: string|null }} [options]
+ *   `memoryFile`: where ears and LED are remembered (see memory.js); none by
+ *   default, index.js gives the container's.
  */
 export function createApp(gladys, options = {}) {
   const logger = createLogger({ name: 'karotz' });
@@ -42,6 +45,7 @@ export function createApp(gladys, options = {}) {
     options.createClient ?? ((host) => createKarotzClient(host, { fetch: fetchImpl, passwords }));
 
   let timer = null;
+  let memoryLoaded = null;
   // Reads never overlap: a slow rabbit must not pile requests up.
   let reading = Promise.resolve();
 
@@ -51,6 +55,9 @@ export function createApp(gladys, options = {}) {
     fetch: fetchImpl,
     sleepMs: options.sleepMs ?? defaultSleepMs,
     config: normalizeConfig(),
+    memory: createMemory(options.memoryFile ?? null, logger),
+    // How long a widget waits for a long command before answering (tests).
+    quickAnswerMs: options.quickAnswerMs,
     /** @type {ReturnType<typeof createRabbit>[]} */
     rabbits: [],
 
@@ -68,6 +75,9 @@ export function createApp(gladys, options = {}) {
     },
 
     async publishStates(rabbit) {
+      // Every change of what Gladys shows goes through here: the moment to
+      // note what the rabbit cannot tell (ears, last LED).
+      await ctx.memory.remember(rabbit);
       const states = buildStates(gladys, rabbit);
       if (states.length > 0) {
         await gladys.publishChangedStates(states, { heartbeat: STATE_HEARTBEAT_MS });
@@ -79,7 +89,7 @@ export function createApp(gladys, options = {}) {
      * really did. Fires NO scene event: the change is ours.
      */
     async refresh(rabbit) {
-      await readRabbit(rabbit);
+      await read(rabbit);
       await ctx.publishStates(rabbit);
       refreshWidgets(gladys);
     },
@@ -91,11 +101,21 @@ export function createApp(gladys, options = {}) {
     },
   };
 
+  // One read of a rabbit; a rabbit seen for the first time gets back what was
+  // remembered of it (its ears, its last LED).
+  async function read(rabbit) {
+    const changes = await readRabbit(rabbit, { sleepMs: ctx.sleepMs });
+    if (changes.identified) {
+      ctx.memory.restore(rabbit);
+    }
+    return changes;
+  }
+
   async function readAllNow(events) {
     let changed = false;
     let identified = false;
     for (const rabbit of ctx.rabbits) {
-      const changes = await readRabbit(rabbit);
+      const changes = await read(rabbit);
       identified ||= changes.identified;
       if (changes.wentOffline) {
         logger.warn(`${rabbit.host} is unreachable: ${rabbit.lastError}`);
@@ -215,6 +235,12 @@ export function createApp(gladys, options = {}) {
         return commands.moveEars(ctx, rabbit, { left: value });
       case FEATURES.EAR_RIGHT:
         return commands.moveEars(ctx, rabbit, { right: value });
+      case FEATURES.EARS_RANDOM:
+        return commands.randomEars(ctx, rabbit);
+      case FEATURES.EARS_RESET:
+        return commands.resetEars(ctx, rabbit);
+      case FEATURES.NOTIFICATION:
+        return commands.playNotification(ctx, rabbit, value);
       case FEATURES.VOLUME:
         return commands.setVolume(ctx, rabbit, value);
       default:
@@ -230,7 +256,9 @@ export function createApp(gladys, options = {}) {
     });
 
     gladys.onSetValue(async (device, feature, value) => {
-      logger.info(`onSetValue <- ${feature.external_id} = ${value}`);
+      // A notification is the one-time URL of a voice clip: not for the logs.
+      const shown = typeof value === 'string' ? '(text)' : value;
+      logger.info(`onSetValue <- ${feature.external_id} = ${shown}`);
       await setValue(device, feature, value);
     });
 
@@ -256,6 +284,9 @@ export function createApp(gladys, options = {}) {
 
     gladys.on('connected', async () => {
       try {
+        // Once: a reconnection keeps what this process already knows.
+        memoryLoaded ??= ctx.memory.load();
+        await memoryLoaded;
         await applyConfig(await gladys.getConfig());
       } catch (err) {
         logger.error('Initialization failed', err);

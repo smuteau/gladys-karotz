@@ -4,8 +4,11 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { validateWidgetContent } from '@gladysassistant/integration-sdk';
-import { HOST, MAC, createFakeKarotz, createTestApp } from './helpers/fakeKarotz.js';
+import { HOST, MAC, createFakeKarotz, createTestApp, snapshotName } from './helpers/fakeKarotz.js';
 
 const RABBIT = `ext:test-integration:karotz:${MAC}`;
 const CAMERA = `ext:test-integration:karotz-camera:${MAC}`;
@@ -82,6 +85,106 @@ test('commands reach the rabbit and the confirmed state comes back', async () =>
   await set('awake', 0);
   assert.equal(karotz.sleeping, true);
   assert.equal(stateOf(gladys, 'awake'), 0);
+});
+
+test('turning the LED back on restores its mode as well as its color', async () => {
+  const karotz = createFakeKarotz({ ledColor: '21FF37', ledPulse: '1' });
+  const { gladys } = await createTestApp({ karotz });
+  const set = (key, value) =>
+    gladys.fake.setValue({ external_id: RABBIT }, { external_id: `${RABBIT}:${key}` }, value);
+
+  await set('led', 0);
+  assert.equal(karotz.ledColor, '000000');
+  await set('led', 1);
+  assert.deepEqual(
+    [karotz.ledColor, karotz.ledPulse],
+    ['21FF37', '1'],
+    'a pulsing LED pulses again',
+  );
+
+  await set('led-pulse', 0);
+  await set('led', 0);
+  await set('led', 1);
+  assert.deepEqual(
+    [karotz.ledColor, karotz.ledPulse],
+    ['21FF37', '0'],
+    'a steady one stays steady',
+  );
+});
+
+test('the ears and the last LED are remembered across restarts', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'karotz-memory-'));
+  const memoryFile = join(dir, 'memory.json');
+  try {
+    const karotz = createFakeKarotz({ ledColor: '21FF37', ledPulse: '1' });
+    const first = await createTestApp({ karotz, options: { memoryFile } });
+    await first.gladys.fake.setValue(
+      { external_id: RABBIT },
+      { external_id: `${RABBIT}:ear-left` },
+      3,
+    );
+    await first.gladys.fake.setValue({ external_id: RABBIT }, { external_id: `${RABBIT}:led` }, 0);
+    first.app.stopLoop();
+    assert.deepEqual(JSON.parse(await readFile(memoryFile, 'utf8')).rabbits[MAC], {
+      ears: { left: 3, right: 0 },
+      led: { color: '21FF37', pulse: true },
+    });
+
+    // A new process: the rabbit still cannot tell where its ears are.
+    const second = await createTestApp({ karotz, options: { memoryFile } });
+    assert.equal(stateOf(second.gladys, 'ear-left'), 3);
+    assert.equal(stateOf(second.gladys, 'ear-right'), 0);
+    await second.gladys.fake.setValue(
+      { external_id: RABBIT },
+      { external_id: `${RABBIT}:ear-right` },
+      12,
+    );
+    // The left ear stays where it was, instead of going back to 0.
+    assert.deepEqual(karotz.callsTo('ears').at(-1).params, {
+      left: '3',
+      right: '12',
+      noreset: '1',
+    });
+    await second.gladys.fake.setValue({ external_id: RABBIT }, { external_id: `${RABBIT}:led` }, 1);
+    assert.deepEqual([karotz.ledColor, karotz.ledPulse], ['21FF37', '1']);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test('a rabbit that misses one read is not declared unreachable', async () => {
+  const { gladys, ctx, karotz } = await createTestApp();
+  karotz.dropNext = 1;
+  await ctx.readAll({ events: true });
+  assert.equal(ctx.rabbits[0].online, true);
+  assert.deepEqual(gladys.fake.sceneEvents, []);
+});
+
+test('a failed synthesis says so, even for a sentence the rabbit cached', async () => {
+  const karotz = createFakeKarotz({ speechService: false });
+  const { gladys } = await createTestApp({ karotz });
+  const speak = () =>
+    gladys.fake.widgetAction('karotz', 'speak', {}, { settings: {}, values: { text: 'Bonjour' } });
+
+  assert.match(JSON.stringify(await speak()), /service de synthèse vocale n'a pas répondu/);
+  // The second time Free Rabbits OS answers from its cache, in silence.
+  assert.match(JSON.stringify(await speak()), /service de synthèse vocale n'a pas répondu/);
+  assert.deepEqual(
+    karotz.callsTo('tts').map((call) => call.params.nocache),
+    ['0', '0', '1'],
+  );
+});
+
+test('waking up from the widget answers before the rabbit is done', async () => {
+  const karotz = createFakeKarotz({ sleeping: true, delays: { wakeup: 200 } });
+  const { gladys, ctx } = await createTestApp({ karotz, options: { quickAnswerMs: 20 } });
+  const started = Date.now();
+  const ack = await gladys.fake.widgetAction('karotz', 'wake', {}, { settings: {}, values: {} });
+  assert.match(JSON.stringify(ack), /se réveille/);
+  assert.ok(Date.now() - started < 150, 'the toast does not wait for the rabbit');
+  // The command still ends, and the card follows.
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  assert.equal(ctx.rabbits[0].status.sleeping, false);
 });
 
 test('a command refused by a sleeping rabbit fails the acknowledgement', async () => {
@@ -165,7 +268,7 @@ test('scene actions drive the rabbit and return their outputs', async () => {
   assert.equal(karotz.callsTo('ears_random').length, 1);
 
   ack = await gladys.fake.sceneAction('take_snapshot', { rabbit: RABBIT, silent: true });
-  assert.deepEqual(ack.data.outputs, { filename: 'snapshot_1.jpg' });
+  assert.deepEqual(ack.data.outputs, { filename: snapshotName(1) });
   assert.equal(gladys.fake.cameraImages.length, 1);
 
   for (const key of ['stop_sound', 'say_time']) {
@@ -227,6 +330,134 @@ test('widget actions answer a toast, also when the rabbit refuses', async () => 
   await act('karotz', 'sleep');
   ack = await act('karotz', 'mood');
   assert.equal(ack.success, true, 'a sleeping rabbit is a message, not a failure');
+});
+
+test('the photos widget walks through the pictures stored on the rabbit', async () => {
+  const karotz = createFakeKarotz({ photos: [1, 2, 3].map(snapshotName), snapshots: 3 });
+  const { gladys } = await createTestApp({ karotz });
+  const get = async () =>
+    (await gladys.fake.widgetGet('karotz_camera', { settings: {}, language: 'fr' })).data.content;
+  const act = (key) =>
+    gladys.fake.widgetAction('karotz_camera', key, {}, { settings: {}, values: {} });
+  const buttons = (content) =>
+    content.components.filter((c) => c.type === 'button').map((c) => c.action.key);
+  const caption = (content) => content.components.find((c) => c.variant === 'caption').text;
+
+  // The newest first, the whole picture.
+  let content = await get();
+  assert.deepEqual(validateWidgetContent(content), []);
+  assert.match(caption(content), /^3\/3 · 21\/11\/2026\s17:00:03$/u);
+  assert.equal(content.components.find((c) => c.type === 'image').fit, 'contain');
+  assert.deepEqual(buttons(content), ['snapshot', 'photo_previous', 'clear_snapshots']);
+
+  // Back one: no toast, the card changes.
+  const ack = await act('photo_previous');
+  assert.equal(ack.success, true);
+  assert.equal(ack.data?.message ?? null, null);
+  content = await get();
+  assert.match(caption(content), /^2\/3 /);
+  assert.deepEqual(buttons(content), [
+    'snapshot',
+    'photo_previous',
+    'photo_next',
+    'clear_snapshots',
+  ]);
+
+  // The image key names that picture; it is fetched once from the rabbit.
+  const key = content.components.find((c) => c.type === 'image').key;
+  assert.equal(key, `photo-${MAC}-20261121170002`);
+  assert.equal((await gladys.fake.widgetGetImage(key)).success, true);
+  assert.equal((await gladys.fake.widgetGetImage(key)).success, true);
+  assert.deepEqual(
+    karotz.callsTo('snapshot_get').map((c) => c.params.filename),
+    [snapshotName(2)],
+  );
+  // A key it never declared reaches no rabbit.
+  assert.equal((await gladys.fake.widgetGetImage(`photo-${MAC}-20991231235959`)).success, false);
+
+  // A new picture is shown at once, without asking the rabbit for it again.
+  await act('snapshot');
+  content = await get();
+  assert.match(caption(content), /^4\/4 /);
+  await gladys.fake.widgetGetImage(content.components.find((c) => c.type === 'image').key);
+  assert.equal(karotz.callsTo('snapshot_get').length, 2, 'only the one snapshot fetches');
+
+  await act('clear_snapshots');
+  content = await get();
+  assert.deepEqual(buttons(content), ['snapshot']);
+});
+
+test('an https:// sound is refused on OpenKarotz, played on LapinLibre', async () => {
+  const https = 'https://icecast.radiofrance.fr/fip-midfi.mp3';
+  const openKarotz = await createTestApp();
+  const refused = await openKarotz.gladys.fake.sceneAction('play_sound', { sound: https });
+  assert.equal(refused.success, false);
+  assert.equal(openKarotz.karotz.callsTo('sound').length, 0, 'nothing reaches the rabbit');
+  await openKarotz.gladys.fake.sceneAction('play_sound', { sound: https.replace('https', 'http') });
+  assert.equal(
+    openKarotz.karotz.callsTo('sound').at(-1).params.url,
+    https.replace('https', 'http'),
+  );
+
+  const lapinLibre = await createTestApp({ karotz: createFakeKarotz({ system: 'lapinlibre' }) });
+  const played = await lapinLibre.gladys.fake.sceneAction('play_sound', { sound: https });
+  assert.equal(played.success, true);
+  assert.equal(lapinLibre.karotz.callsTo('sound').at(-1).params.url, https);
+});
+
+test('Gladys can speak through the rabbit with its own voice', async () => {
+  const notify = (app, url) =>
+    app.gladys.fake.setValue(
+      { external_id: RABBIT },
+      { external_id: `${RABBIT}:play-notification` },
+      url,
+    );
+  const local = 'http://192.168.1.10:80/api/v1/tts/audio/3f9a2c.mp3';
+  const gladysPlus = 'https://api.gladysgateway.com/tts/ac365e90/generate.mp3';
+
+  const openKarotz = await createTestApp();
+  const feature = openKarotz.gladys.fake.discoveredDevices[0].features.find((f) =>
+    f.external_id.endsWith(':play-notification'),
+  );
+  assert.deepEqual([feature.category, feature.type], ['music', 'play_notification']);
+
+  // A voice integration: Gladys serves the clip in http on the LAN.
+  assert.equal((await notify(openKarotz, local)).success, true);
+  assert.equal(openKarotz.karotz.callsTo('sound').at(-1).params.url, local);
+  // Gladys Plus: https, which OpenKarotz cannot play.
+  assert.equal((await notify(openKarotz, gladysPlus)).success, false);
+  assert.equal((await notify(openKarotz, 'not a url')).success, false);
+  assert.equal(openKarotz.karotz.callsTo('sound').length, 1);
+
+  const lapinLibre = await createTestApp({ karotz: createFakeKarotz({ system: 'lapinlibre' }) });
+  assert.equal((await notify(lapinLibre, gladysPlus)).success, true);
+  assert.equal(lapinLibre.karotz.callsTo('sound').at(-1).params.url, gladysPlus);
+});
+
+test('the ears have push buttons: at random, and back to 0', async () => {
+  const { gladys, karotz } = await createTestApp();
+  const keys = gladys.fake.discoveredDevices[0].features.map((f) => f.external_id.split(':').pop());
+  assert.ok(keys.includes('ears-random') && keys.includes('ears-reset'));
+  const push = (key) =>
+    gladys.fake.setValue({ external_id: RABBIT }, { external_id: `${RABBIT}:${key}` }, 1);
+
+  await push('ears-random');
+  assert.equal(karotz.callsTo('ears_random').length, 1);
+  assert.equal(stateOf(gladys, 'ear-left'), 3);
+  assert.equal(stateOf(gladys, 'ear-right'), 11);
+  await push('ears-reset');
+  assert.equal(karotz.callsTo('ears_reset').length, 1);
+  assert.equal(stateOf(gladys, 'ear-left'), 0);
+  assert.equal(stateOf(gladys, 'ear-right'), 0);
+});
+
+test('the version comes from get_version, with the version of the system', async () => {
+  const { gladys } = await createTestApp();
+  const [device] = gladys.fake.discoveredDevices;
+  assert.equal(
+    device.params.find((p) => p.name === 'FIRMWARE_VERSION').value,
+    'OpenKarotz 2.0.5 (2.0.r8)',
+  );
 });
 
 test('a LapinLibre or Terrier OS rabbit behind its web password is driven the same way', async () => {

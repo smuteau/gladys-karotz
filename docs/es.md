@@ -66,16 +66,53 @@ Los demás ajustes:
 Cada conejo se convierte en un dispositivo, reconocido por su dirección MAC:
 conserva su historial, sus escenas y sus paneles si cambia su dirección IP.
 
-| Función                     | Lo que puede hacer                     |
-| --------------------------- | -------------------------------------- |
-| Despierto                   | despertar o dormir al conejo           |
-| LED, color del LED          | encender, apagar, elegir el color      |
-| Pulsación del LED           | luz fija o pulsante                    |
-| Oreja izquierda / derecha   | posición de 0 a 16                     |
-| Volumen                     | de 0 a 100 %, si su firmware lo ofrece |
-| Almacenamiento, memoria USB | porcentaje usado                       |
-| Etiquetas RFID              | número de etiquetas registradas        |
-| Cámara (dispositivo aparte) | una foto reciente bajo demanda         |
+| Función                     | Lo que puede hacer                              |
+| --------------------------- | ----------------------------------------------- |
+| Despierto                   | despertar o dormir al conejo                    |
+| LED, color del LED          | encender, apagar, elegir el color               |
+| Pulsación del LED           | luz fija o pulsante                             |
+| Oreja izquierda / derecha   | posición de 0 a 16                              |
+| Ears at random / reset      | botones: orejas al azar, o a 0                  |
+| Play notification           | la voz de Gladys: véase «Sonidos, radios y voz» |
+| Volumen                     | de 0 a 100 %, si su firmware lo ofrece          |
+| Almacenamiento, memoria USB | porcentaje usado                                |
+| Etiquetas RFID              | número de etiquetas registradas                 |
+| Cámara (dispositivo aparte) | una foto reciente bajo demanda                  |
+
+El conejo no dice dónde están sus orejas: la integración muestra la última
+posición pedida y la recuerda incluso tras un reinicio. La primerísima vez, la
+oreja cuya posición se desconoce vuelve a 0 cuando mueve la otra: el botón **Ears
+reset** pone las dos a 0, un punto de partida conocido.
+
+El widget **Cámara** de Gladys muestra la última foto tomada por la
+integración, durante una hora: el Karotz no tiene vídeo en directo.
+
+## Sonidos, radios y voz
+
+El conejo reproduce sonidos, radios y la voz de Gladys desde una dirección web.
+Lo que puede reproducir depende de su sistema:
+
+| Lo que reproduce                                      | OpenKarotz (Free Rabbits OS)                             | LapinLibre, Terrier OS                      |
+| ----------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------- |
+| Sonido o radio por `http://`                          | sí                                                       | sí                                          |
+| Sonido o radio por `https://`                         | no: su reproductor no lee HTTPS, la dirección se rechaza | sí                                          |
+| Voz de Gladys con una integración de voz de la tienda | sí: Gladys sirve el sonido por `http://` en su red       | sí                                          |
+| Voz de Gladys Plus                                    | no: llega por `https://`                                 | sí                                          |
+| Voz propia del conejo («Hablar»)                      | el servicio en línea de Free Rabbits OS                  | el servidor configurado en `lapinlibre.txt` |
+
+**Hacer hablar al conejo con la voz de Gladys.** El conejo tiene una función
+«Play notification»: en una escena, la acción de Gladys **Hablar en un altavoz**
+lo hace hablar con la voz elegida en Gladys (página Inteligencia artificial,
+tarjeta Voz). Con OpenKarotz, instale una integración de voz de la tienda: sin
+conexión (eSpeak NG, Piper) o en línea (Microsoft Edge TTS, Google Traductor,
+ElevenLabs…). Gladys Plus solo funciona con LapinLibre y Terrier OS. Gladys debe
+funcionar en la red del host (la instalación estándar) para que el conejo
+alcance la dirección del sonido.
+
+**Internet.** La integración habla con el conejo a través de su red, sin nube. El
+conejo, en cambio, necesita Internet para las radios, para su propia voz (el
+servicio en línea de Free Rabbits OS) y para las voces en línea de Gladys; con
+Terrier OS también se comunica con Le Terrier.
 
 ## Botones de la configuración
 
@@ -98,7 +135,10 @@ posterior).
 - **Hacer hablar al conejo** — una frase, con la voz que elija. Puede usar en
   ella variables de la escena.
 - **Reproducir un sonido o una radio** — el identificador de un sonido
-  guardado en el conejo, o la dirección `http://` de un MP3 o de una radio web.
+  guardado en el conejo, o la dirección `http://` de un MP3 o de una radio web
+  (sin espacios, «&» ni «#»: el conejo la recibe tal cual). Con OpenKarotz, una
+  dirección `https://` se rechaza: su reproductor solo lee `http://`. LapinLibre
+  y Terrier OS leen las dos.
 - **Detener la radio**.
 - **Reproducir un estado de ánimo** — al azar, o por su número.
 - **Decir la hora**.
@@ -125,10 +165,14 @@ acción estándar «Controlar un dispositivo».
 - **Karotz** — estado del conejo, almacenamiento, número de etiquetas y cuatro
   botones: hablar (se abre un pequeño formulario), estado de ánimo, decir la
   hora, dormir. Cuando duerme, un solo botón: despertarlo.
-- **Cámara del Karotz** — la última foto, un botón para tomar una nueva y otro
-  para borrar las fotos guardadas en el conejo.
+- **Fotos del Karotz** — las fotos guardadas en el conejo, una a una y enteras,
+  de la más reciente a la más antigua: botones **Anterior** y **Siguiente**,
+  **Tomar una foto** (se muestra al momento) y **Borrar las fotos**.
 
 Con varios conejos, elija cuál mostrar en los ajustes del widget.
+
+La lista ofrece también la cámara del conejo: Gladys aún no sabe filtrarla, y
+las dos opciones muestran el mismo conejo.
 
 ## Límites
 
@@ -147,6 +191,11 @@ Con varios conejos, elija cuál mostrar en los ajustes del widget.
   Con LapinLibre y Terrier OS, ese servidor se configura en `lapinlibre.txt`
   (`SERVER=` o `TTS_SERVER=`): sin él, el conejo se niega a hablar y la
   integración se lo indica.
+  Cuando ese servicio no responde, la integración lo dice («El conejo no ha
+  podido hablar») en lugar de anunciar que está hecho.
+- **El LED reproduce los colores de forma aproximada**: el conejo recibe
+  exactamente el color elegido, pero los tonos pálidos o anaranjados salen
+  saturados.
 - **La API del conejo habla HTTP simple**, sea cual sea su sistema. Con
   LapinLibre y Terrier OS, la contraseña web viaja por tanto legible por su red
   local: el WPA3 la protege en el wifi, no en el cable entre el router y
@@ -165,6 +214,9 @@ Con varios conejos, elija cuál mostrar en los ajustes del widget.
   la correcta. Compruébela abriendo la página web del conejo (usuario `admin`).
 - **«El conejo está ocupado»** — otra orden, de Le Terrier por ejemplo, lo
   estaba usando en ese instante: inténtelo de nuevo.
+- **«El conejo no ha podido hablar»** — su servicio de voz, en línea con Free
+  Rabbits OS, no ha respondido. Pruebe desde la página web del conejo: si
+  tampoco habla allí, el problema está en el conejo o en el servicio.
 - **El conejo no aparece en Descubrimiento** — debe haber respondido al menos
   una vez: use **Probar la conexión**.
 - **No hay función Volumen** — su firmware no tiene ese ajuste; es lo normal en

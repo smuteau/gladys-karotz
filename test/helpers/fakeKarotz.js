@@ -14,6 +14,10 @@ export const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46,
 export const HOST = '192.168.1.70';
 export const MAC = 'aabbccddeeff';
 
+/** The name a rabbit gives its n-th picture of the day. */
+export const snapshotName = (n) =>
+  `snapshot_2026_11_21_17_${String(Math.floor(n / 60)).padStart(2, '0')}_${String(n % 60).padStart(2, '0')}.jpg`;
+
 export function createFakeKarotz(overrides = {}) {
   const rabbit = {
     online: true,
@@ -25,18 +29,28 @@ export function createFakeKarotz(overrides = {}) {
     speechServer: true,
     // LapinLibre: another request holds the rabbit.
     busy: false,
+    // OpenKarotz on Free Rabbits OS: false = its online speech service fails.
+    speechService: true,
+    // The next N requests get no answer at all.
+    dropNext: 0,
+    // Milliseconds some scripts take to answer, e.g. `{ wakeup: 50 }`.
+    delays: {},
     sleeping: false,
     ledColor: '00FF00',
     ledPulse: '0',
     hasVolume: false,
     tags: [],
+    // Pictures taken so far, and the names of those still stored.
     snapshots: 0,
+    photos: [],
     jpeg: JPEG,
     // Every request received: `{ path, params, authorization }`.
     calls: [],
     ...overrides,
   };
   const lapinLibre = () => rabbit.system === 'lapinlibre';
+  // Sentences Free Rabbits OS cached, failed syntheses included.
+  const ttsCache = new Set();
 
   const json = (body) => new Response(JSON.stringify(body), { status: 200 });
   const ok = (extra = {}) => json({ ...extra, return: '0' });
@@ -102,7 +116,7 @@ export function createFakeKarotz(overrides = {}) {
     ears: (params) => (rabbit.sleeping ? asleep() : ok({ left: params.left, right: params.right })),
     ears_reset: () => ok(),
     ears_random: () => ok({ left: '3', right: '11' }),
-    tts() {
+    tts(params) {
       if (lapinLibre()) {
         if (rabbit.sleeping) {
           return asleep();
@@ -113,6 +127,22 @@ export function createFakeKarotz(overrides = {}) {
               'no speech server is set for fr-FR: set SERVER= (or TTS_SERVER=) in lapinlibre.txt',
             );
       }
+      if (!rabbit.speechService) {
+        // Free Rabbits OS: a failed synthesis says nothing, and is cached
+        // anyway; the cached sentence then "succeeds" in silence.
+        if (params.nocache !== '1' && ttsCache.has(params.text)) {
+          return json({ id: '', played: '0', cache: '1', return: '0', voice: '1', mute: '0' });
+        }
+        ttsCache.add(params.text);
+        return json({
+          id: 'f879a0df',
+          played: '0',
+          cache: '0',
+          return: '1',
+          voice: '1',
+          mute: '0',
+        });
+      }
       // The Python script of some firmwares answers a boolean.
       return rabbit.sleeping ? json({ return: false }) : json({ return: true, played: true });
     },
@@ -121,6 +151,10 @@ export function createFakeKarotz(overrides = {}) {
     'apps/moods': (params) => ok({ moods: params.id ?? '42' }),
     'apps/clock': () => ok({ hour: '12' }),
     reboot: () => ok(),
+    get_version: () =>
+      lapinLibre()
+        ? ok({ version: '4f2c1a0 (0.2.0)', rootfs_version: 'Unknown', patch_version: 'N/A' })
+        : ok({ version: '2.0.5', rootfs_version: '2.0.r8' }),
     volume(params) {
       if (!rabbit.hasVolume) {
         return new Response('Not found', { status: 404 });
@@ -129,11 +163,17 @@ export function createFakeKarotz(overrides = {}) {
     },
     snapshot() {
       rabbit.snapshots += 1;
-      return ok({ filename: `snapshot_${rabbit.snapshots}.jpg` });
+      const name = snapshotName(rabbit.snapshots);
+      rabbit.photos.push(name);
+      return ok({ filename: name, thumb: name.replace('.jpg', '.thumb.gif') });
     },
-    snapshot_get: () => new Response(rabbit.jpeg, { status: 200 }),
+    snapshot_get: (params) =>
+      rabbit.photos.includes(params.filename)
+        ? new Response(rabbit.jpeg, { status: 200 })
+        : new Response('{"return":"1","msg":"no stored snapshot has that name"}', { status: 404 }),
+    snapshot_list: () => ok({ snapshots: rabbit.photos.map((id) => ({ id })) }),
     clear_snapshots() {
-      rabbit.snapshots = 0;
+      rabbit.photos = [];
       return ok();
     },
     rfid_list_ext: () => ok({ tags: rabbit.tags }),
@@ -145,6 +185,10 @@ export function createFakeKarotz(overrides = {}) {
   rabbit.fetch = async (input, init = {}) => {
     const url = new URL(String(input));
     if (!rabbit.online || url.host !== (rabbit.host ?? HOST)) {
+      throw new TypeError('fetch failed');
+    }
+    if (rabbit.dropNext > 0) {
+      rabbit.dropNext -= 1;
       throw new TypeError('fetch failed');
     }
     const path = url.pathname.replace('/cgi-bin/', '');
@@ -164,6 +208,9 @@ export function createFakeKarotz(overrides = {}) {
     if (lapinLibre() && rabbit.busy && HARDWARE.has(path)) {
       return refused('the rabbit is busy with another request: try again');
     }
+    if (rabbit.delays[path]) {
+      await new Promise((resolve) => setTimeout(resolve, rabbit.delays[path]));
+    }
     const handler = handlers[path];
     return handler ? handler(params) : new Response('Not found', { status: 404 });
   };
@@ -173,9 +220,18 @@ export function createFakeKarotz(overrides = {}) {
 }
 
 /** A connected app in front of one fake rabbit. */
-export async function createTestApp({ karotz = createFakeKarotz(), config = {} } = {}) {
+export async function createTestApp({
+  karotz = createFakeKarotz(),
+  config = {},
+  options = {},
+} = {}) {
   const gladys = createFakeGladys({ config: { hosts: HOST, ...config } });
-  const app = createApp(gladys, { fetch: karotz.fetch, sleepMs: async () => {}, timers: false });
+  const app = createApp(gladys, {
+    fetch: karotz.fetch,
+    sleepMs: async () => {},
+    timers: false,
+    ...options,
+  });
   app.register();
   await gladys.connect();
   return { gladys, app, ctx: app.ctx, karotz };

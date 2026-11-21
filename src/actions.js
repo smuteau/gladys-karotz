@@ -144,7 +144,7 @@ function describeRabbit(ctx, rabbit) {
       es: `${rabbit.host}: sin respuesta`,
     };
   }
-  const firmware = firmwareLabel(rabbit.status);
+  const firmware = firmwareLabel(rabbit.status, rabbit.versions);
   const sleeping = rabbit.status.sleeping;
   return {
     en: `${rabbit.host}: ${firmware}, ${sleeping ? 'asleep' : 'awake'}`,

@@ -67,9 +67,24 @@ export function parseStatus(raw = {}) {
   };
 }
 
-/** `OpenKarotz 2.0.5`, `LapinLibre 4f2c1a0 (0.2.0)`: what serves the API, and its version. */
-export function firmwareLabel(status) {
-  return `${status?.system ?? SYSTEMS.OPENKAROTZ} ${status?.version ?? '?'}`;
+// Placeholders get_version answers when it has nothing to say.
+const NO_VERSION = new Set(['', '0', 'unknown', 'n/a']);
+const versionText = (value) =>
+  typeof value === 'string' && !NO_VERSION.has(value.trim().toLowerCase()) ? value.trim() : null;
+
+/** `/cgi-bin/get_version` -> `{ version, rootfs }`, each a string or null. */
+export function parseVersions(raw = {}) {
+  return { version: versionText(raw.version), rootfs: versionText(raw.rootfs_version) };
+}
+
+/**
+ * `OpenKarotz 210 (2.0.r8)`, `LapinLibre 4f2c1a0 (0.2.0)`: what serves the API,
+ * its version and, when known, the version of the rabbit's system.
+ */
+export function firmwareLabel(status, versions = null) {
+  const system = status?.system ?? SYSTEMS.OPENKAROTZ;
+  const version = versions?.version ?? status?.version ?? '?';
+  return versions?.rootfs ? `${system} ${version} (${versions.rootfs})` : `${system} ${version}`;
 }
 
 /** Does this answer look like an OpenKarotz status? Used by the network search. */
@@ -95,28 +110,54 @@ export function createRabbit(host, client) {
     lastErrorKind: null,
     // null until checked; `false` on the stock OpenKarotz.
     hasVolume: null,
+    // `{ version, rootfs }` from get_version; null until asked.
+    versions: null,
     volume: null,
     // The API does not report the ears: the last positions we asked for.
     ears: { left: null, right: null },
-    // Last color that was not "off", to turn the LED back on.
-    lastLedColor: DEFAULT_LED_COLOR,
+    // The last LED that was not "off", color and mode: turning the LED back
+    // on restores both (a pulsing LED pulses again).
+    lastLed: { color: DEFAULT_LED_COLOR, pulse: false },
     // RFID tags by id; null until listed once.
     tags: null,
     // The status tag count the list above was fetched for.
     listedTagCount: null,
-    // Last picture taken through the integration: { key, base64, takenAt }.
-    lastSnapshot: null,
+    // The pictures stored on the rabbit (oldest first), the one the photos
+    // widget shows (null: the newest), and the bytes of the last few: see
+    // photos.js.
+    photos: null,
+    photoShown: null,
+    photoCache: null,
+    photoQueue: null,
   };
+}
+
+// A rabbit busy with a long script (a mood, a picture while asleep) can miss
+// one request: an online rabbit is asked twice before it is declared
+// unreachable, which also fires the "rabbit unreachable" scene trigger.
+const STATUS_RETRY_DELAY_MS = 2000;
+
+async function readStatus(rabbit, sleepMs) {
+  try {
+    return await rabbit.client.status();
+  } catch (err) {
+    if (!sleepMs || err.kind !== ERROR_KINDS.UNREACHABLE) {
+      throw err;
+    }
+    await sleepMs(STATUS_RETRY_DELAY_MS);
+    return rabbit.client.status();
+  }
 }
 
 /**
  * Read one rabbit and describe what changed since the previous read. Never
- * throws: an unreachable rabbit is a state, not an error.
+ * throws: an unreachable rabbit is a state, not an error. `sleepMs` enables
+ * the second try of an online rabbit (see readStatus).
  *
  * @returns {Promise<{ wentOnline: boolean, wentOffline: boolean,
  *   sleepChanged: boolean, newTags: Array<object>, identified: boolean }>}
  */
-export async function readRabbit(rabbit) {
+export async function readRabbit(rabbit, { sleepMs } = {}) {
   const changes = {
     wentOnline: false,
     wentOffline: false,
@@ -129,7 +170,7 @@ export async function readRabbit(rabbit) {
 
   let status;
   try {
-    status = parseStatus(await rabbit.client.status());
+    status = parseStatus(await readStatus(rabbit, wasOnline === true ? sleepMs : undefined));
   } catch (err) {
     rabbit.online = false;
     rabbit.lastError = err.message;
@@ -146,7 +187,7 @@ export async function readRabbit(rabbit) {
   // A transition needs a baseline: the first read never fires anything.
   changes.sleepChanged = previous !== null && previous.sleeping !== status.sleeping;
   if (status.ledColor !== LED_OFF) {
-    rabbit.lastLedColor = status.ledColor;
+    rabbit.lastLed = { color: status.ledColor, pulse: status.ledPulse };
   }
   if (rabbit.id === null) {
     // A rabbit without any MAC in its status (never seen, but the scripts
@@ -160,6 +201,20 @@ export async function readRabbit(rabbit) {
       rabbit.hasVolume = await rabbit.client.hasVolume();
     } catch {
       // Unknown for now: asked again at the next read.
+    }
+  }
+
+  // The `version` of the status is frozen on some firmwares (Free Rabbits OS
+  // says 200 where its web page says 210): get_version tells the truth, with
+  // the version of the system. Asked once, and again when the rabbit comes
+  // back, since an update restarts it.
+  if (rabbit.versions === null || changes.wentOnline) {
+    try {
+      rabbit.versions = parseVersions(await rabbit.client.getVersion());
+    } catch (err) {
+      if (err.kind === ERROR_KINDS.NOT_SUPPORTED) {
+        rabbit.versions = { version: null, rootfs: null };
+      }
     }
   }
 

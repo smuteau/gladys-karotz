@@ -38,6 +38,12 @@ export const ERROR_KINDS = {
   BUSY: 'busy',
   // LapinLibre: no speech server is set for the rabbit's language.
   NO_SPEECH: 'no_speech',
+  // The rabbit's text-to-speech service did not produce the sentence.
+  SPEECH_FAILED: 'speech_failed',
+  // OpenKarotz's player cannot read an https:// URL.
+  NO_HTTPS: 'no_https',
+  // The same, for the voice of Gladys Plus, which comes as an https:// URL.
+  NO_HTTPS_VOICE: 'no_https_voice',
   NOT_SUPPORTED: 'not_supported',
   REFUSED: 'refused',
 };
@@ -95,8 +101,11 @@ function isSuccess(answer) {
 // "the rabbit is asleep: wake it up first", "the API's ear moves are
 // disabled (ears_mode)", "the rabbit is busy..." and "no speech server is
 // set for <lang>...".
+// The message of a refusal that gave no reason.
+const NO_REASON = 'Command refused';
+
 function refusal(answer) {
-  const message = typeof answer.msg === 'string' && answer.msg ? answer.msg : 'Command refused';
+  const message = typeof answer.msg === 'string' && answer.msg ? answer.msg : NO_REASON;
   if (/sleeping|asleep|en veille/i.test(message)) {
     return new KarotzError(ERROR_KINDS.SLEEPING, message);
   }
@@ -110,6 +119,58 @@ function refusal(answer) {
     return new KarotzError(ERROR_KINDS.BUSY, message);
   }
   return new KarotzError(ERROR_KINDS.REFUSED, message);
+}
+
+// OpenKarotz on Free Rabbits OS answers `"played":"0"` when the sentence was
+// not spoken (`"mute":"1"` aside, where silence is the point).
+const notPlayed = (answer) => String(answer.played) === '0' && String(answer.mute) !== '1';
+
+const speechFailed = () =>
+  new KarotzError(
+    ERROR_KINDS.SPEECH_FAILED,
+    'The text-to-speech service of the rabbit did not produce the sentence',
+  );
+
+/** A query value sent as is, not percent-encoded: see queryString. */
+class RawValue {
+  constructor(value) {
+    this.value = value;
+  }
+}
+
+/**
+ * The query string of a request. Values are encoded as a browser does
+ * (`%20` for a space, never `+`): the bash scripts decode `%XX` only. Except a
+ * RawValue: OpenKarotz's `sound` script does not decode its `url` at all
+ * (`url=http%3A%2F%2F...` plays nothing, checked on a real Karotz), and its
+ * own web page sends the URL raw.
+ */
+function queryString(params) {
+  const parts = [];
+  for (const [key, value] of Object.entries(params)) {
+    if (value instanceof RawValue) {
+      parts.push(`${key}=${value.value}`);
+    } else if (value !== undefined && value !== null && value !== '') {
+      parts.push(`${key}=${encodeURIComponent(String(value))}`);
+    }
+  }
+  return parts.length > 0 ? `?${parts.join('&')}` : '';
+}
+
+// What a URL may hold to travel raw: no space, no `&` (it would end the
+// parameter), no `#`, nothing a URL parser would escape.
+const RAW_URL = /^https?:\/\/[^\s&#"'<>\\^`{|}]{1,1016}$/i;
+
+/** The URL of a sound or a stream, refused when it cannot travel raw. */
+function soundUrl(value) {
+  const url = String(value ?? '').trim();
+  if (!RAW_URL.test(url)) {
+    throw new KarotzError(
+      ERROR_KINDS.REFUSED,
+      'The rabbit only plays an http:// or https:// URL without spaces, "&" or "#"',
+    );
+  }
+  return url;
 }
 
 const basicAuth = (password) =>
@@ -192,12 +253,7 @@ export function createKarotzClient(
   }
 
   async function request(path, params = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
-    const url = new URL(path, base);
-    for (const [key, value] of Object.entries(params)) {
-      if (value !== undefined && value !== null && value !== '') {
-        url.searchParams.set(key, String(value));
-      }
-    }
+    const url = new URL(path + queryString(params), base);
     const response = await send(url, timeoutMs);
     if (response.status === 404) {
       throw new KarotzError(ERROR_KINDS.NOT_SUPPORTED, `${path} is not available on ${host}`);
@@ -254,11 +310,39 @@ export function createKarotzClient(
     earsReset: () => call('ears_reset'),
     earsRandom: () => call('ears_random'),
 
-    tts: (text, { voice, nocache = false } = {}) =>
-      call('tts', { text, voice, nocache: nocache ? 1 : 0 }, PLAYBACK_TIMEOUT_MS),
+    /**
+     * Speak a sentence. Free Rabbits OS fetches the speech from an online
+     * service and keeps it in a cache keyed by the text: a failed fetch
+     * answers `{"return":"1"}` with no reason, and is cached anyway, so the
+     * same sentence then "succeeds" in silence (`"played":"0"`). Both are a
+     * failure here, and a silent cached sentence is asked once more without
+     * the cache.
+     */
+    async tts(text, { voice, nocache = false } = {}) {
+      const say = async (fresh) => {
+        try {
+          return await call('tts', { text, voice, nocache: fresh ? 1 : 0 }, PLAYBACK_TIMEOUT_MS);
+        } catch (err) {
+          if (err.kind === ERROR_KINDS.REFUSED && err.message === NO_REASON) {
+            throw speechFailed();
+          }
+          throw err;
+        }
+      };
+      let answer = await say(nocache);
+      if (notPlayed(answer) && !nocache) {
+        answer = await say(true);
+      }
+      if (notPlayed(answer)) {
+        throw speechFailed();
+      }
+      return answer;
+    },
 
     playSound: (id) => call('sound', { id }, PLAYBACK_TIMEOUT_MS),
-    playUrl: (url) => call('sound', { url }, PLAYBACK_TIMEOUT_MS),
+    // The URL travels raw: see RawValue.
+    playUrl: async (url) =>
+      call('sound', { url: new RawValue(soundUrl(url)) }, PLAYBACK_TIMEOUT_MS),
     // mplayer slave command: only streams (playUrl) are stopped this way.
     soundControl: (cmd) => call('sound_control', { cmd }),
     soundList: async () => (await call('sound_list')).sounds ?? [],
@@ -308,6 +392,8 @@ export function createKarotzClient(
       return Buffer.from(await response.arrayBuffer());
     },
     snapshotList: async () => (await call('snapshot_list')).snapshots ?? [],
+    /** `{ version, rootfs_version }`: the truth, where `status` may be frozen. */
+    getVersion: () => call('get_version'),
     clearSnapshots: () => call('clear_snapshots'),
 
     /** @returns {Promise<Array<{ id: string, name?: string, color_name?: string }>>} */

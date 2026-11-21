@@ -27,9 +27,11 @@ Everything is local: no account, no cloud, works in any country.
 | Feature                | Type           | Notes                                                 |
 | ---------------------- | -------------- | ----------------------------------------------------- |
 | Awake                  | switch         | wake up / put to sleep                                |
-| LED, LED color         | light          | on/off keeps the last color                           |
+| LED, LED color         | light          | on/off keeps the last color and mode                  |
 | LED pulse              | switch         | steady or pulsing                                     |
 | Left ear, right ear    | slider 0–16    | the rabbit does not report its ears: last order shown |
+| Ears at random / reset | push button    | reset puts both ears back to 0                        |
+| Play notification      | music          | Gladys' "Talk on a speaker" action, see below         |
 | Volume                 | slider 0–100 % | only on firmwares that ship `/cgi-bin/volume`         |
 | Storage used, USB used | sensor (%)     |                                                       |
 | RFID tags              | sensor (count) |                                                       |
@@ -43,11 +45,33 @@ move the ears (position, random, rest), take a picture.
 or woke up, new RFID tag recorded.
 
 **Dashboard widgets** — `Karotz` (state, storage, tags, and buttons: wake up /
-sleep, speak, mood, time) and `Karotz camera` (last picture, take one, delete
-the pictures stored on the rabbit).
+sleep, speak, mood, time) and `Karotz photos` (the pictures stored on the
+rabbit, one at a time: previous, next, take one, delete them all).
 
 **Configuration buttons** — test the connection, search the local network for
 rabbits, identify a rabbit (blue pulse and moving ears), restart a rabbit.
+
+## Sounds, radios and voice
+
+The rabbit plays every sound, radio and the voice of Gladys from a URL, and what
+it can read depends on its system:
+
+| What is played                                           | OpenKarotz (FROS)                   | LapinLibre, Terrier OS |
+| -------------------------------------------------------- | ----------------------------------- | ---------------------- |
+| sound or radio over `http://`                            | yes                                 | yes                    |
+| sound or radio over `https://`                           | no (refused: its player has no TLS) | yes                    |
+| voice of Gladys from a voice integration (`type: "tts"`) | yes (Gladys serves it over http)    | yes                    |
+| voice of Gladys Plus                                     | no (an `https://` URL)              | yes                    |
+| the rabbit's own text-to-speech                          | Free Rabbits' online service        | `TTS_SERVER=`          |
+
+The `Play notification` feature receives the URL of the clip Gladys
+synthesized (`music`/`play_notification`, as Gladys' own speakers): any voice
+integration of the store works (eSpeak NG, Piper, Edge TTS, ElevenLabs…), since
+the core serves the clip from its own `http://<LAN IP>:<port>`.
+
+The integration only ever talks to the rabbit over the LAN. The rabbit itself
+needs the Internet for radios, its own text-to-speech and online voices; on
+Terrier OS it also talks to Le Terrier.
 
 ## Finding the rabbit
 
@@ -75,6 +99,11 @@ MAC address, in `/cgi-bin/status`. Hence:
 - **Every picture stays on the rabbit**, whose storage is small, and OpenKarotz
   has no "delete one picture" endpoint. The camera widget has a button that
   deletes them all.
+- **The rabbit does not report its ears.** The integration shows the last
+  position it asked for, kept in `/data/karotz-memory.json` across restarts
+  (`KAROTZ_MEMORY_FILE` outside the container).
+- **The Gladys Camera widget shows the last picture taken**, for one hour: the
+  Karotz has no live video, and every picture is a request to the rabbit.
 - **A sleeping rabbit refuses** LED, ears, sounds and speech. The command fails
   with an explicit message; wake it up first.
 - The OpenKarotz API has **no authentication**; LapinLibre and Terrier OS add
@@ -118,6 +147,7 @@ Run it against a Gladys instance:
 GLADYS_HOST_API_URL="http://localhost:1443" \
 GLADYS_INTEGRATION_TOKEN="<token>" \
 GLADYS_INTEGRATION_SELECTOR="karotz" \
+KAROTZ_MEMORY_FILE="./karotz-memory.json" \
 LOG_LEVEL=debug \
 npm start
 ```

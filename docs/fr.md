@@ -67,16 +67,54 @@ Les autres réglages :
 Chaque lapin devient un appareil, reconnu par son adresse MAC : il garde son
 historique, ses scènes et ses tableaux de bord si son adresse IP change.
 
-| Fonctionnalité           | Ce que vous pouvez faire                |
-| ------------------------ | --------------------------------------- |
-| Réveillé                 | réveiller ou endormir le lapin          |
-| LED, couleur de la LED   | allumer, éteindre, choisir la couleur   |
-| Pulsation de la LED      | lumière fixe ou pulsée                  |
-| Oreille gauche / droite  | position de 0 à 16                      |
-| Volume                   | 0 à 100 %, si votre firmware le propose |
-| Stockage, clé USB        | pourcentage utilisé                     |
-| Tags RFID                | nombre de tags enregistrés              |
-| Caméra (appareil séparé) | une photo fraîche à la demande          |
+| Fonctionnalité           | Ce que vous pouvez faire                       |
+| ------------------------ | ---------------------------------------------- |
+| Réveillé                 | réveiller ou endormir le lapin                 |
+| LED, couleur de la LED   | allumer, éteindre, choisir la couleur          |
+| Pulsation de la LED      | lumière fixe ou pulsée                         |
+| Oreille gauche / droite  | position de 0 à 16                             |
+| Ears at random / reset   | boutons : oreilles au hasard, ou à 0           |
+| Play notification        | voix de Gladys : voir « Sons, radios et voix » |
+| Volume                   | 0 à 100 %, si votre firmware le propose        |
+| Stockage, clé USB        | pourcentage utilisé                            |
+| Tags RFID                | nombre de tags enregistrés                     |
+| Caméra (appareil séparé) | une photo fraîche à la demande                 |
+
+Le lapin ne dit pas où sont ses oreilles : l'intégration affiche la dernière
+position demandée, et s'en souvient même après un redémarrage. La toute
+première fois, l'oreille dont la position est inconnue revient à 0 quand vous
+bougez l'autre : le bouton **Ears reset** les remet toutes les deux à 0, un point
+de départ connu.
+
+Le widget **Caméra** de Gladys affiche la dernière photo prise par
+l'intégration, pendant une heure : le Karotz n'a pas de vidéo en direct.
+
+## Sons, radios et voix
+
+Le lapin lit les sons, les radios et la voix de Gladys depuis une adresse web.
+Ce qu'il sait lire dépend de son système :
+
+| Ce que vous faites jouer                             | OpenKarotz (Free Rabbits OS)                                 | LapinLibre, Terrier OS                 |
+| ---------------------------------------------------- | ------------------------------------------------------------ | -------------------------------------- |
+| Son ou radio en `http://`                            | oui                                                          | oui                                    |
+| Son ou radio en `https://`                           | non : son lecteur ne lit pas le HTTPS, l'adresse est refusée | oui                                    |
+| Voix de Gladys avec une intégration de voix du store | oui : Gladys sert le son en `http://` sur votre réseau       | oui                                    |
+| Voix de Gladys Plus                                  | non : elle arrive en `https://`                              | oui                                    |
+| Voix du lapin lui-même (« Faire parler »)            | le service en ligne de Free Rabbits OS                       | le serveur réglé dans `lapinlibre.txt` |
+
+**Faire parler le lapin avec la voix de Gladys.** Le lapin a une fonctionnalité
+« Play notification » : dans une scène, l'action Gladys **Parler sur une
+enceinte** le fait parler avec la voix choisie dans Gladys (page Intelligence
+artificielle, carte Voix). Sous OpenKarotz, installez une intégration de voix du
+store : hors ligne (eSpeak NG, Piper) ou en ligne (Microsoft Edge TTS, Google
+Traduction, ElevenLabs…). Gladys Plus ne marche que sous LapinLibre et Terrier
+OS. Gladys doit tourner en réseau hôte (l'installation standard), pour que le
+lapin joigne l'adresse du son.
+
+**Internet.** L'intégration parle au lapin sur votre réseau, sans cloud. Le
+lapin, lui, a besoin d'Internet pour les radios, pour sa propre voix (le service
+en ligne de Free Rabbits OS) et pour les voix en ligne de Gladys ; sous Terrier
+OS, il échange aussi avec Le Terrier.
 
 ## Boutons de la configuration
 
@@ -99,7 +137,10 @@ plus récent).
 - **Faire parler le lapin** — une phrase, avec la voix de votre choix. Vous
   pouvez y glisser des variables de la scène.
 - **Jouer un son ou une radio** — l'identifiant d'un son stocké sur le lapin,
-  ou l'adresse `http://` d'un MP3 ou d'une webradio.
+  ou l'adresse `http://` d'un MP3 ou d'une webradio (sans espace, « & » ni
+  « # » : le lapin la reçoit telle quelle). Sous OpenKarotz, une adresse
+  `https://` est refusée : son lecteur ne lit que le `http://`. LapinLibre et
+  Terrier OS lisent les deux.
 - **Arrêter la radio**.
 - **Jouer une humeur** — au hasard, ou par son numéro.
 - **Dire l'heure**.
@@ -125,10 +166,15 @@ l'appareil, utilisez l'action standard « Contrôler un appareil ».
 - **Karotz** — état du lapin, stockage, nombre de tags, et quatre boutons :
   faire parler (un petit formulaire s'ouvre), humeur, dire l'heure, endormir.
   Quand il dort, un seul bouton : le réveiller.
-- **Caméra du Karotz** — la dernière photo, un bouton pour en prendre une
-  nouvelle et un bouton pour effacer les photos stockées sur le lapin.
+- **Photos du Karotz** — les photos stockées sur le lapin, une à une et en
+  entier, de la plus récente à la plus ancienne : boutons **Précédente** et
+  **Suivante**, **Prendre une photo** (elle s'affiche aussitôt) et **Effacer les
+  photos**.
 
 Avec plusieurs lapins, choisissez lequel afficher dans les réglages du widget.
+
+La liste propose aussi la caméra du lapin : Gladys ne sait pas encore la
+filtrer, et les deux choix affichent le même lapin.
 
 ## Limites
 
@@ -147,6 +193,10 @@ Avec plusieurs lapins, choisissez lequel afficher dans les réglages du widget.
   Sous LapinLibre et Terrier OS, ce serveur se règle dans `lapinlibre.txt`
   (`SERVER=` ou `TTS_SERVER=`) : sans lui, le lapin refuse de parler et
   l'intégration vous le dit.
+  Quand ce service ne répond pas, l'intégration le dit (« Le lapin n'a pas pu
+  parler ») au lieu d'annoncer que c'est fait.
+- **La LED rend les couleurs à peu près** : le lapin reçoit exactement la
+  couleur choisie, mais les teintes pâles ou orangées ressortent saturées.
 - **L'API du lapin parle en HTTP simple**, quel que soit son système. Sous
   LapinLibre et Terrier OS, le mot de passe web passe donc lisible sur votre
   réseau local : le WPA3 le protège sur le Wi-Fi, pas sur le câble entre la
@@ -165,6 +215,9 @@ Avec plusieurs lapins, choisissez lequel afficher dans les réglages du widget.
   bon. Vérifiez-le en ouvrant la page web du lapin (utilisateur `admin`).
 - **« Le lapin est occupé »** — une autre commande, du Terrier par exemple,
   l'occupait à cet instant : réessayez.
+- **« Le lapin n'a pas pu parler »** — son service de synthèse vocale, en ligne
+  sous Free Rabbits OS, n'a pas répondu. Essayez depuis la page web du lapin :
+  s'il n'y parle pas non plus, le problème vient du lapin ou du service.
 - **Le lapin n'apparaît pas dans Découverte** — il doit avoir répondu au moins
   une fois : utilisez **Tester la connexion**.
 - **Pas de fonctionnalité Volume** — votre firmware n'a pas ce réglage ; c'est

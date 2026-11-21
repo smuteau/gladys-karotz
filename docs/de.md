@@ -70,16 +70,54 @@ Jeder Hase wird zu einem Gerät, das an seiner MAC-Adresse erkannt wird: Er
 behält seinen Verlauf, seine Szenen und seine Dashboards, wenn sich seine
 IP-Adresse ändert.
 
-| Funktion               | Was Sie tun können                          |
-| ---------------------- | ------------------------------------------- |
-| Wach                   | den Hasen aufwecken oder schlafen legen     |
-| LED, LED-Farbe         | einschalten, ausschalten, Farbe wählen      |
-| LED-Pulsieren          | Dauerlicht oder pulsierendes Licht          |
-| Linkes / rechtes Ohr   | Position von 0 bis 16                       |
-| Lautstärke             | 0 bis 100 %, wenn Ihre Firmware es anbietet |
-| Speicher, USB-Stick    | belegter Anteil in Prozent                  |
-| RFID-Tags              | Anzahl der gespeicherten Tags               |
-| Kamera (eigenes Gerät) | ein frisches Bild auf Abruf                 |
+| Funktion               | Was Sie tun können                                     |
+| ---------------------- | ------------------------------------------------------ |
+| Wach                   | den Hasen aufwecken oder schlafen legen                |
+| LED, LED-Farbe         | einschalten, ausschalten, Farbe wählen                 |
+| LED-Pulsieren          | Dauerlicht oder pulsierendes Licht                     |
+| Linkes / rechtes Ohr   | Position von 0 bis 16                                  |
+| Ears at random / reset | Knöpfe: Ohren zufällig oder zurück auf 0               |
+| Play notification      | die Stimme von Gladys: siehe „Töne, Radios und Stimme“ |
+| Lautstärke             | 0 bis 100 %, wenn Ihre Firmware es anbietet            |
+| Speicher, USB-Stick    | belegter Anteil in Prozent                             |
+| RFID-Tags              | Anzahl der gespeicherten Tags                          |
+| Kamera (eigenes Gerät) | ein frisches Bild auf Abruf                            |
+
+Der Hase verrät nicht, wo seine Ohren stehen: Die Integration zeigt die zuletzt
+angeforderte Position und merkt sie sich auch nach einem Neustart. Beim
+allerersten Mal geht das Ohr mit unbekannter Position auf 0 zurück, wenn Sie das
+andere bewegen: Der Knopf **Ears reset** stellt beide auf 0, ein bekannter
+Ausgangspunkt.
+
+Das **Kamera**-Widget von Gladys zeigt eine Stunde lang das letzte Foto, das die
+Integration aufgenommen hat: Der Karotz hat kein Live-Video.
+
+## Töne, Radios und Stimme
+
+Der Hase spielt Töne, Radios und die Stimme von Gladys von einer Webadresse ab.
+Was er abspielen kann, hängt von seinem System ab:
+
+| Was Sie abspielen                                           | OpenKarotz (Free Rabbits OS)                                      | LapinLibre, Terrier OS                      |
+| ----------------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------- |
+| Ton oder Radio über `http://`                               | ja                                                                | ja                                          |
+| Ton oder Radio über `https://`                              | nein: Sein Player liest kein HTTPS, die Adresse wird abgelehnt    | ja                                          |
+| Stimme von Gladys mit einer Sprachintegration aus dem Store | ja: Gladys stellt den Ton über `http://` in Ihrem Netzwerk bereit | ja                                          |
+| Stimme von Gladys Plus                                      | nein: Sie kommt über `https://`                                   | ja                                          |
+| Eigene Stimme des Hasen („Sprechen“)                        | der Online-Dienst von Free Rabbits OS                             | der in `lapinlibre.txt` eingestellte Server |
+
+**Den Hasen mit der Stimme von Gladys sprechen lassen.** Der Hase hat eine
+Funktion „Play notification“: In einer Szene lässt ihn die Gladys-Aktion **Auf
+einem Lautsprecher sprechen** mit der in Gladys gewählten Stimme sprechen (Seite
+Künstliche Intelligenz, Karte Stimme). Unter OpenKarotz installieren Sie eine
+Sprachintegration aus dem Store: offline (eSpeak NG, Piper) oder online
+(Microsoft Edge TTS, Google Übersetzer, ElevenLabs…). Gladys Plus funktioniert
+nur unter LapinLibre und Terrier OS. Gladys muss im Host-Netzwerk laufen (die
+Standardinstallation), damit der Hase die Adresse des Tons erreicht.
+
+**Internet.** Die Integration spricht über Ihr Netzwerk mit dem Hasen, ohne
+Cloud. Der Hase selbst braucht Internet für Radios, für seine eigene Stimme (den
+Online-Dienst von Free Rabbits OS) und für die Online-Stimmen von Gladys; unter
+Terrier OS tauscht er sich auch mit Le Terrier aus.
 
 ## Schaltflächen der Konfiguration
 
@@ -102,7 +140,9 @@ neuer).
   Variablen der Szene können darin verwendet werden.
 - **Einen Ton oder ein Radio abspielen** — die Kennung eines auf dem Hasen
   gespeicherten Tons oder die `http://`-Adresse einer MP3-Datei oder eines
-  Webradios.
+  Webradios (ohne Leerzeichen, „&“ oder „#“: Der Hase erhält sie unverändert).
+  Unter OpenKarotz wird eine `https://`-Adresse abgelehnt: Sein Player liest nur
+  `http://`. LapinLibre und Terrier OS lesen beides.
 - **Das Radio stoppen**.
 - **Eine Stimmung abspielen** — zufällig oder über ihre Nummer.
 - **Die Uhrzeit ansagen**.
@@ -131,11 +171,15 @@ Sie dafür die Standardaktion „Ein Gerät steuern“.
   Schaltflächen: sprechen (ein kleines Formular öffnet sich), Stimmung,
   Uhrzeit ansagen, schlafen legen. Wenn er schläft, nur eine Schaltfläche:
   aufwecken.
-- **Karotz-Kamera** — das letzte Foto, eine Schaltfläche für ein neues und
-  eine, um die auf dem Hasen gespeicherten Fotos zu löschen.
+- **Karotz-Fotos** — die auf dem Hasen gespeicherten Fotos, einzeln und ganz,
+  das neueste zuerst: Schaltflächen **Vorheriges** und **Nächstes**, **Foto
+  aufnehmen** (sofort angezeigt) und **Fotos löschen**.
 
 Bei mehreren Hasen wählen Sie in den Widget-Einstellungen, welcher angezeigt
 wird.
+
+Die Liste bietet auch die Kamera des Hasen an: Gladys kann sie noch nicht
+filtern, und beide Einträge zeigen denselben Hasen.
 
 ## Grenzen
 
@@ -154,6 +198,10 @@ wird.
   Sie es über seine Webseite. Unter LapinLibre und Terrier OS wird dieser
   Server in `lapinlibre.txt` eingestellt (`SERVER=` oder `TTS_SERVER=`): Ohne
   ihn verweigert der Hase das Sprechen, und die Integration sagt es Ihnen.
+  Antwortet dieser Dienst nicht, sagt die Integration es („Der Hase konnte
+  nicht sprechen“), statt einen Erfolg zu melden.
+- **Die LED gibt Farben nur ungefähr wieder**: Der Hase erhält genau die
+  gewählte Farbe, aber blasse oder orange Töne wirken gesättigt.
 - **Die API des Hasen spricht einfaches HTTP**, welches System er auch hat.
   Unter LapinLibre und Terrier OS geht das Web-Passwort daher lesbar über Ihr
   lokales Netzwerk: WPA3 schützt es im WLAN, nicht auf dem Kabel zwischen
@@ -174,6 +222,10 @@ wird.
   `admin`).
 - **„Der Hase ist beschäftigt“** — ein anderer Befehl, zum Beispiel von Le
   Terrier, nutzte ihn in diesem Moment: Versuchen Sie es erneut.
+- **„Der Hase konnte nicht sprechen“** — sein Sprachdienst, unter Free Rabbits
+  OS online, hat nicht geantwortet. Versuchen Sie es über die Webseite des
+  Hasen: Spricht er dort auch nicht, liegt das Problem beim Hasen oder beim
+  Dienst.
 - **Der Hase erscheint nicht unter Erkennung** — er muss mindestens einmal
   geantwortet haben: Nutzen Sie **Verbindung testen**.
 - **Keine Funktion „Lautstärke“** — Ihre Firmware hat diese Einstellung nicht;

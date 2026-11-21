@@ -2,7 +2,8 @@
 // Dashboard widgets (manifest `widgets`).
 //
 //   - `karotz`: the state of a rabbit and its most used commands;
-//   - `karotz_camera`: the last picture taken, and a button to take one.
+//   - `karotz_camera`: the pictures stored on the rabbit, one at a time, and
+//     buttons to take one or delete them all.
 //
 // Both have one optional setting, `rabbit` (a `"source": "devices"` select):
 // without it the first configured rabbit is shown, which is the right answer
@@ -15,6 +16,7 @@
 import { WIDGET_COLORS } from '@gladysassistant/integration-sdk';
 import * as commands from './commands.js';
 import { FEATURES, rabbitIds } from './devices.js';
+import { listPhotos, parsePhotoKey, photoBase64, photoDate, photoKey } from './photos.js';
 import { firmwareLabel, rabbitName } from './rabbits.js';
 
 export const WIDGET_KEYS = { RABBIT: 'karotz', CAMERA: 'karotz_camera' };
@@ -27,6 +29,8 @@ const ACTIONS = {
   TIME: 'time',
   SNAPSHOT: 'snapshot',
   CLEAR_SNAPSHOTS: 'clear_snapshots',
+  PHOTO_PREVIOUS: 'photo_previous',
+  PHOTO_NEXT: 'photo_next',
 };
 
 const NO_RABBIT = {
@@ -90,7 +94,7 @@ function rabbitContent(ctx, rabbit) {
     items.push({
       label: { en: 'Firmware', fr: 'Firmware', de: 'Firmware', es: 'Firmware' },
       icon: 'cpu',
-      value: firmwareLabel(rabbit.status).slice(0, 40),
+      value: firmwareLabel(rabbit.status, rabbit.versions).slice(0, 40),
       color: WIDGET_COLORS.NEUTRAL,
     });
   }
@@ -150,7 +154,8 @@ function rabbitContent(ctx, rabbit) {
     {
       type: 'button',
       label: { en: 'Mood', fr: 'Humeur', de: 'Stimmung', es: 'Estado de ánimo' },
-      icon: 'smile',
+      // The core renders Tabler's Feather font, which has no `smile`.
+      icon: 'heart',
       style: 'secondary',
       action: { key: ACTIONS.MOOD },
     },
@@ -177,75 +182,162 @@ function rabbitContent(ctx, rabbit) {
   return { ttl_seconds: 60, components };
 }
 
-function cameraContent(ctx, rabbit, language) {
+const unreachable = {
+  type: 'text',
+  variant: 'body',
+  text: {
+    en: 'The rabbit does not answer.',
+    fr: 'Le lapin ne répond pas.',
+    de: 'Der Hase antwortet nicht.',
+    es: 'El conejo no responde.',
+  },
+};
+
+const takePicture = {
+  type: 'button',
+  label: {
+    en: 'Take a picture',
+    fr: 'Prendre une photo',
+    de: 'Foto aufnehmen',
+    es: 'Tomar una foto',
+  },
+  icon: 'camera',
+  style: 'primary',
+  action: { key: ACTIONS.SNAPSHOT },
+};
+
+/**
+ * The pictures stored on the rabbit, one at a time (the whole picture, not a
+ * crop), with buttons to walk through them, take one, or delete them all.
+ */
+async function photosContent(ctx, rabbit, language) {
   const components = [heading(ctx, rabbit)];
-  const snapshot = rabbit.lastSnapshot;
-  if (snapshot) {
+  if (!rabbit.online) {
+    components.push(unreachable);
+    return { ttl_seconds: 60, components };
+  }
+  let photos;
+  try {
+    photos = await listPhotos(rabbit);
+  } catch (err) {
+    components.push({ type: 'text', variant: 'body', text: commands.describeError(err) });
+    return { ttl_seconds: 60, components };
+  }
+  if (photos.length === 0) {
     components.push(
-      {
-        type: 'image',
-        key: snapshot.key,
-        alt: { en: 'Last picture', fr: 'Dernière photo', de: 'Letztes Foto', es: 'Última foto' },
-        fit: 'contain',
-      },
       {
         type: 'text',
-        variant: 'caption',
-        text: snapshot.takenAt.toLocaleString(LOCALES[language] ?? LOCALES.en),
+        variant: 'body',
+        text: {
+          en: 'No picture yet: take the first one.',
+          fr: 'Pas encore de photo : prenez la première.',
+          de: 'Noch kein Foto: Nehmen Sie das erste auf.',
+          es: 'Todavía no hay foto: tome la primera.',
+        },
       },
+      takePicture,
     );
-  } else {
+    return { ttl_seconds: 300, components };
+  }
+  const index = shownIndex(rabbit, photos);
+  const filename = photos[index];
+  const when = photoDate(filename, LOCALES[language] ?? LOCALES.en);
+  const position = `${index + 1}/${photos.length}`;
+  components.push(
+    {
+      type: 'image',
+      key: photoKey(rabbit, filename),
+      alt: { en: 'Picture', fr: 'Photo', de: 'Foto', es: 'Foto' },
+      fit: 'contain',
+    },
+    { type: 'text', variant: 'caption', text: `${position} · ${when}` },
+    takePicture,
+  );
+  if (index > 0) {
     components.push({
-      type: 'text',
-      variant: 'body',
-      text: {
-        en: 'No picture yet: take the first one.',
-        fr: 'Pas encore de photo : prenez la première.',
-        de: 'Noch kein Foto: Nehmen Sie das erste auf.',
-        es: 'Todavía no hay foto: tome la primera.',
-      },
+      type: 'button',
+      label: { en: 'Previous', fr: 'Précédente', de: 'Vorheriges', es: 'Anterior' },
+      icon: 'chevron-left',
+      style: 'secondary',
+      action: { key: ACTIONS.PHOTO_PREVIOUS },
     });
   }
-  if (rabbit.online) {
-    components.push(
-      {
-        type: 'button',
-        label: {
-          en: 'Take a picture',
-          fr: 'Prendre une photo',
-          de: 'Foto aufnehmen',
-          es: 'Tomar una foto',
-        },
-        icon: 'camera',
-        style: 'primary',
-        action: { key: ACTIONS.SNAPSHOT },
-      },
-      {
-        type: 'button',
-        label: {
-          en: 'Delete pictures',
-          fr: 'Effacer les photos',
-          de: 'Fotos löschen',
-          es: 'Borrar las fotos',
-        },
-        icon: 'trash-2',
-        style: 'danger',
-        // Deletes every snapshot stored on the rabbit: ask first.
-        action: { key: ACTIONS.CLEAR_SNAPSHOTS, confirm: true },
-      },
-    );
+  if (index < photos.length - 1) {
+    components.push({
+      type: 'button',
+      label: { en: 'Next', fr: 'Suivante', de: 'Nächstes', es: 'Siguiente' },
+      icon: 'chevron-right',
+      style: 'secondary',
+      action: { key: ACTIONS.PHOTO_NEXT },
+    });
   }
+  components.push({
+    type: 'button',
+    label: {
+      en: 'Delete pictures',
+      fr: 'Effacer les photos',
+      de: 'Fotos löschen',
+      es: 'Borrar las fotos',
+    },
+    icon: 'trash-2',
+    style: 'danger',
+    // Deletes every picture stored on the rabbit: ask first.
+    action: { key: ACTIONS.CLEAR_SNAPSHOTS, confirm: true },
+  });
   return { ttl_seconds: 300, components };
+}
+
+/** The picture the widget shows: the one chosen, else the newest. */
+function shownIndex(rabbit, photos) {
+  const index = photos.indexOf(rabbit.photoShown);
+  return index === -1 ? photos.length - 1 : index;
+}
+
+async function showPhoto(rabbit, step) {
+  const photos = rabbit.photos ?? (await listPhotos(rabbit));
+  if (photos.length === 0) {
+    return;
+  }
+  const index = Math.min(photos.length - 1, Math.max(0, shownIndex(rabbit, photos) + step));
+  rabbit.photoShown = photos[index];
 }
 
 const LOCALES = { en: 'en-GB', fr: 'fr-FR', de: 'de-DE', es: 'es-ES' };
 
 const DONE = { en: 'Done.', fr: "C'est fait.", de: 'Erledigt.', es: 'Hecho.' };
 
+// Waking up plays a sound and recalibrates the ears: about 12 s on a real
+// Karotz, falling asleep about 6 s. The toast must not wait that long: past
+// this delay it answers, and the command ends in the background.
+const QUICK_ANSWER_MS = 2500;
+
+/**
+ * Run a long command, but answer within QUICK_ANSWER_MS. A failure before
+ * that delay is the toast, as usual; a later one is only logged, and the
+ * widgets are refreshed once the command is over, so the card shows the
+ * state the rabbit really reached.
+ */
+async function answerSoon(ctx, work) {
+  let timer;
+  const late = new Promise((resolve) => {
+    timer = setTimeout(resolve, ctx.quickAnswerMs ?? QUICK_ANSWER_MS);
+    timer.unref?.();
+  });
+  const running = work();
+  try {
+    await Promise.race([running, late]);
+  } finally {
+    clearTimeout(timer);
+  }
+  running
+    .catch((err) => ctx.logger.warn(`A widget command ended in error: ${err.message}`))
+    .finally(() => refreshWidgets(ctx.gladys));
+}
+
 async function runAction(ctx, rabbit, actionKey, values) {
   switch (actionKey) {
     case ACTIONS.WAKE:
-      await commands.wake(ctx, rabbit, { silent: false });
+      await answerSoon(ctx, () => commands.wake(ctx, rabbit, { silent: false }));
       return {
         en: 'The rabbit is waking up.',
         fr: 'Le lapin se réveille.',
@@ -253,7 +345,7 @@ async function runAction(ctx, rabbit, actionKey, values) {
         es: 'El conejo se despierta.',
       };
     case ACTIONS.SLEEP:
-      await commands.sleep(ctx, rabbit);
+      await answerSoon(ctx, () => commands.sleep(ctx, rabbit));
       return {
         en: 'Good night, rabbit.',
         fr: 'Bonne nuit, lapin.',
@@ -286,6 +378,13 @@ async function runAction(ctx, rabbit, actionKey, values) {
         de: 'Foto aufgenommen.',
         es: 'Foto tomada.',
       };
+    // Walking through the pictures needs no toast: the card itself changes.
+    case ACTIONS.PHOTO_PREVIOUS:
+      await showPhoto(rabbit, -1);
+      return undefined;
+    case ACTIONS.PHOTO_NEXT:
+      await showPhoto(rabbit, 1);
+      return undefined;
     case ACTIONS.CLEAR_SNAPSHOTS:
       await commands.clearSnapshots(ctx, rabbit);
       return {
@@ -325,16 +424,17 @@ function widget(build) {
 
 export const WIDGETS = {
   [WIDGET_KEYS.RABBIT]: widget(rabbitContent),
-  [WIDGET_KEYS.CAMERA]: widget(cameraContent),
+  [WIDGET_KEYS.CAMERA]: widget(photosContent),
 };
 
 /** Raw base64 of a widget image, by the key the content declared. */
-export function getWidgetImage(ctx, imageKey) {
-  const owner = ctx.rabbits.find((rabbit) => rabbit.lastSnapshot?.key === imageKey);
-  if (!owner) {
+export async function getWidgetImage(ctx, imageKey) {
+  const photo = parsePhotoKey(imageKey);
+  const rabbit = photo && ctx.rabbits.find((candidate) => candidate.id === photo.rabbitId);
+  if (!rabbit) {
     throw new Error(`Unknown widget image: ${imageKey}`);
   }
-  return owner.lastSnapshot.base64;
+  return photoBase64(rabbit, photo.filename);
 }
 
 /** "Re-pull me now": rate-limited core-side, dropped while disconnected. */

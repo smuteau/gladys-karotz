@@ -48,12 +48,28 @@ a change whose `Sec-Fetch-Site`, `Origin` or `Referer` names another site;
 `rabbitFetch` sends none of them: never add them.
 
 **Every request to a rabbit goes through `rabbitFetch`** (`src/karotz/http.js`),
-never the global `fetch`. OpenKarotz's web server ends its header lines with a
-bare LF: Node's strict parser (and so `fetch`) rejects every answer with
-`HPE_CR_EXPECTED` / `HPE_INVALID_HEADER_TOKEN`, and the rabbit looks offline
-while curl and a browser reach it. `rabbitFetch` is `node:http` with
-`insecureHTTPParser`, kept to the rabbits: GET, plain HTTP, no redirect, a
-bounded answer.
+never the global `fetch` nor `node:http`. OpenKarotz's CGI scripts write their
+own headers and break HTTP twice: header lines end with a bare LF (Node's strict
+parser rejects every answer, the rabbit looks offline), and `snapshot` with its
+shutter sound or while asleep prints `dbus-send` output between the status line
+and the headers (no parser of Node accepts it). `rabbitFetch` is a raw HTTP/1.0
+client: status from the status line, body after the first empty line, nothing
+in between read. Kept to the rabbits: GET, plain HTTP, no redirect, a bounded
+answer.
+
+**Speech on Free Rabbits OS** comes from an online service, and a failed
+synthesis is cached: the client treats `"played":"0"` (not muted) and a bare
+`{"return":"1"}` as `SPEECH_FAILED`, and asks a silent cached sentence again
+with `nocache=1`.
+
+**Query strings are built by hand** (`queryString` in the client): values are
+encoded as a browser does (`%20`, never `+`), because the bash scripts decode
+`%XX` only, and the `url` of `sound` travels raw (`RawValue`): that script
+decodes nothing, and a percent-encoded URL is silently never fetched.
+
+**What the rabbit cannot report** — ear positions (OpenKarotz needs both ears
+in every `ears` request), the LED to restore after "off" — is kept in
+`/data/karotz-memory.json` (`src/memory.js`), written only on change.
 
 ## Architecture
 
@@ -61,7 +77,9 @@ bounded answer.
 index.js                          SDK wiring only: createApp(gladys).register(), then connect()
 src/app.js                        ctx (config, rabbits), reading loop, handler registration
 src/karotz/client.js              OpenKarotz HTTP client: tolerant parsing, KarotzError kinds
-src/karotz/http.js                rabbitFetch: node:http with the lenient parser OpenKarotz needs
+src/karotz/http.js                rabbitFetch: a raw HTTP/1.0 client OpenKarotz's broken headers need
+src/memory.js                     ears and last LED per rabbit, kept in /data across restarts
+src/photos.js                     stored pictures for the photos widget: list, keys, one fetch at a time
 src/rabbits.js                    one rabbit: parseStatus, readRabbit -> detected changes
 src/devices.js                    devices, features (FEATURES keys) and states
 src/commands.js                   every operation on a rabbit, shared by all surfaces
@@ -145,6 +163,9 @@ test/                             node --test: SDK fake Gladys + test/helpers/fa
   rabbit accepted. Never send it from the network search (an address that
   answers 401 is only reported), never put it in a log line, an error message,
   a URL or a widget.
+- **Widget icons are those of Gladys' icon font** (`server/config/icons.json`
+  in the Gladys repository), not any Feather name: an unknown one renders
+  nothing (`smile` did). `rabbit`, `heart`, `camera`, `image` exist.
 - **Configuration buttons: green or red.** The Configuration screen shows a
   resolved message as a success and a thrown error as a failure. A handler of
   `src/actions.js` therefore resolves only when the operation worked, and

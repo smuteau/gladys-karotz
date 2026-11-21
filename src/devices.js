@@ -27,6 +27,9 @@ export const FEATURES = {
   LED_PULSE: 'led-pulse',
   EAR_LEFT: 'ear-left',
   EAR_RIGHT: 'ear-right',
+  EARS_RANDOM: 'ears-random',
+  EARS_RESET: 'ears-reset',
+  NOTIFICATION: 'play-notification',
   VOLUME: 'volume',
   STORAGE_USED: 'storage-used',
   USB_USED: 'usb-used',
@@ -79,7 +82,7 @@ export function buildDevices(gladys, rabbits, config) {
   for (const rabbit of known) {
     const name = rabbitName(rabbit, rabbits.length);
     const ids = rabbitIds(gladys, rabbit);
-    const { SWITCH, LIGHT, DATA, COUNTER_SENSOR } = DEVICE_FEATURE_CATEGORIES;
+    const { SWITCH, LIGHT, DATA, COUNTER_SENSOR, BUTTON, MUSIC } = DEVICE_FEATURE_CATEGORIES;
     const features = [
       command('Awake', ids.feature(FEATURES.AWAKE), SWITCH, DEVICE_FEATURE_TYPES.SWITCH.BINARY),
       command('LED', ids.feature(FEATURES.LED), LIGHT, DEVICE_FEATURE_TYPES.LIGHT.BINARY),
@@ -116,6 +119,32 @@ export function buildDevices(gladys, rabbits, config) {
         SWITCH,
         DEVICE_FEATURE_TYPES.SWITCH.DIMMER,
         { min: EAR_MIN, max: EAR_MAX, has_feedback: false },
+      ),
+      // Push buttons (a "Push" button in the device widget). The reset
+      // recalibrates the ears to 0: a known start after a restart.
+      command(
+        'Ears at random',
+        ids.feature(FEATURES.EARS_RANDOM),
+        BUTTON,
+        DEVICE_FEATURE_TYPES.BUTTON.PUSH,
+        { has_feedback: false },
+      ),
+      command(
+        'Ears reset',
+        ids.feature(FEATURES.EARS_RESET),
+        BUTTON,
+        DEVICE_FEATURE_TYPES.BUTTON.PUSH,
+        { has_feedback: false },
+      ),
+      // Gladys' "play a notification" scene action: the core synthesizes the
+      // sentence with its voice and sends the URL of the clip (see
+      // commands.playNotification). Defined as Gladys' own speakers define it.
+      command(
+        'Play notification',
+        ids.feature(FEATURES.NOTIFICATION),
+        MUSIC,
+        DEVICE_FEATURE_TYPES.MUSIC.PLAY_NOTIFICATION,
+        { min: 1, max: 1, has_feedback: false },
       ),
     ];
     if (rabbit.hasVolume) {
@@ -161,7 +190,7 @@ export function buildDevices(gladys, rabbits, config) {
       params: [
         { name: 'HOST', value: rabbit.host },
         ...(rabbit.status?.version
-          ? [{ name: 'FIRMWARE_VERSION', value: firmwareLabel(rabbit.status) }]
+          ? [{ name: 'FIRMWARE_VERSION', value: firmwareLabel(rabbit.status, rabbit.versions) }]
           : []),
       ],
       features,

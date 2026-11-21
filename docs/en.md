@@ -65,16 +65,53 @@ The other settings:
 Each rabbit becomes a device, recognized by its MAC address: it keeps its
 history, scenes and dashboards when its IP address changes.
 
-| Feature                  | What you can do                          |
-| ------------------------ | ---------------------------------------- |
-| Awake                    | wake the rabbit up or put it to sleep    |
-| LED, LED color           | turn on, turn off, pick the color        |
-| LED pulse                | steady or pulsing light                  |
-| Left / right ear         | position from 0 to 16                    |
-| Volume                   | 0 to 100 %, when your firmware offers it |
-| Storage, USB key         | percentage used                          |
-| RFID tags                | number of recorded tags                  |
-| Camera (separate device) | a fresh picture on demand                |
+| Feature                  | What you can do                                     |
+| ------------------------ | --------------------------------------------------- |
+| Awake                    | wake the rabbit up or put it to sleep               |
+| LED, LED color           | turn on, turn off, pick the color                   |
+| LED pulse                | steady or pulsing light                             |
+| Left / right ear         | position from 0 to 16                               |
+| Ears at random / reset   | buttons: ears at random, or back to 0               |
+| Play notification        | the voice of Gladys: see "Sounds, radios and voice" |
+| Volume                   | 0 to 100 %, when your firmware offers it            |
+| Storage, USB key         | percentage used                                     |
+| RFID tags                | number of recorded tags                             |
+| Camera (separate device) | a fresh picture on demand                           |
+
+The rabbit does not tell where its ears are: the integration shows the last
+position it asked for, and remembers it even after a restart. The very first
+time, the ear whose position is unknown goes back to 0 when you move the other
+one: the **Ears reset** button puts both back to 0, a known starting point.
+
+The Gladys **Camera** widget shows the last picture taken by the integration,
+for one hour: the Karotz has no live video.
+
+## Sounds, radios and voice
+
+The rabbit plays sounds, radios and the voice of Gladys from a web address. What
+it can play depends on its system:
+
+| What you play                                         | OpenKarotz (Free Rabbits OS)                                | LapinLibre, Terrier OS             |
+| ----------------------------------------------------- | ----------------------------------------------------------- | ---------------------------------- |
+| Sound or radio over `http://`                         | yes                                                         | yes                                |
+| Sound or radio over `https://`                        | no: its player reads no HTTPS, the address is refused       | yes                                |
+| Voice of Gladys with a voice integration of the store | yes: Gladys serves the sound over `http://` on your network | yes                                |
+| Voice of Gladys Plus                                  | no: it comes over `https://`                                | yes                                |
+| Voice of the rabbit itself ("Speak")                  | the online service of Free Rabbits OS                       | the server set in `lapinlibre.txt` |
+
+**Make the rabbit speak with the voice of Gladys.** The rabbit has a "Play
+notification" feature: in a scene, the Gladys action **Talk on a speaker** makes
+it speak with the voice chosen in Gladys (Artificial intelligence page, Voice
+card). On OpenKarotz, install a voice integration of the store: offline (eSpeak
+NG, Piper) or online (Microsoft Edge TTS, Google Translate, ElevenLabs…). Gladys
+Plus only works on LapinLibre and Terrier OS. Gladys must run on the host
+network (the standard install), so the rabbit can reach the address of the
+sound.
+
+**Internet.** The integration talks to the rabbit over your network, with no
+cloud. The rabbit itself needs the Internet for radios, for its own voice (the
+online service of Free Rabbits OS) and for the online voices of Gladys; on
+Terrier OS it also talks to Le Terrier.
 
 ## Configuration buttons
 
@@ -95,7 +132,9 @@ The integration adds its own cards to the scene editor (Gladys 5.1 or later).
 - **Make the rabbit speak** — a sentence, with the voice of your choice. Scene
   variables can be used in it.
 - **Play a sound or a radio** — the identifier of a sound stored on the rabbit,
-  or the `http://` address of an MP3 or a web radio.
+  or the `http://` address of an MP3 or a web radio (no space, "&" or "#": the
+  rabbit receives it as is). On OpenKarotz an `https://` address is refused: its
+  player only reads `http://`. LapinLibre and Terrier OS read both.
 - **Stop the radio**.
 - **Play a mood** — a random one, or by its number.
 - **Tell the time**.
@@ -121,10 +160,14 @@ the standard "Control a device" action.
 - **Karotz** — state of the rabbit, storage, tag count, and four buttons:
   speak (a small form opens), mood, tell the time, sleep. When it sleeps, a
   single button: wake it up.
-- **Karotz camera** — the last picture, a button to take a new one and a button
-  to delete the pictures stored on the rabbit.
+- **Karotz photos** — the pictures stored on the rabbit, one by one and whole,
+  newest first: **Previous** and **Next** buttons, **Take a picture** (shown at
+  once) and **Delete pictures**.
 
 With several rabbits, pick which one to show in the widget settings.
+
+The list also offers the camera of the rabbit: Gladys cannot filter it yet, and
+both choices show the same rabbit.
 
 ## Limits
 
@@ -143,6 +186,10 @@ With several rabbits, pick which one to show in the widget settings.
   LapinLibre and Terrier OS, that server is set in `lapinlibre.txt` (`SERVER=`
   or `TTS_SERVER=`): without it, the rabbit refuses to speak and the
   integration tells you so.
+  When that service does not answer, the integration says so ("The rabbit could
+  not speak") instead of reporting success.
+- **The LED renders colors roughly**: the rabbit receives exactly the chosen
+  color, but pale or orange shades come out saturated.
 - **The API of the rabbit speaks plain HTTP**, whatever its system. On
   LapinLibre and Terrier OS, the web password therefore travels readable on
   your local network: WPA3 protects it on the Wi-Fi, not on the cable between
@@ -161,6 +208,9 @@ With several rabbits, pick which one to show in the widget settings.
   Check it by opening the web page of the rabbit (user `admin`).
 - **"The rabbit is busy"** — another command, from Le Terrier for instance, was
   using it at that instant: try again.
+- **"The rabbit could not speak"** — its speech service, online on Free Rabbits
+  OS, did not answer. Try from the web page of the rabbit: if it does not speak
+  there either, the problem lies with the rabbit or the service.
 - **The rabbit does not show up in Discovery** — it must have answered at least
   once: use **Test the connection**.
 - **No Volume feature** — your firmware does not have that setting; this is

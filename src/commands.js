@@ -7,10 +7,10 @@
 // throws a KarotzError when the rabbit refuses or does not answer.
 // -----------------------------------------------------------------------------
 
-import { createHash } from 'node:crypto';
 import { ERROR_KINDS, KarotzError } from './karotz/client.js';
 import { cameraIds } from './devices.js';
-import { LED_OFF } from './rabbits.js';
+import { forgetPhotos, isPhotoName, rememberPhoto } from './photos.js';
+import { LED_OFF, SYSTEMS } from './rabbits.js';
 
 // Gladys refuses a camera image over 150 KB, a widget image over 300 KB.
 const CAMERA_IMAGE_MAX_BYTES = 150 * 1024;
@@ -36,7 +36,7 @@ export async function sleep(ctx, rabbit) {
 export async function setLed(ctx, rabbit, led = {}) {
   const current = rabbit.status;
   await rabbit.client.leds({
-    color: led.color ?? current?.ledColor ?? rabbit.lastLedColor,
+    color: led.color ?? current?.ledColor ?? rabbit.lastLed.color,
     pulse: led.pulse ?? current?.ledPulse ?? false,
     speed: led.speed,
     color2: led.color2,
@@ -46,8 +46,8 @@ export async function setLed(ctx, rabbit, led = {}) {
 
 export async function switchLed(ctx, rabbit, on) {
   if (on) {
-    // Back to the last color that was not "off".
-    await setLed(ctx, rabbit, { color: rabbit.lastLedColor });
+    // Back to the last LED that was not "off": its color, and its mode.
+    await setLed(ctx, rabbit, { color: rabbit.lastLed.color, pulse: rabbit.lastLed.pulse });
   } else {
     await setLed(ctx, rabbit, { color: LED_OFF, pulse: false });
   }
@@ -99,9 +99,37 @@ export function playSound(ctx, rabbit, sound) {
   if (!value) {
     throw new KarotzError(ERROR_KINDS.REFUSED, 'No sound to play');
   }
-  return /^https?:\/\//i.test(value)
-    ? rabbit.client.playUrl(value)
-    : rabbit.client.playSound(value);
+  if (!/^https?:\/\//i.test(value)) {
+    return rabbit.client.playSound(value);
+  }
+  // OpenKarotz's player (mplayer, 2011) reads no HTTPS: it answers "ok" and
+  // plays nothing, checked on a real Karotz with the same stream in http and
+  // https. LapinLibre reads both.
+  if (/^https:/i.test(value) && rabbit.status?.system !== SYSTEMS.LAPINLIBRE) {
+    throw new KarotzError(ERROR_KINDS.NO_HTTPS, `${rabbit.host} cannot play an https:// URL`);
+  }
+  return rabbit.client.playUrl(value);
+}
+
+/**
+ * Gladys' "play a notification": the core synthesizes the sentence with the
+ * voice chosen in Gladys and sends the URL of the clip. A voice integration
+ * serves it from Gladys itself, in plain http on the LAN, which every rabbit
+ * plays; Gladys Plus gives an https:// URL, which OpenKarotz cannot play.
+ */
+export async function playNotification(ctx, rabbit, url) {
+  const value = typeof url === 'string' ? url.trim() : '';
+  if (!/^https?:\/\//i.test(value)) {
+    throw new KarotzError(ERROR_KINDS.REFUSED, 'The notification is not the URL of a sound');
+  }
+  try {
+    return await playSound(ctx, rabbit, value);
+  } catch (err) {
+    if (err.kind === ERROR_KINDS.NO_HTTPS) {
+      throw new KarotzError(ERROR_KINDS.NO_HTTPS_VOICE, err.message);
+    }
+    throw err;
+  }
 }
 
 export const stopSound = (ctx, rabbit) => rabbit.client.soundControl('quit');
@@ -110,9 +138,10 @@ export const sayTime = (ctx, rabbit) => rabbit.client.clock();
 export const reboot = (ctx, rabbit) => rabbit.client.reboot();
 
 /**
- * Take a picture and bring it back. The rabbit keeps every snapshot on its
- * small storage and has no "delete one" endpoint: see clearSnapshots.
- * @returns {Promise<{ filename: string, key: string, base64: string, bytes: number }>}
+ * Take a picture and bring it back. The rabbit stores it: OpenKarotz keeps
+ * every snapshot on its small storage and has no "delete one" endpoint (see
+ * clearSnapshots), LapinLibre keeps the ten newest in RAM.
+ * @returns {Promise<{ filename: string, base64: string, bytes: number }>}
  */
 export async function takeSnapshot(ctx, rabbit, { silent = true } = {}) {
   const filename = await rabbit.client.snapshot({ silent });
@@ -121,24 +150,18 @@ export async function takeSnapshot(ctx, rabbit, { silent = true } = {}) {
     throw new KarotzError(ERROR_KINDS.REFUSED, 'The rabbit did not return a JPEG picture');
   }
   const base64 = jpeg.toString('base64');
-  // The core caches a widget image by key: new bytes, new key.
-  const hash = createHash('sha1').update(jpeg).digest('hex').slice(0, 12);
-  const snapshot = {
-    filename,
-    key: `snap-${rabbit.id}-${hash}`.toLowerCase().slice(0, 64),
-    base64,
-    bytes: jpeg.length,
-    takenAt: new Date(),
-  };
-  if (jpeg.length <= WIDGET_IMAGE_MAX_BYTES) {
-    rabbit.lastSnapshot = snapshot;
+  if (isPhotoName(filename) && jpeg.length <= WIDGET_IMAGE_MAX_BYTES) {
+    // The photos widget shows it without asking the rabbit again.
+    rememberPhoto(rabbit, filename, base64);
   }
+  // The photos widget opens on the newest picture: this one.
+  rabbit.photoShown = null;
   if (ctx.config.camera && jpeg.length <= CAMERA_IMAGE_MAX_BYTES) {
     await ctx.gladys
       .publishCameraImage(cameraIds(ctx.gladys, rabbit).device, `image/jpg;base64,${base64}`)
       .catch((err) => ctx.logger.warn(`publishCameraImage failed: ${err.message}`));
   }
-  return snapshot;
+  return { filename, base64, bytes: jpeg.length };
 }
 
 /** The `image/jpg;base64,...` string Gladys expects from a camera. */
@@ -152,7 +175,7 @@ export async function captureCameraImage(ctx, rabbit) {
 
 export async function clearSnapshots(ctx, rabbit) {
   await rabbit.client.clearSnapshots();
-  rabbit.lastSnapshot = null;
+  forgetPhotos(rabbit);
 }
 
 /**
@@ -162,7 +185,7 @@ export async function clearSnapshots(ctx, rabbit) {
 export async function identify(ctx, rabbit) {
   const before = rabbit.status
     ? { color: rabbit.status.ledColor, pulse: rabbit.status.ledPulse }
-    : { color: rabbit.lastLedColor, pulse: false };
+    : { ...rabbit.lastLed };
   await rabbit.client.leds({ color: IDENTIFY_COLOR, pulse: true, speed: 300 });
   await rabbit.client.earsRandom().catch(() => {});
   await ctx.sleepMs(IDENTIFY_DURATION_MS);
@@ -207,6 +230,27 @@ export function describeError(err) {
         fr: 'Le lapin est occupé : réessayez dans un instant.',
         de: 'Der Hase ist beschäftigt: Versuchen Sie es gleich noch einmal.',
         es: 'El conejo está ocupado: inténtelo de nuevo en un momento.',
+      };
+    case ERROR_KINDS.NO_HTTPS:
+      return {
+        en: 'This rabbit cannot play an https:// address: use its http:// address.',
+        fr: 'Ce lapin ne sait pas lire une adresse https:// : utilisez son adresse http://.',
+        de: 'Dieser Hase kann keine https://-Adresse abspielen: Verwenden Sie die http://-Adresse.',
+        es: 'Este conejo no puede reproducir una dirección https://: use su dirección http://.',
+      };
+    case ERROR_KINDS.NO_HTTPS_VOICE:
+      return {
+        en: 'This rabbit cannot play the voice of Gladys Plus (https://): pick a voice integration in Gladys (Artificial intelligence page, Voice card).',
+        fr: 'Ce lapin ne lit pas la voix de Gladys Plus (https://) : choisissez une intégration de voix dans Gladys (page Intelligence artificielle, carte Voix).',
+        de: 'Dieser Hase kann die Stimme von Gladys Plus (https://) nicht abspielen: Wählen Sie eine Sprachintegration in Gladys (Seite Künstliche Intelligenz, Karte Stimme).',
+        es: 'Este conejo no puede reproducir la voz de Gladys Plus (https://): elija una integración de voz en Gladys (página Inteligencia artificial, tarjeta Voz).',
+      };
+    case ERROR_KINDS.SPEECH_FAILED:
+      return {
+        en: "The rabbit could not speak: its speech service did not answer. It needs the Internet; try from the rabbit's web page.",
+        fr: "Le lapin n'a pas pu parler : son service de synthèse vocale n'a pas répondu. Il a besoin d'Internet ; essayez depuis la page web du lapin.",
+        de: 'Der Hase konnte nicht sprechen: Sein Sprachdienst hat nicht geantwortet. Er braucht Internet; versuchen Sie es über die Webseite des Hasen.',
+        es: 'El conejo no ha podido hablar: su servicio de voz no ha respondido. Necesita Internet; pruebe desde la página web del conejo.',
       };
     case ERROR_KINDS.NO_SPEECH:
       return {

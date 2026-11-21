@@ -12,11 +12,12 @@
 
 import { GladysIntegration, logger } from '@gladysassistant/integration-sdk';
 import { createApp } from './src/app.js';
+import { DEFAULT_MEMORY_FILE } from './src/memory.js';
 
 const gladys = new GladysIntegration();
 
 // Handlers are registered BEFORE connect().
-createApp(gladys).register();
+createApp(gladys, { memoryFile: process.env.KAROTZ_MEMORY_FILE ?? DEFAULT_MEMORY_FILE }).register();
 
 logger.info('Starting the Karotz integration...');
 gladys.connect().catch((err) => {

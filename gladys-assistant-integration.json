@@ -31,10 +31,10 @@
         "es": "Conectar su conejo"
       },
       "description": {
-        "en": "Your Karotz must run OpenKarotz (on the original firmware or on Free Rabbits OS), LapinLibre or Terrier OS, and be on the same network as Gladys. Terrier OS is the safest choice: WPA3 Wi-Fi, SSH by key only and a password on its web page. A Karotz does not announce itself on the network: enter its address below, or use the \"Search my network\" button. This integration needs no account and no cloud: it talks to the rabbit over your network.",
-        "fr": "Votre Karotz doit faire tourner OpenKarotz (sur le firmware d'origine ou sur Free Rabbits OS), LapinLibre ou Terrier OS, et être sur le même réseau que Gladys. Terrier OS est le choix le plus sûr : Wi-Fi WPA3, SSH par clé seulement et un mot de passe sur sa page web. Un Karotz ne s'annonce pas sur le réseau : saisissez son adresse ci-dessous, ou utilisez le bouton « Chercher sur mon réseau ». Cette intégration n'a besoin ni de compte ni de cloud : elle parle au lapin sur votre réseau.",
-        "de": "Auf Ihrem Karotz muss OpenKarotz (auf der Original-Firmware oder auf Free Rabbits OS), LapinLibre oder Terrier OS laufen, und er muss im selben Netzwerk wie Gladys sein. Terrier OS ist die sicherste Wahl: WLAN mit WPA3, SSH nur mit Schlüssel und ein Passwort auf seiner Webseite. Ein Karotz meldet sich nicht im Netzwerk an: Tragen Sie seine Adresse unten ein oder nutzen Sie die Schaltfläche „Mein Netzwerk durchsuchen“. Diese Integration braucht weder Konto noch Cloud: Sie spricht über Ihr Netzwerk mit dem Hasen.",
-        "es": "Su Karotz debe ejecutar OpenKarotz (sobre el firmware original o sobre Free Rabbits OS), LapinLibre o Terrier OS, y estar en la misma red que Gladys. Terrier OS es la opción más segura: wifi WPA3, SSH solo con clave y una contraseña en su página web. Un Karotz no se anuncia en la red: introduzca su dirección más abajo o use el botón «Buscar en mi red». Esta integración no necesita ni cuenta ni nube: habla con el conejo a través de su red."
+        "en": "Your Karotz must run OpenKarotz (on the original firmware or on Free Rabbits OS), LapinLibre or Terrier OS, and be on the same network as Gladys. Terrier OS is the safest choice: WPA3 Wi-Fi, SSH by key only and a password on its web page. A Karotz does not announce itself on the network: enter its address below, or use the \"Search my network\" button. This integration needs no account and no cloud: it talks to the rabbit over your network. Sounds and radios: http:// only on OpenKarotz, https:// too on LapinLibre and Terrier OS.",
+        "fr": "Votre Karotz doit faire tourner OpenKarotz (sur le firmware d'origine ou sur Free Rabbits OS), LapinLibre ou Terrier OS, et être sur le même réseau que Gladys. Terrier OS est le choix le plus sûr : Wi-Fi WPA3, SSH par clé seulement et un mot de passe sur sa page web. Un Karotz ne s'annonce pas sur le réseau : saisissez son adresse ci-dessous, ou utilisez le bouton « Chercher sur mon réseau ». Cette intégration n'a besoin ni de compte ni de cloud : elle parle au lapin sur votre réseau. Sons et radios : http:// seulement sous OpenKarotz, https:// aussi sous LapinLibre et Terrier OS.",
+        "de": "Auf Ihrem Karotz muss OpenKarotz (auf der Original-Firmware oder auf Free Rabbits OS), LapinLibre oder Terrier OS laufen, und er muss im selben Netzwerk wie Gladys sein. Terrier OS ist die sicherste Wahl: WLAN mit WPA3, SSH nur mit Schlüssel und ein Passwort auf seiner Webseite. Ein Karotz meldet sich nicht im Netzwerk an: Tragen Sie seine Adresse unten ein oder nutzen Sie die Schaltfläche „Mein Netzwerk durchsuchen“. Diese Integration braucht weder Konto noch Cloud: Sie spricht über Ihr Netzwerk mit dem Hasen. Töne und Radios: unter OpenKarotz nur http://, unter LapinLibre und Terrier OS auch https://.",
+        "es": "Su Karotz debe ejecutar OpenKarotz (sobre el firmware original o sobre Free Rabbits OS), LapinLibre o Terrier OS, y estar en la misma red que Gladys. Terrier OS es la opción más segura: wifi WPA3, SSH solo con clave y una contraseña en su página web. Un Karotz no se anuncia en la red: introduzca su dirección más abajo o use el botón «Buscar en mi red». Esta integración no necesita ni cuenta ni nube: habla con el conejo a través de su red. Sonidos y radios: solo http:// con OpenKarotz, también https:// con LapinLibre y Terrier OS."
       },
       "links": [
         {
@@ -963,7 +963,7 @@
         "de": "Zustand eines Hasen, mit Schaltflächen zum Wecken, Sprechen, für Stimmung und Uhrzeit.",
         "es": "Estado de un conejo, con botones para despertarlo, hacerlo hablar, un estado de ánimo o la hora."
       },
-      "icon": "smile",
+      "icon": "rabbit",
       "settings": [
         {
           "key": "rabbit",
@@ -983,18 +983,18 @@
     {
       "key": "karotz_camera",
       "label": {
-        "en": "Karotz camera",
-        "fr": "Caméra du Karotz",
-        "de": "Karotz-Kamera",
-        "es": "Cámara del Karotz"
+        "en": "Karotz photos",
+        "fr": "Photos du Karotz",
+        "de": "Karotz-Fotos",
+        "es": "Fotos del Karotz"
       },
       "description": {
-        "en": "Last picture taken by a rabbit, and a button to take a new one.",
-        "fr": "Dernière photo prise par un lapin, et un bouton pour en prendre une nouvelle.",
-        "de": "Letztes Foto eines Hasen und eine Schaltfläche für ein neues.",
-        "es": "Última foto tomada por un conejo, y un botón para tomar una nueva."
+        "en": "The pictures stored on a rabbit, one by one, with buttons to take or delete them.",
+        "fr": "Les photos stockées sur un lapin, une à une, avec des boutons pour en prendre ou les effacer.",
+        "de": "Die auf dem Hasen gespeicherten Fotos, einzeln, mit Knöpfen zum Aufnehmen und Löschen.",
+        "es": "Las fotos guardadas en un conejo, una a una, con botones para tomarlas o borrarlas."
       },
-      "icon": "camera",
+      "icon": "image",
       "settings": [
         {
           "key": "rabbit",
