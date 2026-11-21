@@ -166,25 +166,112 @@ test('a failed synthesis says so, even for a sentence the rabbit cached', async 
   const speak = () =>
     gladys.fake.widgetAction('karotz', 'speak', {}, { settings: {}, values: { text: 'Bonjour' } });
 
-  assert.match(JSON.stringify(await speak()), /service de synthèse vocale n'a pas répondu/);
+  const first = JSON.stringify(await speak());
+  assert.match(first, /sa propre synthèse vocale n'a pas répondu/);
+  // The way to the voice of Gladys, not to the web page of the rabbit.
+  assert.match(first, /Parler sur une enceinte/);
+  assert.doesNotMatch(first, /page web|Internet/);
   // The second time Free Rabbits OS answers from its cache, in silence.
-  assert.match(JSON.stringify(await speak()), /service de synthèse vocale n'a pas répondu/);
+  assert.match(JSON.stringify(await speak()), /sa propre synthèse vocale n'a pas répondu/);
   assert.deepEqual(
     karotz.callsTo('tts').map((call) => call.params.nocache),
     ['0', '0', '1'],
   );
 });
 
-test('waking up from the widget answers before the rabbit is done', async () => {
+test('waking up from the widget: the card says so until the rabbit is done', async () => {
   const karotz = createFakeKarotz({ sleeping: true, delays: { wakeup: 200 } });
   const { gladys, ctx } = await createTestApp({ karotz, options: { quickAnswerMs: 20 } });
+  const card = async () => {
+    const ack = await gladys.fake.widgetGet('karotz', { settings: {}, language: 'fr' });
+    assert.deepEqual(validateWidgetContent(ack.data.content), []);
+    return ack.data.content;
+  };
+  const buttons = (content) =>
+    content.components.filter((c) => c.type === 'button').map((c) => c.action.key);
+
   const started = Date.now();
   const ack = await gladys.fake.widgetAction('karotz', 'wake', {}, { settings: {}, values: {} });
-  assert.match(JSON.stringify(ack), /se réveille/);
-  assert.ok(Date.now() - started < 150, 'the toast does not wait for the rabbit');
-  // The command still ends, and the card follows.
+  assert.equal(ack.success, true);
+  assert.ok(Date.now() - started < 150, 'the action does not wait for the rabbit');
+  // No toast, which would vanish first: the card carries the message.
+  assert.doesNotMatch(JSON.stringify(ack.data ?? {}), /réveille/);
+  const waking = await card();
+  assert.match(JSON.stringify(waking), /Le lapin se réveille/);
+  assert.deepEqual(buttons(waking), [], 'no button while the rabbit wakes up');
+  assert.equal(waking.ttl_seconds, 10, 'asked again soon, even without a nudge');
+
+  // The reading loop leaves a waking rabbit alone.
+  const reads = karotz.callsTo('status').length;
+  await ctx.readAll({ events: true });
+  assert.equal(karotz.callsTo('status').length, reads);
+
   await new Promise((resolve) => setTimeout(resolve, 300));
   assert.equal(ctx.rabbits[0].status.sleeping, false);
+  assert.equal(buttons(await card())[0], 'sleep', 'Sleep comes first once awake');
+});
+
+test('falling asleep from the widget: "Good night" stays until Wake up is there', async () => {
+  const karotz = createFakeKarotz({ delays: { sleep: 200 } });
+  const { gladys } = await createTestApp({ karotz, options: { quickAnswerMs: 20 } });
+  const card = async () =>
+    (await gladys.fake.widgetGet('karotz', { settings: {}, language: 'fr' })).data.content;
+  await gladys.fake.widgetAction('karotz', 'sleep', {}, { settings: {}, values: {} });
+  assert.match(JSON.stringify(await card()), /Bonne nuit, lapin/);
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  const asleep = await card();
+  assert.doesNotMatch(JSON.stringify(asleep), /Bonne nuit/);
+  assert.equal(asleep.components.find((c) => c.type === 'button').action.key, 'wake');
+});
+
+test('the LED pulse switch keeps the mode while the LED is off', async () => {
+  const karotz = createFakeKarotz({ ledColor: '21FF37', ledPulse: '1' });
+  const { gladys } = await createTestApp({ karotz });
+  const set = (key, value) =>
+    gladys.fake.setValue({ external_id: RABBIT }, { external_id: `${RABBIT}:${key}` }, value);
+
+  await set('led', 0);
+  assert.equal(stateOf(gladys, 'led'), 0);
+  assert.equal(stateOf(gladys, 'led-pulse'), 1, 'the switch does not drop to off with the LED');
+
+  // Changed while off: remembered, and the LED stays off.
+  const leds = karotz.callsTo('leds').length;
+  await set('led-pulse', 0);
+  assert.equal(karotz.callsTo('leds').length, leds);
+  assert.equal(karotz.ledColor, '000000');
+  assert.equal(stateOf(gladys, 'led-pulse'), 0);
+  await set('led', 1);
+  assert.deepEqual([karotz.ledColor, karotz.ledPulse], ['21FF37', '0']);
+});
+
+test('the ears go back where they were when the rabbit wakes up', async () => {
+  const { gladys, ctx, karotz } = await createTestApp();
+  const set = (key, value) =>
+    gladys.fake.setValue({ external_id: RABBIT }, { external_id: `${RABBIT}:${key}` }, value);
+  const lastEars = () => karotz.callsTo('ears').at(-1)?.params;
+
+  await set('ear-left', 5);
+  await set('ear-right', 9);
+  await set('awake', 0);
+  const before = karotz.callsTo('ears').length;
+  await set('awake', 1);
+  assert.equal(karotz.callsTo('ears').length, before + 1);
+  assert.deepEqual(lastEars(), { left: '5', right: '9', noreset: '1' });
+
+  // Woken by its own schedule or button: the reading loop puts them back.
+  karotz.sleeping = true;
+  await ctx.readAll({ events: true });
+  karotz.sleeping = false;
+  await ctx.readAll({ events: true });
+  assert.equal(karotz.callsTo('ears').length, before + 2);
+  assert.deepEqual(lastEars(), { left: '5', right: '9', noreset: '1' });
+
+  // Ears at 0 are where waking up leaves them: nothing to send.
+  await set('ears-reset', 1);
+  const afterReset = karotz.callsTo('ears').length;
+  await set('awake', 0);
+  await set('awake', 1);
+  assert.equal(karotz.callsTo('ears').length, afterReset);
 });
 
 test('a command refused by a sleeping rabbit fails the acknowledgement', async () => {
@@ -326,6 +413,13 @@ test('widget actions answer a toast, also when the rabbit refuses', async () => 
   assert.deepEqual(validateWidgetContent(content), []);
   const image = content.components.find((c) => c.type === 'image');
   assert.equal((await gladys.fake.widgetGetImage(image.key)).success, true);
+
+  // The rabbit answers with a sound: no "Done" on top of it.
+  for (const key of ['mood', 'time']) {
+    ack = await act('karotz', key);
+    assert.equal(ack.success, true);
+    assert.doesNotMatch(JSON.stringify(ack.data ?? {}), /fait|Done/);
+  }
 
   await act('karotz', 'sleep');
   ack = await act('karotz', 'mood');

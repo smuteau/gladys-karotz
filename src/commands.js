@@ -19,29 +19,80 @@ const WIDGET_IMAGE_MAX_BYTES = 300 * 1024;
 const IDENTIFY_COLOR = '0000FF';
 const IDENTIFY_DURATION_MS = 5000;
 
-export async function wake(ctx, rabbit, { silent = true } = {}) {
-  await rabbit.client.wakeup({ silent });
-  await ctx.refresh(rabbit);
+/** What a rabbit is busy with while it wakes up or falls asleep. */
+export const TRANSITIONS = { WAKING: 'waking', FALLING_ASLEEP: 'falling_asleep' };
+
+// Waking up takes about 12 s on a real Karotz, falling asleep about 6 s, and
+// the rabbit answers only once it is over. Meanwhile the widget says what is
+// going on, and the reading loop leaves the rabbit alone (see app.js).
+async function inTransition(rabbit, transition, work) {
+  rabbit.transition = transition;
+  try {
+    return await work();
+  } finally {
+    rabbit.transition = null;
+  }
 }
 
-export async function sleep(ctx, rabbit) {
-  await rabbit.client.sleep();
-  await ctx.refresh(rabbit);
+export function wake(ctx, rabbit, { silent = true } = {}) {
+  return inTransition(rabbit, TRANSITIONS.WAKING, async () => {
+    await rabbit.client.wakeup({ silent });
+    await restoreEars(ctx, rabbit);
+    await ctx.refresh(rabbit);
+  });
+}
+
+export function sleep(ctx, rabbit) {
+  return inTransition(rabbit, TRANSITIONS.FALLING_ASLEEP, async () => {
+    await rabbit.client.sleep();
+    await ctx.refresh(rabbit);
+  });
 }
 
 /**
- * Set the LED. Every omitted value keeps what the rabbit currently shows.
+ * Put the ears back where Gladys last placed them. Waking up (and starting)
+ * recalibrates them to 0: without this the rabbit and Gladys disagree, and
+ * the rabbit forgets the position it had before the night. A failure is only
+ * logged: the rabbit is awake, which is what was asked.
+ */
+export async function restoreEars(ctx, rabbit) {
+  const { left, right } = rabbit.ears;
+  if (left === null || right === null || (left === 0 && right === 0)) {
+    return;
+  }
+  await rabbit.client
+    .ears(left, right)
+    .catch((err) => ctx.logger.warn(`${rabbit.host}: ears not put back: ${err.message}`));
+}
+
+/**
+ * Set the LED. Every omitted value keeps what the LED shows, or, when it is
+ * off, what it showed last (`lastLed`).
  * @param {{ color?: string|number, pulse?: boolean, speed?: number, color2?: string|number }} led
  */
 export async function setLed(ctx, rabbit, led = {}) {
   const current = rabbit.status;
+  const lit = current !== null && current.ledColor !== LED_OFF;
   await rabbit.client.leds({
-    color: led.color ?? current?.ledColor ?? rabbit.lastLed.color,
-    pulse: led.pulse ?? current?.ledPulse ?? false,
+    color: led.color ?? (lit ? current.ledColor : rabbit.lastLed.color),
+    pulse: led.pulse ?? (lit ? current.ledPulse : rabbit.lastLed.pulse),
     speed: led.speed,
     color2: led.color2,
   });
   await ctx.refresh(rabbit);
+}
+
+/**
+ * The LED pulse switch. While the LED is off it is a mode, kept for when the
+ * LED comes back on: the switch keeps showing it, and the LED stays off.
+ */
+export async function setLedPulse(ctx, rabbit, pulse) {
+  if (rabbit.status?.ledColor === LED_OFF) {
+    rabbit.lastLed = { ...rabbit.lastLed, pulse };
+    await ctx.publishStates(rabbit);
+    return;
+  }
+  await setLed(ctx, rabbit, { pulse });
 }
 
 export async function switchLed(ctx, rabbit, on) {
@@ -247,10 +298,10 @@ export function describeError(err) {
       };
     case ERROR_KINDS.SPEECH_FAILED:
       return {
-        en: "The rabbit could not speak: its speech service did not answer. It needs the Internet; try from the rabbit's web page.",
-        fr: "Le lapin n'a pas pu parler : son service de synthèse vocale n'a pas répondu. Il a besoin d'Internet ; essayez depuis la page web du lapin.",
-        de: 'Der Hase konnte nicht sprechen: Sein Sprachdienst hat nicht geantwortet. Er braucht Internet; versuchen Sie es über die Webseite des Hasen.',
-        es: 'El conejo no ha podido hablar: su servicio de voz no ha respondido. Necesita Internet; pruebe desde la página web del conejo.',
+        en: 'The rabbit could not speak: its own speech service did not answer. For the voice chosen in Gladys, use the "Talk on a speaker" action.',
+        fr: "Le lapin n'a pas pu parler : sa propre synthèse vocale n'a pas répondu. Pour la voix choisie dans Gladys, utilisez l'action « Parler sur une enceinte ».",
+        de: 'Der Hase konnte nicht sprechen: Seine eigene Sprachausgabe hat nicht geantwortet. Für die in Gladys gewählte Stimme nutzen Sie die Aktion „Auf einem Lautsprecher sprechen“.',
+        es: 'El conejo no ha podido hablar: su propia síntesis de voz no ha respondido. Para la voz elegida en Gladys, use la acción «Hablar en un altavoz».',
       };
     case ERROR_KINDS.NO_SPEECH:
       return {

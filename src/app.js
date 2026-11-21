@@ -115,8 +115,22 @@ export function createApp(gladys, options = {}) {
     let changed = false;
     let identified = false;
     for (const rabbit of ctx.rabbits) {
+      // Waking up or falling asleep on our command, the rabbit is busy with
+      // its script and would miss the read: the command reads it back.
+      if (rabbit.transition) {
+        continue;
+      }
       const changes = await read(rabbit);
       identified ||= changes.identified;
+      // Woken by its schedule or its button, or back after a restart: its
+      // ears went back to 0 (the first read is a baseline, as for events).
+      if (
+        rabbit.online &&
+        !rabbit.status.sleeping &&
+        (changes.sleepChanged || changes.wentOnline)
+      ) {
+        await commands.restoreEars(ctx, rabbit);
+      }
       if (changes.wentOffline) {
         logger.warn(`${rabbit.host} is unreachable: ${rabbit.lastError}`);
       }
@@ -230,7 +244,7 @@ export function createApp(gladys, options = {}) {
       case FEATURES.LED_COLOR:
         return commands.setLed(ctx, rabbit, { color: value });
       case FEATURES.LED_PULSE:
-        return commands.setLed(ctx, rabbit, { pulse: value === 1 });
+        return commands.setLedPulse(ctx, rabbit, value === 1);
       case FEATURES.EAR_LEFT:
         return commands.moveEars(ctx, rabbit, { left: value });
       case FEATURES.EAR_RIGHT:

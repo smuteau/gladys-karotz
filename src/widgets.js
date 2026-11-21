@@ -53,8 +53,41 @@ function heading(ctx, rabbit) {
   return { type: 'text', variant: 'heading', text: rabbitName(rabbit, ctx.rabbits.length) };
 }
 
+// While the rabbit wakes up or falls asleep (6 to 12 s): the card says so
+// until the new state, and its button, are there.
+const TRANSITION_TEXTS = {
+  [commands.TRANSITIONS.WAKING]: {
+    icon: 'sun',
+    state: { en: 'Waking up…', fr: 'Se réveille…', de: 'Wacht auf…', es: 'Despertándose…' },
+    text: {
+      en: 'The rabbit is waking up.',
+      fr: 'Le lapin se réveille.',
+      de: 'Der Hase wacht auf.',
+      es: 'El conejo se despierta.',
+    },
+  },
+  [commands.TRANSITIONS.FALLING_ASLEEP]: {
+    icon: 'moon',
+    state: { en: 'Falling asleep…', fr: "S'endort…", de: 'Schläft ein…', es: 'Durmiéndose…' },
+    text: {
+      en: 'Good night, rabbit.',
+      fr: 'Bonne nuit, lapin.',
+      de: 'Gute Nacht, Hase.',
+      es: 'Buenas noches, conejo.',
+    },
+  },
+};
+
+// The shortest the core allows: the card asks again soon even if the nudge
+// sent at the end of the transition is dropped by the core's rate limit.
+const TRANSITION_TTL_SECONDS = 10;
+
 function stateItem(rabbit) {
   const label = { en: 'State', fr: 'État', de: 'Zustand', es: 'Estado' };
+  const transition = TRANSITION_TEXTS[rabbit.transition];
+  if (transition) {
+    return { label, icon: transition.icon, value: transition.state, color: WIDGET_COLORS.INFO };
+  }
   if (!rabbit.online) {
     return {
       label,
@@ -119,9 +152,18 @@ function rabbitContent(ctx, rabbit) {
     },
     { type: 'status', items },
   ];
+  if (TRANSITION_TEXTS[rabbit.transition]) {
+    components.push({
+      type: 'text',
+      variant: 'body',
+      text: TRANSITION_TEXTS[rabbit.transition].text,
+    });
+    return { ttl_seconds: TRANSITION_TTL_SECONDS, components };
+  }
   if (!rabbit.online) {
     return { ttl_seconds: 60, components };
   }
+  // Sleep and Wake up stay the first button, whatever the state.
   if (rabbit.status.sleeping) {
     components.push({
       type: 'button',
@@ -133,6 +175,13 @@ function rabbitContent(ctx, rabbit) {
     return { ttl_seconds: 60, components };
   }
   components.push(
+    {
+      type: 'button',
+      label: { en: 'Sleep', fr: 'Endormir', de: 'Schlafen legen', es: 'Dormir' },
+      icon: 'moon',
+      style: 'secondary',
+      action: { key: ACTIONS.SLEEP },
+    },
     {
       type: 'button',
       label: { en: 'Speak', fr: 'Faire parler', de: 'Sprechen', es: 'Hablar' },
@@ -170,13 +219,6 @@ function rabbitContent(ctx, rabbit) {
       icon: 'clock',
       style: 'secondary',
       action: { key: ACTIONS.TIME },
-    },
-    {
-      type: 'button',
-      label: { en: 'Sleep', fr: 'Endormir', de: 'Schlafen legen', es: 'Dormir' },
-      icon: 'moon',
-      style: 'secondary',
-      action: { key: ACTIONS.SLEEP },
     },
   );
   return { ttl_seconds: 60, components };
@@ -307,9 +349,11 @@ const LOCALES = { en: 'en-GB', fr: 'fr-FR', de: 'de-DE', es: 'es-ES' };
 const DONE = { en: 'Done.', fr: "C'est fait.", de: 'Erledigt.', es: 'Hecho.' };
 
 // Waking up plays a sound and recalibrates the ears: about 12 s on a real
-// Karotz, falling asleep about 6 s. The toast must not wait that long: past
-// this delay it answers, and the command ends in the background.
-const QUICK_ANSWER_MS = 2500;
+// Karotz, falling asleep about 6 s. The action must not wait that long: past
+// this delay it answers, the core pulls the card again, which says what the
+// rabbit is doing (TRANSITION_TEXTS), and the command ends in the background.
+// A refusal (asleep, wrong password, no answer at all) comes well before.
+const QUICK_ANSWER_MS = 1500;
 
 /**
  * Run a long command, but answer within QUICK_ANSWER_MS. A failure before
@@ -336,22 +380,14 @@ async function answerSoon(ctx, work) {
 
 async function runAction(ctx, rabbit, actionKey, values) {
   switch (actionKey) {
+    // No toast: it would vanish before the rabbit is done, and the card
+    // itself says what is going on until the new button is there.
     case ACTIONS.WAKE:
       await answerSoon(ctx, () => commands.wake(ctx, rabbit, { silent: false }));
-      return {
-        en: 'The rabbit is waking up.',
-        fr: 'Le lapin se réveille.',
-        de: 'Der Hase wacht auf.',
-        es: 'El conejo se despierta.',
-      };
+      return undefined;
     case ACTIONS.SLEEP:
       await answerSoon(ctx, () => commands.sleep(ctx, rabbit));
-      return {
-        en: 'Good night, rabbit.',
-        fr: 'Bonne nuit, lapin.',
-        de: 'Gute Nacht, Hase.',
-        es: 'Buenas noches, conejo.',
-      };
+      return undefined;
     case ACTIONS.SPEAK:
       // An older core drops the form and relays the action without values.
       if (!values?.text) {
@@ -364,12 +400,13 @@ async function runAction(ctx, rabbit, actionKey, values) {
       }
       await commands.speak(ctx, rabbit, values.text);
       return DONE;
+    // The rabbit itself answers: the sound is the confirmation.
     case ACTIONS.MOOD:
       await commands.playMood(ctx, rabbit);
-      return DONE;
+      return undefined;
     case ACTIONS.TIME:
       await commands.sayTime(ctx, rabbit);
-      return DONE;
+      return undefined;
     case ACTIONS.SNAPSHOT:
       await commands.takeSnapshot(ctx, rabbit, { silent: false });
       return {

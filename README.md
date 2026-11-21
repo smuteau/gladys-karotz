@@ -44,9 +44,10 @@ move the ears (position, random, rest), take a picture.
 **Scene triggers** — rabbit unreachable, rabbit back online, rabbit fell asleep
 or woke up, new RFID tag recorded.
 
-**Dashboard widgets** — `Karotz` (state, storage, tags, and buttons: wake up /
-sleep, speak, mood, time) and `Karotz photos` (the pictures stored on the
-rabbit, one at a time: previous, next, take one, delete them all).
+**Dashboard widgets** — `Karotz` (state, storage, tags, and buttons: sleep /
+wake up first, then speak, mood, time; the card says so while the rabbit wakes
+up or falls asleep) and `Karotz photos` (the pictures stored on the rabbit, one
+at a time: previous, next, take one, delete them all).
 
 **Configuration buttons** — test the connection, search the local network for
 rabbits, identify a rabbit (blue pulse and moving ears), restart a rabbit.
@@ -67,7 +68,11 @@ it can read depends on its system:
 The `Play notification` feature receives the URL of the clip Gladys
 synthesized (`music`/`play_notification`, as Gladys' own speakers): any voice
 integration of the store works (eSpeak NG, Piper, Edge TTS, ElevenLabs…), since
-the core serves the clip from its own `http://<LAN IP>:<port>`.
+the core serves the clip from its own `http://<LAN IP>:<port>`. It is reached
+through Gladys' own "Talk on a speaker" scene action. The integration's
+`Make the rabbit speak (its own voice)` action and the widget's Speak button
+use the rabbit's own text-to-speech instead: an integration cannot ask Gladys
+for a clip of its voice today.
 
 The integration only ever talks to the rabbit over the LAN. The rabbit itself
 needs the Internet for radios, its own text-to-speech and online voices; on

@@ -87,7 +87,13 @@ Der Hase verrät nicht, wo seine Ohren stehen: Die Integration zeigt die zuletzt
 angeforderte Position und merkt sie sich auch nach einem Neustart. Beim
 allerersten Mal geht das Ohr mit unbekannter Position auf 0 zurück, wenn Sie das
 andere bewegen: Der Knopf **Ears reset** stellt beide auf 0, ein bekannter
-Ausgangspunkt.
+Ausgangspunkt. Beim Aufwachen stellt der Hase seine Ohren auf 0: Die Integration
+bringt sie sofort an ihre letzte Position zurück, auch wenn er von selbst
+aufwacht oder nach einem Neustart zurückkommt.
+
+Ausgeschaltet behält die LED ihren Modus: Der Schalter **LED-Pulsieren** bleibt,
+wie er ist, und eine Änderung bei ausgeschalteter LED gilt fürs nächste
+Einschalten, ohne sie einzuschalten.
 
 Das **Kamera**-Widget von Gladys zeigt eine Stunde lang das letzte Foto, das die
 Integration aufgenommen hat: Der Karotz hat kein Live-Video.
@@ -105,19 +111,28 @@ Was er abspielen kann, hängt von seinem System ab:
 | Stimme von Gladys Plus                                      | nein: Sie kommt über `https://`                                   | ja                                          |
 | Eigene Stimme des Hasen („Sprechen“)                        | der Online-Dienst von Free Rabbits OS                             | der in `lapinlibre.txt` eingestellte Server |
 
-**Den Hasen mit der Stimme von Gladys sprechen lassen.** Der Hase hat eine
-Funktion „Play notification“: In einer Szene lässt ihn die Gladys-Aktion **Auf
-einem Lautsprecher sprechen** mit der in Gladys gewählten Stimme sprechen (Seite
-Künstliche Intelligenz, Karte Stimme). Unter OpenKarotz installieren Sie eine
-Sprachintegration aus dem Store: offline (eSpeak NG, Piper) oder online
-(Microsoft Edge TTS, Google Übersetzer, ElevenLabs…). Gladys Plus funktioniert
-nur unter LapinLibre und Terrier OS. Gladys muss im Host-Netzwerk laufen (die
-Standardinstallation), damit der Hase die Adresse des Tons erreicht.
+**Zwei Wege, den Hasen sprechen zu lassen.**
+
+- **Mit der Stimme von Gladys**: die Gladys-Aktion **Auf einem Lautsprecher
+  sprechen**, mit dem Hasen als Lautsprecher (seine Funktion „Play
+  notification“). Er spricht mit der in Gladys gewählten Stimme (Seite
+  Künstliche Intelligenz, Karte Stimme). Unter OpenKarotz installieren Sie eine
+  Sprachintegration aus dem Store: offline (eSpeak NG, Piper), alles bleibt in
+  Ihrem Netzwerk, ohne Internet; oder online (Microsoft Edge TTS, Google
+  Übersetzer, ElevenLabs…). Gladys Plus funktioniert nur unter LapinLibre und
+  Terrier OS. Gladys muss im Host-Netzwerk laufen (die Standardinstallation),
+  damit der Hase die Adresse des Tons erreicht.
+- **Mit seiner eigenen Stimme**: die Aktion **Den Hasen sprechen lassen (eigene
+  Stimme)** und die Schaltfläche **Sprechen** des Widgets. Das ist die
+  Sprachausgabe des Hasen, nicht die von Gladys: ein Online-Dienst unter Free
+  Rabbits OS, der auf manchen Hasen nicht mehr antwortet; der in
+  `lapinlibre.txt` eingestellte Server unter LapinLibre und Terrier OS.
 
 **Internet.** Die Integration spricht über Ihr Netzwerk mit dem Hasen, ohne
 Cloud. Der Hase selbst braucht Internet für Radios, für seine eigene Stimme (den
 Online-Dienst von Free Rabbits OS) und für die Online-Stimmen von Gladys; unter
-Terrier OS tauscht er sich auch mit Le Terrier aus.
+Terrier OS tauscht er sich auch mit Le Terrier aus. Mit einer Offline-Stimme von
+Gladys (eSpeak NG, Piper) spricht er ohne Internet.
 
 ## Schaltflächen der Konfiguration
 
@@ -136,8 +151,10 @@ neuer).
 
 **Aktionen**
 
-- **Den Hasen sprechen lassen** — ein Satz, mit der Stimme Ihrer Wahl.
-  Variablen der Szene können darin verwendet werden.
+- **Den Hasen sprechen lassen (eigene Stimme)** — ein Satz, mit der
+  Sprachausgabe des Hasen und einer seiner Stimmen nach Wahl. Variablen der
+  Szene können darin verwendet werden. Für die Stimme von Gladys nehmen Sie die
+  Gladys-Aktion „Auf einem Lautsprecher sprechen“.
 - **Einen Ton oder ein Radio abspielen** — die Kennung eines auf dem Hasen
   gespeicherten Tons oder die `http://`-Adresse einer MP3-Datei oder eines
   Webradios (ohne Leerzeichen, „&“ oder „#“: Der Hase erhält sie unverändert).
@@ -168,9 +185,12 @@ Sie dafür die Standardaktion „Ein Gerät steuern“.
 ## Dashboard-Widgets
 
 - **Karotz** — Zustand des Hasen, Speicher, Anzahl der Tags und vier
-  Schaltflächen: sprechen (ein kleines Formular öffnet sich), Stimmung,
-  Uhrzeit ansagen, schlafen legen. Wenn er schläft, nur eine Schaltfläche:
-  aufwecken.
+  Schaltflächen: schlafen legen, sprechen (mit seiner eigenen Stimme; ein
+  kleines Formular öffnet sich), Stimmung, Uhrzeit ansagen. Wenn er schläft, nur
+  eine Schaltfläche: aufwecken. Der Hase braucht 6 bis 12 Sekunden zum
+  Einschlafen oder Aufwachen: Währenddessen zeigt die Karte es an („Gute Nacht,
+  Hase.“, „Der Hase wacht auf.“), bis die neue Schaltfläche erscheint. Stimmung
+  und Uhrzeit ansagen zeigen keine Meldung: Der Hase antwortet selbst.
 - **Karotz-Fotos** — die auf dem Hasen gespeicherten Fotos, einzeln und ganz,
   das neueste zuerst: Schaltflächen **Vorheriges** und **Nächstes**, **Foto
   aufnehmen** (sofort angezeigt) und **Fotos löschen**.
@@ -193,13 +213,14 @@ filtern, und beide Einträge zeigen denselben Hasen.
   im Arbeitsspeicher und vergisst sie beim Neustart.
 - **Ein schlafender Hase verweigert** LED, Ohren, Töne und Sprache: Wecken Sie
   ihn zuerst auf (in einer Szene mit der Aktion „Ein Gerät steuern“ beginnen).
-- Die Sprachausgabe hängt vom Sprachsynthese-Dienst ab, der in Ihrem Hasen
-  eingestellt ist und Internet benötigt: Spricht der Hase nicht mehr, testen
-  Sie es über seine Webseite. Unter LapinLibre und Terrier OS wird dieser
-  Server in `lapinlibre.txt` eingestellt (`SERVER=` oder `TTS_SERVER=`): Ohne
-  ihn verweigert der Hase das Sprechen, und die Integration sagt es Ihnen.
-  Antwortet dieser Dienst nicht, sagt die Integration es („Der Hase konnte
-  nicht sprechen“), statt einen Erfolg zu melden.
+- **Die eigene Stimme des Hasen** („Den Hasen sprechen lassen“) hängt von seinem
+  Sprachdienst ab: Unter Free Rabbits OS ist er online und antwortet auf manchen
+  Hasen nicht mehr. Unter LapinLibre und Terrier OS wird dieser Server in
+  `lapinlibre.txt` eingestellt (`SERVER=` oder `TTS_SERVER=`): Ohne ihn
+  verweigert der Hase das Sprechen, und die Integration sagt es Ihnen. Antwortet
+  dieser Dienst nicht, sagt die Integration es („Der Hase konnte nicht
+  sprechen“), statt einen Erfolg zu melden. Die Stimme von Gladys („Auf einem
+  Lautsprecher sprechen“) hängt nicht von ihm ab.
 - **Die LED gibt Farben nur ungefähr wieder**: Der Hase erhält genau die
   gewählte Farbe, aber blasse oder orange Töne wirken gesättigt.
 - **Die API des Hasen spricht einfaches HTTP**, welches System er auch hat.
@@ -222,10 +243,10 @@ filtern, und beide Einträge zeigen denselben Hasen.
   `admin`).
 - **„Der Hase ist beschäftigt“** — ein anderer Befehl, zum Beispiel von Le
   Terrier, nutzte ihn in diesem Moment: Versuchen Sie es erneut.
-- **„Der Hase konnte nicht sprechen“** — sein Sprachdienst, unter Free Rabbits
-  OS online, hat nicht geantwortet. Versuchen Sie es über die Webseite des
-  Hasen: Spricht er dort auch nicht, liegt das Problem beim Hasen oder beim
-  Dienst.
+- **„Der Hase konnte nicht sprechen“** — seine eigene Sprachausgabe (unter Free
+  Rabbits OS online) hat nicht geantwortet. Lassen Sie ihn mit der Stimme von
+  Gladys sprechen: die Aktion „Auf einem Lautsprecher sprechen“ und eine
+  Sprachintegration aus dem Store (siehe „Töne, Radios und Stimme“).
 - **Der Hase erscheint nicht unter Erkennung** — er muss mindestens einmal
   geantwortet haben: Nutzen Sie **Verbindung testen**.
 - **Keine Funktion „Lautstärke“** — Ihre Firmware hat diese Einstellung nicht;

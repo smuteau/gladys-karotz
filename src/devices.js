@@ -236,7 +236,11 @@ export function buildStates(gladys, rabbit) {
   const states = [
     state(FEATURES.AWAKE, status.sleeping ? 0 : 1),
     state(FEATURES.LED, ledOn ? 1 : 0),
-    state(FEATURES.LED_PULSE, status.ledPulse ? 1 : 0),
+    // Off, the LED keeps its mode for when it comes back on (setLedPulse).
+    state(
+      FEATURES.LED_PULSE,
+      (status.ledColor === LED_OFF ? rabbit.lastLed.pulse : status.ledPulse) ? 1 : 0,
+    ),
   ];
   if (status.ledColor !== LED_OFF) {
     states.push(state(FEATURES.LED_COLOR, Number.parseInt(status.ledColor, 16)));

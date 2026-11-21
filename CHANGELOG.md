@@ -50,6 +50,14 @@ the notes of the version's GitHub Release.
 
 - The integration is now called Karotz, and its repository `gladys-karotz`:
   it covers OpenKarotz, LapinLibre and Terrier OS.
+- The `Karotz` widget: Sleep and Wake up come first. While the rabbit wakes up
+  or falls asleep (6 to 12 seconds), the card says so until the new button is
+  there, instead of a toast that vanished first. Mood and Tell the time no
+  longer say "Done": the rabbit answers by itself.
+- The `Make the rabbit speak` scene action is now `Make the rabbit speak (its
+own voice)`, and says where to find the voice of Gladys: the "Talk on a
+  speaker" action. When the rabbit's own speech fails, the message points
+  there instead of to the rabbit's web page.
 
 ### Fixed
 
@@ -63,6 +71,13 @@ the notes of the version's GitHub Release.
   "Done" in silence the second time (Free Rabbits OS caches the failure). It is
   now asked again without the cache, and a failure says why.
 - Turning the LED back on restores its mode: a pulsing LED pulses again.
+  While the LED is off, the LED pulse switch keeps showing that mode instead
+  of dropping to off, and changing it only sets up the next time it comes on.
+- Waking up puts the ears back where they were before the night: the rabbit
+  recalibrates them to 0 when it wakes up, by command, by its own schedule or
+  after a restart.
+- The reading loop no longer asks a rabbit that is waking up or falling asleep
+  on a command: busy with its script, it could miss the read.
 - Moving one ear no longer sends the other back to 0 after a restart.
 - A rabbit that misses one read is asked again before it is declared
   unreachable, so a busy rabbit no longer fires the "unreachable" trigger.

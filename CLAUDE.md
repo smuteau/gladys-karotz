@@ -69,7 +69,15 @@ decodes nothing, and a percent-encoded URL is silently never fetched.
 
 **What the rabbit cannot report** — ear positions (OpenKarotz needs both ears
 in every `ears` request), the LED to restore after "off" — is kept in
-`/data/karotz-memory.json` (`src/memory.js`), written only on change.
+`/data/karotz-memory.json` (`src/memory.js`), written only on change. Waking
+up (by command, schedule or restart) recalibrates the ears to 0:
+`restoreEars` puts them back. While the LED is off, its pulse switch shows the
+remembered mode (`lastLed.pulse`).
+
+**Waking up and falling asleep take 6 to 12 s**, and the rabbit answers only
+at the end. `commands.wake` / `sleep` set `rabbit.transition` meanwhile: the
+reading loop skips that rabbit (a read would time out), and the `karotz`
+widget shows the transition with a 10 s TTL instead of buttons.
 
 ## Architecture
 

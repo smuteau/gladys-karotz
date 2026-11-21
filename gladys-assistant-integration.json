@@ -480,16 +480,16 @@
     {
       "key": "speak",
       "label": {
-        "en": "Make the rabbit speak",
-        "fr": "Faire parler le lapin",
-        "de": "Den Hasen sprechen lassen",
-        "es": "Hacer hablar al conejo"
+        "en": "Make the rabbit speak (its own voice)",
+        "fr": "Faire parler le lapin (sa propre voix)",
+        "de": "Den Hasen sprechen lassen (eigene Stimme)",
+        "es": "Hacer hablar al conejo (su propia voz)"
       },
       "description": {
-        "en": "The rabbit says a sentence with its text-to-speech.",
-        "fr": "Le lapin prononce une phrase avec sa synthèse vocale.",
-        "de": "Der Hase spricht einen Satz mit seiner Sprachausgabe.",
-        "es": "El conejo pronuncia una frase con su síntesis de voz."
+        "en": "The rabbit's own text-to-speech. For the voice of Gladys: the \"Talk on a speaker\" action.",
+        "fr": "La synthèse vocale du lapin. Pour la voix de Gladys : l'action « Parler sur une enceinte ».",
+        "de": "Die Sprachausgabe des Hasen. Für die Stimme von Gladys: Aktion „Auf einem Lautsprecher sprechen“.",
+        "es": "La síntesis de voz del conejo. Para la voz de Gladys: la acción «Hablar en un altavoz»."
       },
       "timeout_seconds": 60,
       "fields": [

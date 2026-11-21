@@ -81,8 +81,14 @@ conserva su historial, sus escenas y sus paneles si cambia su dirección IP.
 
 El conejo no dice dónde están sus orejas: la integración muestra la última
 posición pedida y la recuerda incluso tras un reinicio. La primerísima vez, la
-oreja cuya posición se desconoce vuelve a 0 cuando mueve la otra: el botón **Ears
-reset** pone las dos a 0, un punto de partida conocido.
+oreja cuya posición se desconoce vuelve a 0 cuando mueve la otra: el botón
+**Ears reset** pone las dos a 0, un punto de partida conocido. Al despertarse,
+el conejo pone sus orejas a 0: la integración las devuelve enseguida a su última
+posición, también cuando se despierta solo o vuelve tras un reinicio.
+
+Apagado, el LED conserva su modo: el interruptor **Pulsación del LED** no se
+mueve, y cambiarlo con el LED apagado prepara el próximo encendido, sin
+encenderlo.
 
 El widget **Cámara** de Gladys muestra la última foto tomada por la
 integración, durante una hora: el Karotz no tiene vídeo en directo.
@@ -100,19 +106,27 @@ Lo que puede reproducir depende de su sistema:
 | Voz de Gladys Plus                                    | no: llega por `https://`                                 | sí                                          |
 | Voz propia del conejo («Hablar»)                      | el servicio en línea de Free Rabbits OS                  | el servidor configurado en `lapinlibre.txt` |
 
-**Hacer hablar al conejo con la voz de Gladys.** El conejo tiene una función
-«Play notification»: en una escena, la acción de Gladys **Hablar en un altavoz**
-lo hace hablar con la voz elegida en Gladys (página Inteligencia artificial,
-tarjeta Voz). Con OpenKarotz, instale una integración de voz de la tienda: sin
-conexión (eSpeak NG, Piper) o en línea (Microsoft Edge TTS, Google Traductor,
-ElevenLabs…). Gladys Plus solo funciona con LapinLibre y Terrier OS. Gladys debe
-funcionar en la red del host (la instalación estándar) para que el conejo
-alcance la dirección del sonido.
+**Dos formas de hacer hablar al conejo.**
 
-**Internet.** La integración habla con el conejo a través de su red, sin nube. El
-conejo, en cambio, necesita Internet para las radios, para su propia voz (el
+- **Con la voz de Gladys**: la acción de Gladys **Hablar en un altavoz**, con el
+  conejo como altavoz (su función «Play notification»). Habla con la voz elegida
+  en Gladys (página Inteligencia artificial, tarjeta Voz). Con OpenKarotz,
+  instale una integración de voz de la tienda: sin conexión (eSpeak NG, Piper),
+  todo se queda en su red, sin Internet; o en línea (Microsoft Edge TTS, Google
+  Traductor, ElevenLabs…). Gladys Plus solo funciona con LapinLibre y Terrier
+  OS. Gladys debe funcionar en la red del host (la instalación estándar) para
+  que el conejo alcance la dirección del sonido.
+- **Con su propia voz**: la acción **Hacer hablar al conejo (su propia voz)** y
+  el botón **Hablar** del widget. Es la síntesis de voz del conejo, no la de
+  Gladys: un servicio en línea con Free Rabbits OS, que ya no responde en
+  algunos conejos; el servidor configurado en `lapinlibre.txt` con LapinLibre y
+  Terrier OS.
+
+**Internet.** La integración habla con el conejo a través de su red, sin nube.
+El conejo, en cambio, necesita Internet para las radios, para su propia voz (el
 servicio en línea de Free Rabbits OS) y para las voces en línea de Gladys; con
-Terrier OS también se comunica con Le Terrier.
+Terrier OS también se comunica con Le Terrier. Con una voz de Gladys sin
+conexión (eSpeak NG, Piper), habla sin Internet.
 
 ## Botones de la configuración
 
@@ -132,8 +146,10 @@ posterior).
 
 **Acciones**
 
-- **Hacer hablar al conejo** — una frase, con la voz que elija. Puede usar en
-  ella variables de la escena.
+- **Hacer hablar al conejo (su propia voz)** — una frase, con la síntesis de voz
+  del conejo y la voz que elija entre las suyas. Puede usar en ella variables de
+  la escena. Para la voz de Gladys, use la acción de Gladys «Hablar en un
+  altavoz».
 - **Reproducir un sonido o una radio** — el identificador de un sonido
   guardado en el conejo, o la dirección `http://` de un MP3 o de una radio web
   (sin espacios, «&» ni «#»: el conejo la recibe tal cual). Con OpenKarotz, una
@@ -163,8 +179,12 @@ acción estándar «Controlar un dispositivo».
 ## Widgets del panel
 
 - **Karotz** — estado del conejo, almacenamiento, número de etiquetas y cuatro
-  botones: hablar (se abre un pequeño formulario), estado de ánimo, decir la
-  hora, dormir. Cuando duerme, un solo botón: despertarlo.
+  botones: dormir, hablar (con su propia voz; se abre un pequeño formulario),
+  estado de ánimo, decir la hora. Cuando duerme, un solo botón: despertarlo. El
+  conejo tarda de 6 a 12 segundos en dormirse o despertarse: mientras tanto, la
+  tarjeta lo indica («Buenas noches, conejo.», «El conejo se despierta.») hasta
+  que aparece el nuevo botón. Estado de ánimo y Decir la hora no muestran
+  mensaje: el conejo responde por sí mismo.
 - **Fotos del Karotz** — las fotos guardadas en el conejo, una a una y enteras,
   de la más reciente a la más antigua: botones **Anterior** y **Siguiente**,
   **Tomar una foto** (se muestra al momento) y **Borrar las fotos**.
@@ -186,13 +206,13 @@ las dos opciones muestran el mismo conejo.
   olvida al reiniciarse.
 - **Un conejo dormido rechaza** LED, orejas, sonidos y voz: despiértelo primero
   (en una escena, empiece por la acción «Controlar un dispositivo»).
-- La voz depende del servicio de síntesis configurado en su conejo, que
-  necesita Internet: si el conejo deja de hablar, pruebe desde su página web.
+- **La voz propia del conejo** («Hacer hablar al conejo») depende de su servicio
+  de síntesis: en línea con Free Rabbits OS, ya no responde en algunos conejos.
   Con LapinLibre y Terrier OS, ese servidor se configura en `lapinlibre.txt`
   (`SERVER=` o `TTS_SERVER=`): sin él, el conejo se niega a hablar y la
-  integración se lo indica.
-  Cuando ese servicio no responde, la integración lo dice («El conejo no ha
-  podido hablar») en lugar de anunciar que está hecho.
+  integración se lo indica. Cuando ese servicio no responde, la integración lo
+  dice («El conejo no ha podido hablar») en lugar de anunciar que está hecho. La
+  voz de Gladys («Hablar en un altavoz») no depende de él.
 - **El LED reproduce los colores de forma aproximada**: el conejo recibe
   exactamente el color elegido, pero los tonos pálidos o anaranjados salen
   saturados.
@@ -214,9 +234,10 @@ las dos opciones muestran el mismo conejo.
   la correcta. Compruébela abriendo la página web del conejo (usuario `admin`).
 - **«El conejo está ocupado»** — otra orden, de Le Terrier por ejemplo, lo
   estaba usando en ese instante: inténtelo de nuevo.
-- **«El conejo no ha podido hablar»** — su servicio de voz, en línea con Free
-  Rabbits OS, no ha respondido. Pruebe desde la página web del conejo: si
-  tampoco habla allí, el problema está en el conejo o en el servicio.
+- **«El conejo no ha podido hablar»** — su propia síntesis de voz (en línea con
+  Free Rabbits OS) no ha respondido. Hágalo hablar con la voz de Gladys: la
+  acción «Hablar en un altavoz» y una integración de voz de la tienda (vea
+  «Sonidos, radios y voz»).
 - **El conejo no aparece en Descubrimiento** — debe haber respondido al menos
   una vez: use **Probar la conexión**.
 - **No hay función Volumen** — su firmware no tiene ese ajuste; es lo normal en

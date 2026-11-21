@@ -81,10 +81,16 @@ historique, ses scènes et ses tableaux de bord si son adresse IP change.
 | Caméra (appareil séparé) | une photo fraîche à la demande                 |
 
 Le lapin ne dit pas où sont ses oreilles : l'intégration affiche la dernière
-position demandée, et s'en souvient même après un redémarrage. La toute
-première fois, l'oreille dont la position est inconnue revient à 0 quand vous
-bougez l'autre : le bouton **Ears reset** les remet toutes les deux à 0, un point
-de départ connu.
+position demandée, et s'en souvient même après un redémarrage. La toute première
+fois, l'oreille dont la position est inconnue revient à 0 quand vous bougez
+l'autre : le bouton **Ears reset** les remet toutes les deux à 0, un point de
+départ connu. Au réveil, le lapin remet ses oreilles à 0 : l'intégration les
+replace aussitôt à leur dernière position, aussi quand il se réveille de
+lui-même ou revient après un redémarrage.
+
+Éteinte, la LED garde son mode : l'interrupteur **Pulsation de la LED** ne bouge
+pas, et le changer pendant que la LED est éteinte prépare le prochain allumage,
+sans la rallumer.
 
 Le widget **Caméra** de Gladys affiche la dernière photo prise par
 l'intégration, pendant une heure : le Karotz n'a pas de vidéo en direct.
@@ -102,19 +108,27 @@ Ce qu'il sait lire dépend de son système :
 | Voix de Gladys Plus                                  | non : elle arrive en `https://`                              | oui                                    |
 | Voix du lapin lui-même (« Faire parler »)            | le service en ligne de Free Rabbits OS                       | le serveur réglé dans `lapinlibre.txt` |
 
-**Faire parler le lapin avec la voix de Gladys.** Le lapin a une fonctionnalité
-« Play notification » : dans une scène, l'action Gladys **Parler sur une
-enceinte** le fait parler avec la voix choisie dans Gladys (page Intelligence
-artificielle, carte Voix). Sous OpenKarotz, installez une intégration de voix du
-store : hors ligne (eSpeak NG, Piper) ou en ligne (Microsoft Edge TTS, Google
-Traduction, ElevenLabs…). Gladys Plus ne marche que sous LapinLibre et Terrier
-OS. Gladys doit tourner en réseau hôte (l'installation standard), pour que le
-lapin joigne l'adresse du son.
+**Deux façons de faire parler le lapin.**
+
+- **Avec la voix de Gladys** : l'action Gladys **Parler sur une enceinte**, en
+  choisissant le lapin comme enceinte (sa fonctionnalité « Play notification »).
+  Il parle avec la voix choisie dans Gladys (page Intelligence artificielle,
+  carte Voix). Sous OpenKarotz, installez une intégration de voix du store :
+  hors ligne (eSpeak NG, Piper), tout reste sur votre réseau, sans Internet ; ou
+  en ligne (Microsoft Edge TTS, Google Traduction, ElevenLabs…). Gladys Plus ne
+  marche que sous LapinLibre et Terrier OS. Gladys doit tourner en réseau hôte
+  (l'installation standard), pour que le lapin joigne l'adresse du son.
+- **Avec sa propre voix** : l'action **Faire parler le lapin (sa propre voix)**
+  et le bouton **Faire parler** du widget. C'est la synthèse vocale du lapin,
+  pas celle de Gladys : un service en ligne sous Free Rabbits OS, qui ne répond
+  plus sur certains lapins ; le serveur réglé dans `lapinlibre.txt` sous
+  LapinLibre et Terrier OS.
 
 **Internet.** L'intégration parle au lapin sur votre réseau, sans cloud. Le
 lapin, lui, a besoin d'Internet pour les radios, pour sa propre voix (le service
 en ligne de Free Rabbits OS) et pour les voix en ligne de Gladys ; sous Terrier
-OS, il échange aussi avec Le Terrier.
+OS, il échange aussi avec Le Terrier. Avec une voix de Gladys hors ligne (eSpeak
+NG, Piper), il parle sans Internet.
 
 ## Boutons de la configuration
 
@@ -134,8 +148,10 @@ plus récent).
 
 **Actions**
 
-- **Faire parler le lapin** — une phrase, avec la voix de votre choix. Vous
-  pouvez y glisser des variables de la scène.
+- **Faire parler le lapin (sa propre voix)** — une phrase, avec la synthèse
+  vocale du lapin et la voix de votre choix parmi les siennes. Vous pouvez y
+  glisser des variables de la scène. Pour la voix de Gladys, prenez l'action
+  Gladys « Parler sur une enceinte ».
 - **Jouer un son ou une radio** — l'identifiant d'un son stocké sur le lapin,
   ou l'adresse `http://` d'un MP3 ou d'une webradio (sans espace, « & » ni
   « # » : le lapin la reçoit telle quelle). Sous OpenKarotz, une adresse
@@ -164,8 +180,12 @@ l'appareil, utilisez l'action standard « Contrôler un appareil ».
 ## Widgets du tableau de bord
 
 - **Karotz** — état du lapin, stockage, nombre de tags, et quatre boutons :
-  faire parler (un petit formulaire s'ouvre), humeur, dire l'heure, endormir.
-  Quand il dort, un seul bouton : le réveiller.
+  endormir, faire parler (avec sa propre voix ; un petit formulaire s'ouvre),
+  humeur, dire l'heure. Quand il dort, un seul bouton : le réveiller. Le lapin
+  met 6 à 12 secondes à s'endormir ou à se réveiller : pendant ce temps, la
+  carte l'indique (« Bonne nuit, lapin. », « Le lapin se réveille. ») jusqu'à
+  l'arrivée du nouveau bouton. Humeur et Dire l'heure n'affichent pas de message
+  : le lapin répond lui-même.
 - **Photos du Karotz** — les photos stockées sur le lapin, une à une et en
   entier, de la plus récente à la plus ancienne : boutons **Précédente** et
   **Suivante**, **Prendre une photo** (elle s'affiche aussitôt) et **Effacer les
@@ -188,13 +208,14 @@ filtrer, et les deux choix affichent le même lapin.
   oublie à son redémarrage.
 - **Un lapin endormi refuse** LED, oreilles, sons et voix : réveillez-le
   d'abord (dans une scène, commencez par l'action « Contrôler un appareil »).
-- La voix dépend du service de synthèse configuré dans votre lapin, qui a
-  besoin d'Internet : si le lapin ne parle plus, testez depuis sa page web.
-  Sous LapinLibre et Terrier OS, ce serveur se règle dans `lapinlibre.txt`
-  (`SERVER=` ou `TTS_SERVER=`) : sans lui, le lapin refuse de parler et
-  l'intégration vous le dit.
-  Quand ce service ne répond pas, l'intégration le dit (« Le lapin n'a pas pu
-  parler ») au lieu d'annoncer que c'est fait.
+- **La propre voix du lapin** (« Faire parler le lapin ») dépend de son service
+  de synthèse vocale : en ligne sous Free Rabbits OS, il ne répond plus sur
+  certains lapins. Sous LapinLibre et Terrier OS, ce serveur se règle dans
+  `lapinlibre.txt` (`SERVER=` ou `TTS_SERVER=`) : sans lui, le lapin refuse de
+  parler et l'intégration vous le dit. Quand ce service ne répond pas,
+  l'intégration le dit (« Le lapin n'a pas pu parler ») au lieu d'annoncer que
+  c'est fait. La voix de Gladys (« Parler sur une enceinte ») ne dépend pas de
+  lui.
 - **La LED rend les couleurs à peu près** : le lapin reçoit exactement la
   couleur choisie, mais les teintes pâles ou orangées ressortent saturées.
 - **L'API du lapin parle en HTTP simple**, quel que soit son système. Sous
@@ -215,9 +236,10 @@ filtrer, et les deux choix affichent le même lapin.
   bon. Vérifiez-le en ouvrant la page web du lapin (utilisateur `admin`).
 - **« Le lapin est occupé »** — une autre commande, du Terrier par exemple,
   l'occupait à cet instant : réessayez.
-- **« Le lapin n'a pas pu parler »** — son service de synthèse vocale, en ligne
-  sous Free Rabbits OS, n'a pas répondu. Essayez depuis la page web du lapin :
-  s'il n'y parle pas non plus, le problème vient du lapin ou du service.
+- **« Le lapin n'a pas pu parler »** — sa propre synthèse vocale (en ligne sous
+  Free Rabbits OS) n'a pas répondu. Faites-le parler avec la voix de Gladys :
+  l'action « Parler sur une enceinte » et une intégration de voix du store (voir
+  « Sons, radios et voix »).
 - **Le lapin n'apparaît pas dans Découverte** — il doit avoir répondu au moins
   une fois : utilisez **Tester la connexion**.
 - **Pas de fonctionnalité Volume** — votre firmware n'a pas ce réglage ; c'est

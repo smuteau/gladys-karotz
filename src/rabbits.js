@@ -118,6 +118,9 @@ export function createRabbit(host, client) {
     // The last LED that was not "off", color and mode: turning the LED back
     // on restores both (a pulsing LED pulses again).
     lastLed: { color: DEFAULT_LED_COLOR, pulse: false },
+    // A TRANSITIONS value of commands.js while the rabbit wakes up or falls
+    // asleep on our command, else null.
+    transition: null,
     // RFID tags by id; null until listed once.
     tags: null,
     // The status tag count the list above was fetched for.
