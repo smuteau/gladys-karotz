@@ -64,7 +64,7 @@ export const SCENE_ACTIONS = {
     }
   },
 
-  // The picture itself goes to the rabbit's camera device: the core's "send
+  // The picture itself goes to the rabbit's camera feature: the core's "send
   // camera image" scene action picks it up from there.
   async take_snapshot(ctx, fields) {
     const snapshot = await commands.takeSnapshot(ctx, ctx.findRabbit(fields.rabbit), {

@@ -58,11 +58,13 @@ export function createApp(gladys, options = {}) {
     memory: createMemory(options.memoryFile ?? null, logger),
     // How long a widget waits for a long command before answering (tests).
     quickAnswerMs: options.quickAnswerMs,
+    // Tests: how long a wake-up and a falling asleep are expected to take.
+    transitionMs: options.transitionMs,
     /** @type {ReturnType<typeof createRabbit>[]} */
     rabbits: [],
 
     /**
-     * The rabbit behind a device external id (rabbit or camera). Without an
+     * The rabbit behind a device external id. Without an
      * id, the first rabbit: the single-rabbit home needs no selection.
      */
     findRabbit(externalId, { optional = false } = {}) {
@@ -122,6 +124,14 @@ export function createApp(gladys, options = {}) {
       }
       const changes = await read(rabbit);
       identified ||= changes.identified;
+      // Ears never placed (a new rabbit, no memory): a recalibration gives
+      // them a known position. Asleep, its next wake-up does it. Here, not in
+      // read(): a command's own read-back must not wait for the next command.
+      if (changes.identified && !rabbit.status.sleeping) {
+        await commands
+          .initEars(ctx, rabbit)
+          .catch((err) => logger.warn(`${rabbit.host}: ears not initialized: ${err.message}`));
+      }
       // Woken by its schedule or its button, or back after a restart: its
       // ears went back to 0 (the first read is a baseline, as for events).
       if (
@@ -129,7 +139,7 @@ export function createApp(gladys, options = {}) {
         !rabbit.status.sleeping &&
         (changes.sleepChanged || changes.wentOnline)
       ) {
-        await commands.restoreEars(ctx, rabbit);
+        commands.afterRecalibration(ctx, rabbit);
       }
       if (changes.wentOffline) {
         logger.warn(`${rabbit.host} is unreachable: ${rabbit.lastError}`);

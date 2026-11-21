@@ -33,8 +33,8 @@ LED, oreilles, caméra, sommeil et tags RFID. Pas de compte, pas de cloud.
    `web-password.txt` sur sa clé USB d'installation. Plusieurs lapins avec des
    mots de passe différents : séparez-les par des espaces. Laissez le champ
    vide pour OpenKarotz.
-4. Enregistrez, puis ouvrez l'onglet **Découverte** : le lapin apparaît, ainsi
-   que sa caméra. Ajoutez-les.
+4. Enregistrez, puis ouvrez l'onglet **Découverte** : le lapin apparaît.
+   Ajoutez-le.
 
 Vous ne connaissez pas son adresse ? Un Karotz ne s'annonce pas sur le réseau,
 mais l'intégration peut le chercher. Cliquez sur **Chercher sur mon réseau**,
@@ -60,33 +60,39 @@ Les autres réglages :
   que listé dans la page web du Karotz (sur les firmwares récents, un nombre :
   `1` voix française masculine, `2` féminine, `5` et `6` anglais américain…).
   Vide : la voix par défaut du lapin.
-- **Caméra** — ajoute un appareil caméra par lapin.
+- **Caméra** — donne une caméra à l'appareil du lapin.
 
 ## Les appareils
 
 Chaque lapin devient un appareil, reconnu par son adresse MAC : il garde son
 historique, ses scènes et ses tableaux de bord si son adresse IP change.
 
-| Fonctionnalité           | Ce que vous pouvez faire                       |
-| ------------------------ | ---------------------------------------------- |
-| Réveillé                 | réveiller ou endormir le lapin                 |
-| LED, couleur de la LED   | allumer, éteindre, choisir la couleur          |
-| Pulsation de la LED      | lumière fixe ou pulsée                         |
-| Oreille gauche / droite  | position de 0 à 16                             |
-| Ears at random / reset   | boutons : oreilles au hasard, ou à 0           |
-| Play notification        | voix de Gladys : voir « Sons, radios et voix » |
-| Volume                   | 0 à 100 %, si votre firmware le propose        |
-| Stockage, clé USB        | pourcentage utilisé                            |
-| Tags RFID                | nombre de tags enregistrés                     |
-| Caméra (appareil séparé) | une photo fraîche à la demande                 |
+| Fonctionnalité          | Ce que vous pouvez faire                       |
+| ----------------------- | ---------------------------------------------- |
+| Réveillé                | réveiller ou endormir le lapin                 |
+| LED, couleur de la LED  | allumer, éteindre, choisir la couleur          |
+| Pulsation de la LED     | lumière fixe ou pulsée                         |
+| Oreille gauche / droite | position de 0 à 16                             |
+| Ears at random / reset  | boutons : oreilles au hasard, ou à 0           |
+| Play notification       | voix de Gladys : voir « Sons, radios et voix » |
+| Volume                  | 0 à 100 %, si votre firmware le propose        |
+| Stockage, clé USB       | pourcentage utilisé                            |
+| Tags RFID               | nombre de tags enregistrés                     |
+| Caméra                  | une photo fraîche à la demande                 |
 
 Le lapin ne dit pas où sont ses oreilles : l'intégration affiche la dernière
-position demandée, et s'en souvient même après un redémarrage. La toute première
-fois, l'oreille dont la position est inconnue revient à 0 quand vous bougez
-l'autre : le bouton **Ears reset** les remet toutes les deux à 0, un point de
-départ connu. Au réveil, le lapin remet ses oreilles à 0 : l'intégration les
-replace aussitôt à leur dernière position, aussi quand il se réveille de
-lui-même ou revient après un redémarrage.
+position demandée, et s'en souvient même après un redémarrage. La première fois
+qu'elle voit un lapin, elle recalibre ses oreilles (comme le bouton **Ears
+reset**) : elles partent de 0, une position connue. Les deux curseurs à 0, c'est
+la position de repos : l'intégration recalibre au lieu de déplacer, et les
+oreilles retombent exactement à l'endroit du bouton **Ears reset**.
+
+Le lapin recalibre ses oreilles de lui-même quand il se réveille, joue une
+humeur ou dit l'heure : elles repartent à 0. L'intégration les replace ensuite à
+leur dernière position, aussi quand il se réveille tout seul ou revient après un
+redémarrage. Un mouvement attend toujours la fin d'une recalibration (quelques
+secondes) : envoyé pendant, il l'interromprait, et les oreilles perdraient leur
+repère.
 
 Éteinte, la LED garde son mode : l'interrupteur **Pulsation de la LED** ne bouge
 pas, et le changer pendant que la LED est éteinte prépare le prochain allumage,
@@ -118,11 +124,10 @@ Ce qu'il sait lire dépend de son système :
   en ligne (Microsoft Edge TTS, Google Traduction, ElevenLabs…). Gladys Plus ne
   marche que sous LapinLibre et Terrier OS. Gladys doit tourner en réseau hôte
   (l'installation standard), pour que le lapin joigne l'adresse du son.
-- **Avec sa propre voix** : l'action **Faire parler le lapin (sa propre voix)**
-  et le bouton **Faire parler** du widget. C'est la synthèse vocale du lapin,
-  pas celle de Gladys : un service en ligne sous Free Rabbits OS, qui ne répond
-  plus sur certains lapins ; le serveur réglé dans `lapinlibre.txt` sous
-  LapinLibre et Terrier OS.
+- **Avec sa propre voix** : l'action **Faire parler le lapin (sa propre voix)**.
+  C'est la synthèse vocale du lapin, pas celle de Gladys : un service en ligne
+  sous Free Rabbits OS, qui ne répond plus sur certains lapins ; le serveur
+  réglé dans `lapinlibre.txt` sous LapinLibre et Terrier OS.
 
 **Internet.** L'intégration parle au lapin sur votre réseau, sans cloud. Le
 lapin, lui, a besoin d'Internet pour les radios, pour sa propre voix (le service
@@ -157,13 +162,24 @@ plus récent).
   « # » : le lapin la reçoit telle quelle). Sous OpenKarotz, une adresse
   `https://` est refusée : son lecteur ne lit que le `http://`. LapinLibre et
   Terrier OS lisent les deux.
-- **Arrêter la radio**.
+- **Arrêter la radio** — « Jouer un son ou une radio » lance le lecteur du lapin
+  et se termine aussitôt : une scène qui ne contient qu'elle s'arrête tout de
+  suite, et le lapin continue de jouer jusqu'à cette action ou un autre son.
+  Pour écouter un temps donné, mettez « Jouer un son ou une radio », « Attendre »
+  puis « Arrêter la radio » dans trois blocs l'un sous l'autre (bouton
+  « Nouvelle action »). Dans un groupe « En même temps » (« Ajouter une action en
+  parallèle »), les actions partent ensemble : l'arrêt suit aussitôt le
+  lancement, et l'attente ne retarde que son propre bloc. Une webradio peut
+  aussi mettre plusieurs secondes à se faire entendre. Un son coupe ce qui joue
+  déjà, la voix de Gladys comprise : « Parler sur une enceinte » rend la main
+  dès que la phrase commence, alors mettez une attente après elle si un son
+  suit.
 - **Jouer une humeur** — au hasard, ou par son numéro.
 - **Dire l'heure**.
 - **Régler la LED** — couleur en hexadécimal (`FF0000` pour rouge), fixe ou
   pulsée, avec une seconde couleur et une vitesse.
 - **Bouger les oreilles** — vers une position, au hasard, ou retour au repos.
-- **Prendre une photo** — elle devient l'image de l'appareil caméra : enchaînez
+- **Prendre une photo** — elle devient l'image de la caméra du lapin : enchaînez
   avec l'action Gladys « envoyer l'image d'une caméra » pour la recevoir.
 
 Réveiller, endormir, allumer la LED : ce sont des fonctionnalités de
@@ -179,22 +195,20 @@ l'appareil, utilisez l'action standard « Contrôler un appareil ».
 
 ## Widgets du tableau de bord
 
-- **Karotz** — état du lapin, stockage, nombre de tags, et quatre boutons :
-  endormir, faire parler (avec sa propre voix ; un petit formulaire s'ouvre),
-  humeur, dire l'heure. Quand il dort, un seul bouton : le réveiller. Le lapin
-  met 6 à 12 secondes à s'endormir ou à se réveiller : pendant ce temps, la
-  carte l'indique (« Bonne nuit, lapin. », « Le lapin se réveille. ») jusqu'à
-  l'arrivée du nouveau bouton. Humeur et Dire l'heure n'affichent pas de message
-  : le lapin répond lui-même.
+- **Karotz** — état du lapin, stockage (en %), nombre de tags, et quatre boutons :
+  endormir, oreilles au hasard, humeur, dire l'heure. Quand il dort, un seul
+  bouton : le réveiller. Le lapin met 6 à 12 secondes à s'endormir ou à se
+  réveiller, et le message (« Bonne nuit, lapin. », « Le lapin se réveille. »)
+  reste 4 secondes à l'écran : l'intégration l'envoie donc vers la fin, pour
+  qu'il soit encore là quand le nouveau bouton arrive. Elle prend pour cela la
+  durée du réveil précédent de votre lapin. Oreilles au hasard, Humeur et Dire
+  l'heure n'affichent pas de message : le lapin répond lui-même.
 - **Photos du Karotz** — les photos stockées sur le lapin, une à une et en
   entier, de la plus récente à la plus ancienne : boutons **Précédente** et
   **Suivante**, **Prendre une photo** (elle s'affiche aussitôt) et **Effacer les
   photos**.
 
 Avec plusieurs lapins, choisissez lequel afficher dans les réglages du widget.
-
-La liste propose aussi la caméra du lapin : Gladys ne sait pas encore la
-filtrer, et les deux choix affichent le même lapin.
 
 ## Limites
 
@@ -203,7 +217,7 @@ filtrer, et les deux choix affichent le même lapin.
   intégration Gladys ne peut pas être appelée de cette façon. Le déclencheur
   disponible concerne l'enregistrement d'un _nouveau_ tag.
 - **Sous OpenKarotz, chaque photo reste sur le lapin**, dont le stockage est
-  petit. Effacez-les de temps en temps avec le bouton du widget caméra. Sous
+  petit. Effacez-les de temps en temps avec le bouton du widget photos. Sous
   LapinLibre et Terrier OS, le lapin garde les 10 dernières en mémoire et les
   oublie à son redémarrage.
 - **Un lapin endormi refuse** LED, oreilles, sons et voix : réveillez-le

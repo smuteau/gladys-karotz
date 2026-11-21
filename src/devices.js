@@ -1,10 +1,11 @@
 // -----------------------------------------------------------------------------
 // The Gladys devices of a rabbit, and their states.
 //
-// Each rabbit is published as:
-//   - one `karotz` device: sleep, LED, ears, volume (when the firmware has
-//     it), storage and RFID tag count;
-//   - one `karotz-camera` device (optional): the webcam in its belly.
+// Each rabbit is published as one `karotz` device: sleep, LED, ears, volume
+// (when the firmware has it), storage, RFID tag count, and the webcam in its
+// belly (an optional camera feature). The camera was a `karotz-camera` device
+// of its own until 2026-11-22, before any release: every widget setting then
+// offered two devices that showed the same rabbit.
 //
 // Feature keys are forever (they are part of the external ids): never rename
 // one, Gladys would create a new feature and orphan its history.
@@ -18,7 +19,7 @@ import {
 import { EAR_MAX, EAR_MIN } from './karotz/client.js';
 import { LED_OFF, firmwareLabel, rabbitName } from './rabbits.js';
 
-export const DEVICE_TYPES = { RABBIT: 'karotz', CAMERA: 'karotz-camera' };
+export const DEVICE_TYPES = { RABBIT: 'karotz' };
 
 export const FEATURES = {
   AWAKE: 'awake',
@@ -39,10 +40,6 @@ export const FEATURES = {
 
 export function rabbitIds(gladys, rabbit) {
   return gladys.externalIds(DEVICE_TYPES.RABBIT, rabbit.id);
-}
-
-export function cameraIds(gladys, rabbit) {
-  return gladys.externalIds(DEVICE_TYPES.CAMERA, rabbit.id);
 }
 
 const command = (name, externalId, category, type, extra = {}) => ({
@@ -183,6 +180,22 @@ export function buildDevices(gladys, rabbits, config) {
         { max: 1000 },
       ),
     );
+    if (config.camera) {
+      // Gladys finds a camera by its feature, whatever the device: the
+      // Camera widget, the "send a camera image" action and the image asked
+      // through onGetImage all work on the rabbit itself.
+      features.push({
+        name: 'Camera',
+        external_id: ids.feature(FEATURES.IMAGE),
+        category: DEVICE_FEATURE_CATEGORIES.CAMERA,
+        type: DEVICE_FEATURE_TYPES.CAMERA.IMAGE,
+        read_only: true,
+        has_feedback: false,
+        keep_history: false,
+        min: 0,
+        max: 0,
+      });
+    }
     devices.push({
       name,
       external_id: ids.device,
@@ -195,27 +208,6 @@ export function buildDevices(gladys, rabbits, config) {
       ],
       features,
     });
-
-    if (config.camera) {
-      const camera = cameraIds(gladys, rabbit);
-      devices.push({
-        name: `${name} camera`,
-        external_id: camera.device,
-        features: [
-          {
-            name: 'Image',
-            external_id: camera.feature(FEATURES.IMAGE),
-            category: DEVICE_FEATURE_CATEGORIES.CAMERA,
-            type: DEVICE_FEATURE_TYPES.CAMERA.IMAGE,
-            read_only: true,
-            has_feedback: false,
-            keep_history: false,
-            min: 0,
-            max: 0,
-          },
-        ],
-      });
-    }
   }
   return devices;
 }
@@ -261,13 +253,10 @@ export function buildStates(gladys, rabbit) {
   return states;
 }
 
-/** Which rabbit owns this device (rabbit or camera) external id? */
+/** Which rabbit owns this device external id? */
 export function findRabbitByDevice(gladys, rabbits, externalId) {
   return rabbits.find(
-    (rabbit) =>
-      rabbit.id !== null &&
-      (rabbitIds(gladys, rabbit).device === externalId ||
-        cameraIds(gladys, rabbit).device === externalId),
+    (rabbit) => rabbit.id !== null && rabbitIds(gladys, rabbit).device === externalId,
   );
 }
 

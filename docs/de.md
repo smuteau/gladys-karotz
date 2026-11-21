@@ -34,7 +34,7 @@ LED, Ohren, Kamera, Schlaf und RFID-Tags. Kein Konto, keine Cloud.
    unterschiedlichen Passwörtern: durch Leerzeichen trennen. Für OpenKarotz
    lassen Sie das Feld leer.
 4. Speichern Sie und öffnen Sie dann den Reiter **Erkennung**: Der Hase
-   erscheint dort zusammen mit seiner Kamera. Fügen Sie beide hinzu.
+   erscheint dort. Fügen Sie ihn hinzu.
 
 Sie kennen seine Adresse nicht? Ein Karotz meldet sich nicht im Netzwerk an,
 aber die Integration kann nach ihm suchen. Klicken Sie auf **Mein Netzwerk
@@ -62,7 +62,7 @@ Die übrigen Einstellungen:
 - **Standardstimme** — die Stimmenkennung, mit der der Hase spricht, so wie sie
   auf der Webseite des Karotz aufgeführt ist (bei neueren Firmwares eine Zahl).
   Leer: die eigene Standardstimme des Hasen.
-- **Kamera** — fügt pro Hase ein Kameragerät hinzu.
+- **Kamera** — gibt dem Gerät des Hasen eine Kamera.
 
 ## Geräte
 
@@ -81,15 +81,22 @@ IP-Adresse ändert.
 | Lautstärke             | 0 bis 100 %, wenn Ihre Firmware es anbietet            |
 | Speicher, USB-Stick    | belegter Anteil in Prozent                             |
 | RFID-Tags              | Anzahl der gespeicherten Tags                          |
-| Kamera (eigenes Gerät) | ein frisches Bild auf Abruf                            |
+| Kamera                 | ein frisches Bild auf Abruf                            |
 
 Der Hase verrät nicht, wo seine Ohren stehen: Die Integration zeigt die zuletzt
-angeforderte Position und merkt sie sich auch nach einem Neustart. Beim
-allerersten Mal geht das Ohr mit unbekannter Position auf 0 zurück, wenn Sie das
-andere bewegen: Der Knopf **Ears reset** stellt beide auf 0, ein bekannter
-Ausgangspunkt. Beim Aufwachen stellt der Hase seine Ohren auf 0: Die Integration
-bringt sie sofort an ihre letzte Position zurück, auch wenn er von selbst
-aufwacht oder nach einem Neustart zurückkommt.
+angeforderte Position und merkt sie sich auch nach einem Neustart. Wenn sie
+einen Hasen zum ersten Mal sieht, kalibriert sie seine Ohren neu (wie der Knopf
+**Ears reset**): Sie starten bei 0, einer bekannten Position. Beide
+Schieberegler auf 0 ist die Ruheposition: Die Integration kalibriert neu, statt
+zu bewegen, und die Ohren landen genau dort, wo der Knopf **Ears reset** sie
+hinstellt.
+
+Der Hase kalibriert seine Ohren von selbst neu, wenn er aufwacht, eine Stimmung
+spielt oder die Uhrzeit ansagt: Sie gehen auf 0 zurück. Die Integration bringt
+sie danach an ihre letzte Position zurück, auch wenn er von selbst aufwacht oder
+nach einem Neustart zurückkommt. Eine Bewegung wartet immer das Ende einer
+Neukalibrierung ab (einige Sekunden): Währenddessen gesendet, würde sie diese
+unterbrechen, und die Ohren verlören ihren Bezugspunkt.
 
 Ausgeschaltet behält die LED ihren Modus: Der Schalter **LED-Pulsieren** bleibt,
 wie er ist, und eine Änderung bei ausgeschalteter LED gilt fürs nächste
@@ -123,10 +130,10 @@ Was er abspielen kann, hängt von seinem System ab:
   Terrier OS. Gladys muss im Host-Netzwerk laufen (die Standardinstallation),
   damit der Hase die Adresse des Tons erreicht.
 - **Mit seiner eigenen Stimme**: die Aktion **Den Hasen sprechen lassen (eigene
-  Stimme)** und die Schaltfläche **Sprechen** des Widgets. Das ist die
-  Sprachausgabe des Hasen, nicht die von Gladys: ein Online-Dienst unter Free
-  Rabbits OS, der auf manchen Hasen nicht mehr antwortet; der in
-  `lapinlibre.txt` eingestellte Server unter LapinLibre und Terrier OS.
+  Stimme)**. Das ist die Sprachausgabe des Hasen, nicht die von Gladys: ein
+  Online-Dienst unter Free Rabbits OS, der auf manchen Hasen nicht mehr
+  antwortet; der in `lapinlibre.txt` eingestellte Server unter LapinLibre und
+  Terrier OS.
 
 **Internet.** Die Integration spricht über Ihr Netzwerk mit dem Hasen, ohne
 Cloud. Der Hase selbst braucht Internet für Radios, für seine eigene Stimme (den
@@ -160,14 +167,25 @@ neuer).
   Webradios (ohne Leerzeichen, „&“ oder „#“: Der Hase erhält sie unverändert).
   Unter OpenKarotz wird eine `https://`-Adresse abgelehnt: Sein Player liest nur
   `http://`. LapinLibre und Terrier OS lesen beides.
-- **Das Radio stoppen**.
+- **Das Radio stoppen** — „Einen Ton oder ein Radio abspielen“ startet den
+  Player des Hasen und endet sofort: Eine Szene, die nur diese Aktion enthält,
+  ist gleich zu Ende, und der Hase spielt weiter bis zu dieser Aktion oder einem
+  anderen Ton. Um eine bestimmte Zeit zuzuhören, setzen Sie „Einen Ton oder ein
+  Radio abspielen“, „Warten“ und dann „Das Radio stoppen“ in drei Blöcke
+  untereinander (Schaltfläche „Neue Aktion“). In einer Gruppe „Gleichzeitig“
+  („Parallele Aktion hinzufügen“) starten die Aktionen zusammen: Das Stoppen
+  folgt sofort auf den Start, und das Warten verzögert nur seinen eigenen Block.
+  Ein Webradio kann außerdem einige Sekunden brauchen, bis es zu hören ist. Ein
+  Ton unterbricht, was gerade spielt, auch die Stimme von Gladys: „Auf einem
+  Lautsprecher sprechen“ gibt weiter, sobald der Satz beginnt; setzen Sie danach
+  eine Wartezeit, wenn ein Ton folgt.
 - **Eine Stimmung abspielen** — zufällig oder über ihre Nummer.
 - **Die Uhrzeit ansagen**.
 - **Die LED einstellen** — Farbe hexadezimal (`FF0000` für Rot), dauerhaft
   oder pulsierend, mit einer zweiten Farbe und einer Geschwindigkeit.
 - **Die Ohren bewegen** — auf eine Position, zufällig oder zurück in die
   Ruhestellung.
-- **Ein Foto aufnehmen** — es wird zum Bild des Kamerageräts: Lassen Sie die
+- **Ein Foto aufnehmen** — es wird zum Bild der Kamera des Hasen: Lassen Sie die
   Gladys-Aktion „Kamerabild senden“ folgen, um es zu erhalten.
 
 Aufwecken, schlafen legen, LED einschalten: Das sind Gerätefunktionen, nutzen
@@ -184,22 +202,21 @@ Sie dafür die Standardaktion „Ein Gerät steuern“.
 
 ## Dashboard-Widgets
 
-- **Karotz** — Zustand des Hasen, Speicher, Anzahl der Tags und vier
-  Schaltflächen: schlafen legen, sprechen (mit seiner eigenen Stimme; ein
-  kleines Formular öffnet sich), Stimmung, Uhrzeit ansagen. Wenn er schläft, nur
-  eine Schaltfläche: aufwecken. Der Hase braucht 6 bis 12 Sekunden zum
-  Einschlafen oder Aufwachen: Währenddessen zeigt die Karte es an („Gute Nacht,
-  Hase.“, „Der Hase wacht auf.“), bis die neue Schaltfläche erscheint. Stimmung
-  und Uhrzeit ansagen zeigen keine Meldung: Der Hase antwortet selbst.
+- **Karotz** — Zustand des Hasen, Speicher (in %), Anzahl der Tags und vier
+  Schaltflächen: schlafen legen, Ohren zufällig, Stimmung, Uhrzeit ansagen. Wenn
+  er schläft, nur eine Schaltfläche: aufwecken. Der Hase braucht 6 bis 12
+  Sekunden zum Einschlafen oder Aufwachen, und die Meldung („Gute Nacht, Hase.“,
+  „Der Hase wacht auf.“) bleibt 4 Sekunden sichtbar: Die Integration sendet sie
+  deshalb gegen Ende, damit sie noch da ist, wenn die neue Schaltfläche
+  erscheint. Dafür nimmt sie die Dauer des vorigen Aufwachens Ihres Hasen. Ohren
+  zufällig, Stimmung und Uhrzeit ansagen zeigen keine Meldung: Der Hase
+  antwortet selbst.
 - **Karotz-Fotos** — die auf dem Hasen gespeicherten Fotos, einzeln und ganz,
   das neueste zuerst: Schaltflächen **Vorheriges** und **Nächstes**, **Foto
   aufnehmen** (sofort angezeigt) und **Fotos löschen**.
 
 Bei mehreren Hasen wählen Sie in den Widget-Einstellungen, welcher angezeigt
 wird.
-
-Die Liste bietet auch die Kamera des Hasen an: Gladys kann sie noch nicht
-filtern, und beide Einträge zeigen denselben Hasen.
 
 ## Grenzen
 
@@ -209,7 +226,7 @@ filtern, und beide Einträge zeigen denselben Hasen.
   verfügbare Auslöser betrifft das Speichern eines _neuen_ Tags.
 - **Unter OpenKarotz bleibt jedes Foto auf dem Hasen**, dessen Speicher klein
   ist. Löschen Sie sie von Zeit zu Zeit mit der Schaltfläche des
-  Kamera-Widgets. Unter LapinLibre und Terrier OS behält der Hase die letzten 10
+  Foto-Widgets. Unter LapinLibre und Terrier OS behält der Hase die letzten 10
   im Arbeitsspeicher und vergisst sie beim Neustart.
 - **Ein schlafender Hase verweigert** LED, Ohren, Töne und Sprache: Wecken Sie
   ihn zuerst auf (in einer Szene mit der Aktion „Ein Gerät steuern“ beginnen).

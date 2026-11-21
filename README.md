@@ -35,7 +35,7 @@ Everything is local: no account, no cloud, works in any country.
 | Volume                 | slider 0–100 % | only on firmwares that ship `/cgi-bin/volume`         |
 | Storage used, USB used | sensor (%)     |                                                       |
 | RFID tags              | sensor (count) |                                                       |
-| Camera (second device) | camera image   | optional; a fresh picture on demand                   |
+| Camera                 | camera image   | optional; a fresh picture on demand                   |
 
 **Scene actions** — make the rabbit speak, play a sound or a radio, stop the
 radio, play a mood, tell the time, set the LED (color, pulse, second color),
@@ -44,10 +44,10 @@ move the ears (position, random, rest), take a picture.
 **Scene triggers** — rabbit unreachable, rabbit back online, rabbit fell asleep
 or woke up, new RFID tag recorded.
 
-**Dashboard widgets** — `Karotz` (state, storage, tags, and buttons: sleep /
-wake up first, then speak, mood, time; the card says so while the rabbit wakes
-up or falls asleep) and `Karotz photos` (the pictures stored on the rabbit, one
-at a time: previous, next, take one, delete them all).
+**Dashboard widgets** — `Karotz` (state, storage in %, tags, and buttons:
+sleep / wake up first, then ears at random, mood, time; the wake-up toast is timed to last
+until the new button) and `Karotz photos` (the pictures stored on the rabbit,
+one at a time: previous, next, take one, delete them all).
 
 **Configuration buttons** — test the connection, search the local network for
 rabbits, identify a rabbit (blue pulse and moving ears), restart a rabbit.
@@ -70,9 +70,9 @@ synthesized (`music`/`play_notification`, as Gladys' own speakers): any voice
 integration of the store works (eSpeak NG, Piper, Edge TTS, ElevenLabs…), since
 the core serves the clip from its own `http://<LAN IP>:<port>`. It is reached
 through Gladys' own "Talk on a speaker" scene action. The integration's
-`Make the rabbit speak (its own voice)` action and the widget's Speak button
-use the rabbit's own text-to-speech instead: an integration cannot ask Gladys
-for a clip of its voice today.
+`Make the rabbit speak (its own voice)` action uses the rabbit's own
+text-to-speech instead: an integration cannot ask Gladys for a clip of its
+voice today.
 
 The integration only ever talks to the rabbit over the LAN. The rabbit itself
 needs the Internet for radios, its own text-to-speech and online voices; on
@@ -102,7 +102,7 @@ MAC address, in `/cgi-bin/status`. Hence:
   called from the LAN. Until then: in the Karotz web page, assign the tag a URL
   of your choice. The integration only sees a _new_ tag being recorded.
 - **Every picture stays on the rabbit**, whose storage is small, and OpenKarotz
-  has no "delete one picture" endpoint. The camera widget has a button that
+  has no "delete one picture" endpoint. The photos widget has a button that
   deletes them all.
 - **The rabbit does not report its ears.** The integration shows the last
   position it asked for, kept in `/data/karotz-memory.json` across restarts

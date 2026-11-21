@@ -9,22 +9,26 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { validateWidgetContent } from '@gladysassistant/integration-sdk';
 import { HOST, MAC, createFakeKarotz, createTestApp, snapshotName } from './helpers/fakeKarotz.js';
+import { describeError, speak } from '../src/commands.js';
+import { ERROR_KINDS } from '../src/karotz/client.js';
 
 const RABBIT = `ext:test-integration:karotz:${MAC}`;
-const CAMERA = `ext:test-integration:karotz-camera:${MAC}`;
 
 const stateOf = (gladys, key) =>
   gladys.fake.states.findLast((s) => s.device_feature_external_id === `${RABBIT}:${key}`)?.state;
 
-test('a reachable rabbit is discovered under its MAC address, with its camera', async () => {
+test('a reachable rabbit is discovered under its MAC address, its camera included', async () => {
   const { gladys } = await createTestApp();
   const devices = gladys.fake.discoveredDevices;
+  // One device per rabbit: every widget setting offers one choice per rabbit.
   assert.deepEqual(
     devices.map((d) => d.external_id),
-    [RABBIT, CAMERA],
+    [RABBIT],
   );
   const keys = devices[0].features.map((f) => f.external_id.split(':').pop());
   assert.ok(keys.includes('awake') && keys.includes('led-color') && keys.includes('ear-left'));
+  const camera = devices[0].features.find((f) => f.category === 'camera');
+  assert.equal(camera.external_id, `${RABBIT}:image`);
   // The stock OpenKarotz has no /cgi-bin/volume.
   assert.ok(!keys.includes('volume'));
   assert.equal(gladys.fake.connectionStatus.connected, true);
@@ -36,12 +40,11 @@ test('the volume feature appears on firmwares that have the endpoint', async () 
   assert.ok(keys.includes(`${RABBIT}:volume`));
 });
 
-test('the camera device is optional', async () => {
+test('the camera is optional', async () => {
   const { gladys } = await createTestApp({ config: { camera: false } });
-  assert.deepEqual(
-    gladys.fake.discoveredDevices.map((d) => d.external_id),
-    [RABBIT],
-  );
+  const [device] = gladys.fake.discoveredDevices;
+  assert.equal(device.external_id, RABBIT);
+  assert.ok(!device.features.some((f) => f.category === 'camera'));
 });
 
 test('states follow the status of the rabbit', async () => {
@@ -163,42 +166,49 @@ test('a rabbit that misses one read is not declared unreachable', async () => {
 test('a failed synthesis says so, even for a sentence the rabbit cached', async () => {
   const karotz = createFakeKarotz({ speechService: false });
   const { gladys } = await createTestApp({ karotz });
-  const speak = () =>
-    gladys.fake.widgetAction('karotz', 'speak', {}, { settings: {}, values: { text: 'Bonjour' } });
+  const speak = async () =>
+    JSON.stringify(await gladys.fake.sceneAction('speak', { rabbit: RABBIT, text: 'Bonjour' }));
 
-  const first = JSON.stringify(await speak());
-  assert.match(first, /sa propre synthèse vocale n'a pas répondu/);
-  // The way to the voice of Gladys, not to the web page of the rabbit.
-  assert.match(first, /Parler sur une enceinte/);
-  assert.doesNotMatch(first, /page web|Internet/);
+  assert.match(await speak(), /"success":false.*did not produce the sentence/);
   // The second time Free Rabbits OS answers from its cache, in silence.
-  assert.match(JSON.stringify(await speak()), /sa propre synthèse vocale n'a pas répondu/);
+  assert.match(await speak(), /"success":false.*did not produce the sentence/);
   assert.deepEqual(
     karotz.callsTo('tts').map((call) => call.params.nocache),
     ['0', '0', '1'],
   );
 });
 
-test('waking up from the widget: the card says so until the rabbit is done', async () => {
+const cardOf = async (gladys) => {
+  const ack = await gladys.fake.widgetGet('karotz', { settings: {}, language: 'fr' });
+  assert.deepEqual(validateWidgetContent(ack.data.content), []);
+  return ack.data.content;
+};
+const buttonsOf = (content) =>
+  content.components.filter((c) => c.type === 'button').map((c) => c.action.key);
+
+test('a failed synthesis points to the voice of Gladys, not to the web page', () => {
+  const message = describeError({ kind: ERROR_KINDS.SPEECH_FAILED });
+  assert.match(message.fr, /sa propre synthèse vocale n'a pas répondu/);
+  assert.match(message.fr, /Parler sur une enceinte/);
+  for (const text of Object.values(message)) {
+    assert.doesNotMatch(text, /web|Internet/i);
+    assert.ok(text.length <= 200, 'fits a toast');
+  }
+});
+
+test('waking up from the widget: a toast, and the card keeps its buttons', async () => {
   const karotz = createFakeKarotz({ sleeping: true, delays: { wakeup: 200 } });
-  const { gladys, ctx } = await createTestApp({ karotz, options: { quickAnswerMs: 20 } });
-  const card = async () => {
-    const ack = await gladys.fake.widgetGet('karotz', { settings: {}, language: 'fr' });
-    assert.deepEqual(validateWidgetContent(ack.data.content), []);
-    return ack.data.content;
-  };
-  const buttons = (content) =>
-    content.components.filter((c) => c.type === 'button').map((c) => c.action.key);
+  const { gladys, ctx } = await createTestApp({
+    karotz,
+    options: { quickAnswerMs: 20, transitionMs: { wake: 0 } },
+  });
 
   const started = Date.now();
   const ack = await gladys.fake.widgetAction('karotz', 'wake', {}, { settings: {}, values: {} });
-  assert.equal(ack.success, true);
   assert.ok(Date.now() - started < 150, 'the action does not wait for the rabbit');
-  // No toast, which would vanish first: the card carries the message.
-  assert.doesNotMatch(JSON.stringify(ack.data ?? {}), /réveille/);
-  const waking = await card();
-  assert.match(JSON.stringify(waking), /Le lapin se réveille/);
-  assert.deepEqual(buttons(waking), [], 'no button while the rabbit wakes up');
+  assert.match(JSON.stringify(ack.data), /Le lapin se réveille/);
+  const waking = await cardOf(gladys);
+  assert.deepEqual(buttonsOf(waking), ['wake'], 'the card is the one of before, buttons included');
   assert.equal(waking.ttl_seconds, 10, 'asked again soon, even without a nudge');
 
   // The reading loop leaves a waking rabbit alone.
@@ -208,20 +218,37 @@ test('waking up from the widget: the card says so until the rabbit is done', asy
 
   await new Promise((resolve) => setTimeout(resolve, 300));
   assert.equal(ctx.rabbits[0].status.sleeping, false);
-  assert.equal(buttons(await card())[0], 'sleep', 'Sleep comes first once awake');
+  assert.deepEqual(buttonsOf(await cardOf(gladys)), ['sleep', 'ears_random', 'mood', 'time']);
 });
 
-test('falling asleep from the widget: "Good night" stays until Wake up is there', async () => {
+test('the wake-up toast is timed to last until the rabbit is done', async () => {
+  const karotz = createFakeKarotz({ sleeping: true, delays: { wakeup: 300 } });
+  // Expected to take 3.6 s: answered 3.5 s before, at 0.1 s.
+  const { gladys, ctx } = await createTestApp({
+    karotz,
+    options: { quickAnswerMs: 20, transitionMs: { wake: 3600 } },
+  });
+  const started = Date.now();
+  const ack = await gladys.fake.widgetAction('karotz', 'wake', {}, { settings: {}, values: {} });
+  const answeredAfter = Date.now() - started;
+  assert.match(JSON.stringify(ack.data), /Le lapin se réveille/);
+  assert.ok(answeredAfter >= 90 && answeredAfter < 280, `answered after ${answeredAfter} ms`);
+  await new Promise((resolve) => setTimeout(resolve, 400));
+  // Next time, the duration measured on this rabbit.
+  assert.ok(ctx.rabbits[0].transitionMs.wake >= 290);
+});
+
+test('falling asleep from the widget: "Good night", then Wake up', async () => {
   const karotz = createFakeKarotz({ delays: { sleep: 200 } });
-  const { gladys } = await createTestApp({ karotz, options: { quickAnswerMs: 20 } });
-  const card = async () =>
-    (await gladys.fake.widgetGet('karotz', { settings: {}, language: 'fr' })).data.content;
-  await gladys.fake.widgetAction('karotz', 'sleep', {}, { settings: {}, values: {} });
-  assert.match(JSON.stringify(await card()), /Bonne nuit, lapin/);
+  const { gladys } = await createTestApp({
+    karotz,
+    options: { quickAnswerMs: 20, transitionMs: { sleep: 0 } },
+  });
+  const ack = await gladys.fake.widgetAction('karotz', 'sleep', {}, { settings: {}, values: {} });
+  assert.match(JSON.stringify(ack.data), /Bonne nuit, lapin/);
+  assert.deepEqual(buttonsOf(await cardOf(gladys)), ['sleep', 'ears_random', 'mood', 'time']);
   await new Promise((resolve) => setTimeout(resolve, 300));
-  const asleep = await card();
-  assert.doesNotMatch(JSON.stringify(asleep), /Bonne nuit/);
-  assert.equal(asleep.components.find((c) => c.type === 'button').action.key, 'wake');
+  assert.deepEqual(buttonsOf(await cardOf(gladys)), ['wake']);
 });
 
 test('the LED pulse switch keeps the mode while the LED is off', async () => {
@@ -237,41 +264,109 @@ test('the LED pulse switch keeps the mode while the LED is off', async () => {
   // Changed while off: remembered, and the LED stays off.
   const leds = karotz.callsTo('leds').length;
   await set('led-pulse', 0);
+  await set('led-pulse', 1);
   assert.equal(karotz.callsTo('leds').length, leds);
   assert.equal(karotz.ledColor, '000000');
-  assert.equal(stateOf(gladys, 'led-pulse'), 0);
+  assert.equal(stateOf(gladys, 'led-pulse'), 1);
+  await set('led-pulse', 0);
   await set('led', 1);
   assert.deepEqual([karotz.ledColor, karotz.ledPulse], ['21FF37', '0']);
 });
 
-test('the ears go back where they were when the rabbit wakes up', async () => {
+test('pulse on right after "LED off" does not light the LED again', async () => {
+  const karotz = createFakeKarotz({ ledColor: '21FF37', ledPulse: '0', delays: { leds: 50 } });
+  const { gladys } = await createTestApp({ karotz });
+  const set = (key, value) =>
+    gladys.fake.setValue({ external_id: RABBIT }, { external_id: `${RABBIT}:${key}` }, value);
+  // Both sent at once, as two quick taps on the dashboard.
+  await Promise.all([set('led', 0), set('led-pulse', 1)]);
+  assert.equal(karotz.ledColor, '000000');
+  assert.equal(stateOf(gladys, 'led-pulse'), 1);
+  await set('led', 1);
+  assert.deepEqual([karotz.ledColor, karotz.ledPulse], ['21FF37', '1']);
+});
+
+test('ears never placed are recalibrated once, on the first read', async () => {
+  const { gladys, karotz } = await createTestApp();
+  assert.equal(karotz.callsTo('ears_reset').length, 1);
+  assert.equal(stateOf(gladys, 'ear-left'), 0);
+  assert.equal(stateOf(gladys, 'ear-right'), 0);
+});
+
+test('both ears to 0 is the rest position: a recalibration, not a move', async () => {
+  const waits = [];
+  const { gladys, karotz } = await createTestApp({
+    options: { sleepMs: async (ms) => waits.push(ms) },
+  });
+  const set = (key, value) =>
+    gladys.fake.setValue({ external_id: RABBIT }, { external_id: `${RABBIT}:${key}` }, value);
+  await set('ear-left', 6);
+  const resets = karotz.callsTo('ears_reset').length;
+  const moves = karotz.callsTo('ears').length;
+  await set('ear-left', 0);
+  assert.equal(karotz.callsTo('ears_reset').length, resets + 1);
+  assert.equal(karotz.callsTo('ears').length, moves, 'no move to 0, 0');
+
+  // The next move waits for the end of that recalibration.
+  waits.length = 0;
+  await set('ear-right', 4);
+  assert.ok(
+    waits.some((ms) => ms > 6000 && ms <= 8000),
+    `waited ${waits}`,
+  );
+  assert.deepEqual(karotz.callsTo('ears').at(-1).params, { left: '0', right: '4', noreset: '1' });
+});
+
+test('the ears go back where they were after waking up, a mood or the clock', async () => {
   const { gladys, ctx, karotz } = await createTestApp();
   const set = (key, value) =>
     gladys.fake.setValue({ external_id: RABBIT }, { external_id: `${RABBIT}:${key}` }, value);
   const lastEars = () => karotz.callsTo('ears').at(-1)?.params;
+  const settled = () => ctx.rabbits[0].commandQueue;
+  const placed = { left: '5', right: '9', noreset: '1' };
 
   await set('ear-left', 5);
   await set('ear-right', 9);
   await set('awake', 0);
   const before = karotz.callsTo('ears').length;
   await set('awake', 1);
+  await settled();
   assert.equal(karotz.callsTo('ears').length, before + 1);
-  assert.deepEqual(lastEars(), { left: '5', right: '9', noreset: '1' });
+  assert.deepEqual(lastEars(), placed);
 
   // Woken by its own schedule or button: the reading loop puts them back.
   karotz.sleeping = true;
   await ctx.readAll({ events: true });
   karotz.sleeping = false;
   await ctx.readAll({ events: true });
+  await settled();
   assert.equal(karotz.callsTo('ears').length, before + 2);
-  assert.deepEqual(lastEars(), { left: '5', right: '9', noreset: '1' });
+  assert.deepEqual(lastEars(), placed);
 
-  // Ears at 0 are where waking up leaves them: nothing to send.
+  // A mood and the clock recalibrate the ears too.
+  await gladys.fake.widgetAction('karotz', 'mood', {}, { settings: {}, values: {} });
+  await settled();
+  await gladys.fake.widgetAction('karotz', 'time', {}, { settings: {}, values: {} });
+  await settled();
+  assert.equal(karotz.callsTo('ears').length, before + 4);
+  assert.deepEqual(lastEars(), placed);
+
+  // Ears at 0 are where a recalibration leaves them: nothing to send.
   await set('ears-reset', 1);
   const afterReset = karotz.callsTo('ears').length;
   await set('awake', 0);
   await set('awake', 1);
+  await settled();
   assert.equal(karotz.callsTo('ears').length, afterReset);
+});
+
+test('the storage gauge shows its percentage with its unit', async () => {
+  const { gladys } = await createTestApp();
+  const gauge = (await cardOf(gladys)).components.find((c) => c.type === 'gauge');
+  assert.deepEqual(
+    { value: gauge.value, unit: gauge.unit, min: gauge.min, max: gauge.max },
+    { value: 36, unit: '%', min: 0, max: 100 },
+  );
 });
 
 test('a command refused by a sleeping rabbit fails the acknowledgement', async () => {
@@ -357,15 +452,17 @@ test('scene actions drive the rabbit and return their outputs', async () => {
   ack = await gladys.fake.sceneAction('take_snapshot', { rabbit: RABBIT, silent: true });
   assert.deepEqual(ack.data.outputs, { filename: snapshotName(1) });
   assert.equal(gladys.fake.cameraImages.length, 1);
+  // On the rabbit itself: its camera is one of its features.
+  assert.equal(gladys.fake.cameraImages[0].device_external_id, RABBIT);
 
   for (const key of ['stop_sound', 'say_time']) {
     assert.equal((await gladys.fake.sceneAction(key, { rabbit: RABBIT })).success, true, key);
   }
 });
 
-test('the camera device answers a fresh picture', async () => {
+test('the camera of the rabbit answers a fresh picture', async () => {
   const { gladys } = await createTestApp();
-  const ack = await gladys.fake.getImage({ external_id: CAMERA });
+  const ack = await gladys.fake.getImage({ external_id: RABBIT });
   assert.equal(ack.success, true);
   assert.match(JSON.stringify(ack.data), /image\/jpg;base64,\/9j/);
 });
@@ -398,15 +495,11 @@ test('widgets render exactly as sent, awake, asleep and offline', async () => {
 });
 
 test('widget actions answer a toast, also when the rabbit refuses', async () => {
-  const { gladys, karotz } = await createTestApp();
+  const { gladys } = await createTestApp();
   const act = (widget, key, values) =>
     gladys.fake.widgetAction(widget, key, {}, { settings: {}, values });
 
-  let ack = await act('karotz', 'speak', { text: 'Coucou' });
-  assert.equal(ack.success, true);
-  assert.equal(karotz.callsTo('tts')[0].params.text, 'Coucou');
-
-  ack = await act('karotz_camera', 'snapshot');
+  let ack = await act('karotz_camera', 'snapshot');
   assert.equal(ack.success, true);
   const content = (await gladys.fake.widgetGet('karotz_camera', { settings: {}, language: 'en' }))
     .data.content;
@@ -414,8 +507,8 @@ test('widget actions answer a toast, also when the rabbit refuses', async () => 
   const image = content.components.find((c) => c.type === 'image');
   assert.equal((await gladys.fake.widgetGetImage(image.key)).success, true);
 
-  // The rabbit answers with a sound: no "Done" on top of it.
-  for (const key of ['mood', 'time']) {
+  // The rabbit answers by moving or with a sound: no "Done" on top of it.
+  for (const key of ['ears_random', 'mood', 'time']) {
     ack = await act('karotz', key);
     assert.equal(ack.success, true);
     assert.doesNotMatch(JSON.stringify(ack.data ?? {}), /fait|Done/);
@@ -481,6 +574,36 @@ test('the photos widget walks through the pictures stored on the rabbit', async 
   assert.deepEqual(buttons(content), ['snapshot']);
 });
 
+test('a radio right after a voice clip of Gladys does start (OpenKarotz player handover)', async () => {
+  // The real Karotz: the clip's player quits slower than the one second the
+  // `sound` script gives it, and the radio never starts.
+  const karotz = createFakeKarotz({ slowPlayer: true });
+  const { gladys } = await createTestApp({ karotz });
+  const clip = 'http://192.168.1.10:80/api/v1/tts/audio/0123abcd.wav';
+  const radio = 'http://icecast.radiofrance.fr/fip-midfi.mp3';
+
+  await gladys.fake.setValue(
+    { external_id: RABBIT },
+    { external_id: `${RABBIT}:play-notification` },
+    clip,
+  );
+  const ack = await gladys.fake.sceneAction('play_sound', { rabbit: RABBIT, sound: radio });
+  assert.equal(ack.success, true);
+  assert.deepEqual(karotz.heard, [clip, radio]);
+  assert.equal(karotz.player, radio);
+  // The clip was asked to quit before the radio was sent.
+  const order = karotz.calls.map((c) => `${c.path}${c.params.cmd ? `:${c.params.cmd}` : ''}`);
+  const quit = order.lastIndexOf('sound_control:quit');
+  assert.ok(quit !== -1 && quit < order.lastIndexOf('sound'));
+
+  // "Stop the radio" stops it, and succeeds again with nothing playing.
+  for (let i = 0; i < 2; i += 1) {
+    const stop = await gladys.fake.sceneAction('stop_sound', { rabbit: RABBIT });
+    assert.equal(stop.success, true);
+  }
+  assert.equal(karotz.player, null);
+});
+
 test('an https:// sound is refused on OpenKarotz, played on LapinLibre', async () => {
   const https = 'https://icecast.radiofrance.fr/fip-midfi.mp3';
   const openKarotz = await createTestApp();
@@ -537,12 +660,22 @@ test('the ears have push buttons: at random, and back to 0', async () => {
 
   await push('ears-random');
   assert.equal(karotz.callsTo('ears_random').length, 1);
-  assert.equal(stateOf(gladys, 'ear-left'), 3);
-  assert.equal(stateOf(gladys, 'ear-right'), 11);
+  // OpenKarotz's ears_random names the ears the other way round from `ears`
+  // (left 3, right 11 in the answer): the sliders follow `ears`.
+  assert.equal(stateOf(gladys, 'ear-left'), 11);
+  assert.equal(stateOf(gladys, 'ear-right'), 3);
+  const resets = karotz.callsTo('ears_reset').length;
   await push('ears-reset');
-  assert.equal(karotz.callsTo('ears_reset').length, 1);
+  assert.equal(karotz.callsTo('ears_reset').length, resets + 1);
   assert.equal(stateOf(gladys, 'ear-left'), 0);
   assert.equal(stateOf(gladys, 'ear-right'), 0);
+});
+
+test('LapinLibre names the ears of a random move as its sliders do', async () => {
+  const { gladys } = await createTestApp({ karotz: createFakeKarotz({ system: 'lapinlibre' }) });
+  await gladys.fake.setValue({ external_id: RABBIT }, { external_id: `${RABBIT}:ears-random` }, 1);
+  assert.equal(stateOf(gladys, 'ear-left'), 3);
+  assert.equal(stateOf(gladys, 'ear-right'), 11);
 });
 
 test('the version comes from get_version, with the version of the system', async () => {
@@ -556,7 +689,7 @@ test('the version comes from get_version, with the version of the system', async
 
 test('a LapinLibre or Terrier OS rabbit behind its web password is driven the same way', async () => {
   const karotz = createFakeKarotz({ system: 'lapinlibre', password: 'carrot-2026' });
-  const { gladys } = await createTestApp({
+  const { gladys, ctx } = await createTestApp({
     karotz,
     config: { web_password: 'other-rabbit carrot-2026' },
   });
@@ -580,13 +713,9 @@ test('a LapinLibre or Terrier OS rabbit behind its web password is driven the sa
   karotz.speechServer = false;
   const spoken = await gladys.fake.sceneAction('speak', { text: 'Bonjour' });
   assert.equal(spoken.success, false);
-  const toast = await gladys.fake.widgetAction(
-    'karotz',
-    'speak',
-    {},
-    { settings: {}, values: { text: 'Bonjour' } },
+  await assert.rejects(speak(ctx, ctx.rabbits[0], 'Bonjour'), (err) =>
+    /serveur de synthèse vocale/.test(describeError(err).fr),
   );
-  assert.match(JSON.stringify(toast), /serveur de synthèse vocale/);
 });
 
 test('a rabbit that refuses the web password is reported as such', async () => {

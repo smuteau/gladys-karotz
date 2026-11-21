@@ -50,14 +50,29 @@ the notes of the version's GitHub Release.
 
 - The integration is now called Karotz, and its repository `gladys-karotz`:
   it covers OpenKarotz, LapinLibre and Terrier OS.
-- The `Karotz` widget: Sleep and Wake up come first. While the rabbit wakes up
-  or falls asleep (6 to 12 seconds), the card says so until the new button is
-  there, instead of a toast that vanished first. Mood and Tell the time no
-  longer say "Done": the rabbit answers by itself.
-- The `Make the rabbit speak` scene action is now `Make the rabbit speak (its
-own voice)`, and says where to find the voice of Gladys: the "Talk on a
-  speaker" action. When the rabbit's own speech fails, the message points
-  there instead of to the rabbit's web page.
+- The `Karotz` widget: Sleep and Wake up come first. Waking up and falling
+  asleep take the rabbit 6 to 12 seconds and the toast stays 4: it is now sent
+  near the end (from how long the rabbit's previous one took), so "The rabbit
+  is waking up" is still there when the new button shows up. Mood and Tell the
+  time no longer say "Done": the rabbit answers by itself. The storage gauge
+  shows its unit (%).
+- The camera is a feature of the rabbit's device instead of a second device:
+  every widget setting now offers one device per rabbit, and Gladys' Camera
+  widget and camera scene actions work on the rabbit itself.
+- The `Karotz` widget has an Ears at random button, where Speak was.
+- The scene action `Make the rabbit speak` is now called `Make the rabbit
+speak (its own voice)`, and says where to find the voice of Gladys: the
+  "Talk on a speaker" action. When the rabbit's own speech fails, the message
+  points there instead of to the rabbit's web page.
+- The ears: the first time the integration sees a rabbit, it recalibrates
+  them, so they start from a known position. Both ears to 0 is a
+  recalibration, which lands exactly on the rest position of `Ears reset`.
+
+### Removed
+
+- The Speak button of the `Karotz` widget: the rabbit's own speech service
+  fails on many Free Rabbits OS rabbits, and an integration cannot use the
+  voice of Gladys yet. The scene action stays.
 
 ### Fixed
 
@@ -75,7 +90,21 @@ own voice)`, and says where to find the voice of Gladys: the "Talk on a
   of dropping to off, and changing it only sets up the next time it comes on.
 - Waking up puts the ears back where they were before the night: the rabbit
   recalibrates them to 0 when it wakes up, by command, by its own schedule or
-  after a restart.
+  after a restart. The same after a mood and after telling the time, which
+  recalibrate them too.
+- Moving an ear no longer nudges the other one. On OpenKarotz, the answer of
+  `ears_random` names the ears the other way round from `ears`: after a random
+  move the integration swapped them. And a move sent while the rabbit was
+  still recalibrating its ears interrupted it, so they lost their zero: every
+  move now waits for the end of a recalibration.
+- A sound or a radio played right after another one (a clip of Gladys'
+  voice, say) never started on OpenKarotz, though the rabbit answered "ok":
+  its `sound` script gives the running player one second to quit. The
+  integration now asks the player to quit first, and starts the sound once it
+  is gone. "Stop the radio" no longer fails when nothing is playing.
+- Turning the pulse switch on right after turning the LED off lit the LED
+  again: both commands ran at once, and the second one still saw the LED on.
+  Commands to a rabbit now run one at a time.
 - The reading loop no longer asks a rabbit that is waking up or falling asleep
   on a command: busy with its script, it could miss the read.
 - Moving one ear no longer sends the other back to 0 after a restart.

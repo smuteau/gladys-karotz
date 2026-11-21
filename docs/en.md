@@ -31,8 +31,7 @@ LED, ears, camera, sleep and RFID tags. No account, no cloud.
    page of the rabbit asks for (user `admin`). Terrier OS writes it in
    `web-password.txt` on its install USB key. Several rabbits with different
    passwords: separate them with spaces. Leave the field empty for OpenKarotz.
-4. Save, then open the **Discovery** tab: the rabbit shows up, along with its
-   camera. Add them.
+4. Save, then open the **Discovery** tab: the rabbit shows up. Add it.
 
 You do not know its address? A Karotz does not announce itself on the network,
 but the integration can look for it. Click **Search my network**, without
@@ -58,33 +57,38 @@ The other settings:
   listed in the Karotz web page (on recent firmwares, a number: `5` US English
   male, `6` female, `7` and `8` British English…). Empty: the rabbit's own
   default.
-- **Camera** — adds a camera device per rabbit.
+- **Camera** — gives the rabbit's device a camera.
 
 ## Devices
 
 Each rabbit becomes a device, recognized by its MAC address: it keeps its
 history, scenes and dashboards when its IP address changes.
 
-| Feature                  | What you can do                                     |
-| ------------------------ | --------------------------------------------------- |
-| Awake                    | wake the rabbit up or put it to sleep               |
-| LED, LED color           | turn on, turn off, pick the color                   |
-| LED pulse                | steady or pulsing light                             |
-| Left / right ear         | position from 0 to 16                               |
-| Ears at random / reset   | buttons: ears at random, or back to 0               |
-| Play notification        | the voice of Gladys: see "Sounds, radios and voice" |
-| Volume                   | 0 to 100 %, when your firmware offers it            |
-| Storage, USB key         | percentage used                                     |
-| RFID tags                | number of recorded tags                             |
-| Camera (separate device) | a fresh picture on demand                           |
+| Feature                | What you can do                                     |
+| ---------------------- | --------------------------------------------------- |
+| Awake                  | wake the rabbit up or put it to sleep               |
+| LED, LED color         | turn on, turn off, pick the color                   |
+| LED pulse              | steady or pulsing light                             |
+| Left / right ear       | position from 0 to 16                               |
+| Ears at random / reset | buttons: ears at random, or back to 0               |
+| Play notification      | the voice of Gladys: see "Sounds, radios and voice" |
+| Volume                 | 0 to 100 %, when your firmware offers it            |
+| Storage, USB key       | percentage used                                     |
+| RFID tags              | number of recorded tags                             |
+| Camera                 | a fresh picture on demand                           |
 
 The rabbit does not tell where its ears are: the integration shows the last
-position it asked for, and remembers it even after a restart. The very first
-time, the ear whose position is unknown goes back to 0 when you move the other
-one: the **Ears reset** button puts both back to 0, a known starting point. When
-it wakes up, the rabbit puts its ears back to 0: the integration moves them
-straight back to their last position, also when it wakes up by itself or comes
-back after a restart.
+position it asked for, and remembers it even after a restart. The first time it
+sees a rabbit, it recalibrates the ears (as the **Ears reset** button does):
+they start from 0, a known position. Both sliders at 0 is the rest position: the
+integration recalibrates instead of moving, and the ears land exactly where the
+**Ears reset** button puts them.
+
+The rabbit recalibrates its ears by itself when it wakes up, plays a mood or
+tells the time: they go back to 0. The integration then moves them back to their
+last position, also when it wakes up by itself or comes back after a restart. A
+move always waits for the end of a recalibration (a few seconds): sent during
+it, it would interrupt it, and the ears would lose their reference.
 
 When off, the LED keeps its mode: the **LED pulse** switch does not move, and
 changing it while the LED is off sets up the next time it comes on, without
@@ -116,11 +120,10 @@ it can play depends on its system:
   (Microsoft Edge TTS, Google Translate, ElevenLabs…). Gladys Plus only works on
   LapinLibre and Terrier OS. Gladys must run on the host network (the standard
   install), so the rabbit can reach the address of the sound.
-- **With its own voice**: the **Make the rabbit speak (its own voice)** action
-  and the **Speak** button of the widget. That is the text-to-speech of the
-  rabbit, not of Gladys: an online service on Free Rabbits OS, which no longer
-  answers on some rabbits; the server set in `lapinlibre.txt` on LapinLibre and
-  Terrier OS.
+- **With its own voice**: the **Make the rabbit speak (its own voice)** action.
+  That is the text-to-speech of the rabbit, not of Gladys: an online service on
+  Free Rabbits OS, which no longer answers on some rabbits; the server set in
+  `lapinlibre.txt` on LapinLibre and Terrier OS.
 
 **Internet.** The integration talks to the rabbit over your network, with no
 cloud. The rabbit itself needs the Internet for radios, for its own voice (the
@@ -152,13 +155,22 @@ The integration adds its own cards to the scene editor (Gladys 5.1 or later).
   or the `http://` address of an MP3 or a web radio (no space, "&" or "#": the
   rabbit receives it as is). On OpenKarotz an `https://` address is refused: its
   player only reads `http://`. LapinLibre and Terrier OS read both.
-- **Stop the radio**.
+- **Stop the radio** — "Play a sound or a radio" starts the rabbit's player and
+  ends at once: a scene made of it alone stops right away, and the rabbit keeps
+  playing until this action or another sound. To listen for a set time, put
+  "Play a sound or a radio", "Wait" and then "Stop the radio" in three blocks
+  one under the other ("New action" button). In an "At the same time" group
+  ("Add a parallel action"), the actions start together: the stop follows the
+  start at once, and the wait only delays its own block. A web radio can also
+  take several seconds to be heard. A sound cuts what is already playing, the
+  voice of Gladys included: "Talk on a speaker" hands over as soon as the
+  sentence starts, so put a wait after it when a sound follows.
 - **Play a mood** — a random one, or by its number.
 - **Tell the time**.
 - **Set the LED** — hexadecimal color (`FF0000` for red), steady or pulsing,
   with a second color and a speed.
 - **Move the ears** — to a position, at random, or back to rest.
-- **Take a picture** — it becomes the image of the camera device: follow with
+- **Take a picture** — it becomes the image of the rabbit's camera: follow with
   Gladys' "send a camera image" action to receive it.
 
 Waking up, putting to sleep, turning the LED on: these are device features, use
@@ -174,20 +186,19 @@ the standard "Control a device" action.
 
 ## Dashboard widgets
 
-- **Karotz** — state of the rabbit, storage, tag count, and four buttons: sleep,
-  speak (with its own voice; a small form opens), mood, tell the time. When it
-  sleeps, a single button: wake it up. The rabbit takes 6 to 12 seconds to fall
-  asleep or wake up: meanwhile the card says so ("Good night, rabbit.", "The
-  rabbit is waking up.") until the new button shows up. Mood and Tell the time
-  show no message: the rabbit answers by itself.
+- **Karotz** — state of the rabbit, storage (in %), tag count, and four buttons:
+  sleep, ears at random, mood, tell the time. When it sleeps, a single button:
+  wake it up. The rabbit takes 6 to 12 seconds to fall asleep or wake up, and
+  the message ("Good night, rabbit.", "The rabbit is waking up.") stays 4
+  seconds on screen: the integration sends it near the end, so it is still there
+  when the new button shows up. For that it takes how long your rabbit's
+  previous wake-up took. Ears at random, Mood and Tell the time show no message:
+  the rabbit answers by itself.
 - **Karotz photos** — the pictures stored on the rabbit, one by one and whole,
   newest first: **Previous** and **Next** buttons, **Take a picture** (shown at
   once) and **Delete pictures**.
 
 With several rabbits, pick which one to show in the widget settings.
-
-The list also offers the camera of the rabbit: Gladys cannot filter it yet, and
-both choices show the same rabbit.
 
 ## Limits
 
@@ -196,7 +207,7 @@ both choices show the same rabbit.
   integration cannot be called that way. The available trigger is about a _new_
   tag being recorded.
 - **On OpenKarotz, every picture stays on the rabbit**, whose storage is
-  small. Delete them from time to time with the button of the camera widget. On
+  small. Delete them from time to time with the button of the photos widget. On
   LapinLibre and Terrier OS, the rabbit keeps the last 10 in memory and forgets
   them when it restarts.
 - **A sleeping rabbit refuses** LED, ears, sounds and speech: wake it up first

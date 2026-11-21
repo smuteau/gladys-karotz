@@ -36,6 +36,13 @@ export function createFakeKarotz(overrides = {}) {
     // Milliseconds some scripts take to answer, e.g. `{ wakeup: 50 }`.
     delays: {},
     sleeping: false,
+    // OpenKarotz's player: what it plays now (null: none), and every sound
+    // that really started. `slowPlayer`: a running player takes longer than
+    // the one second the `sound` script gives it, so the next sound does not
+    // start, and the script answers "0" all the same.
+    player: null,
+    heard: [],
+    slowPlayer: false,
     ledColor: '00FF00',
     ledPulse: '0',
     hasVolume: false,
@@ -146,8 +153,30 @@ export function createFakeKarotz(overrides = {}) {
       // The Python script of some firmwares answers a boolean.
       return rabbit.sleeping ? json({ return: false }) : json({ return: true, played: true });
     },
-    sound: () => (rabbit.sleeping ? asleep() : ok()),
-    sound_control: () => ok(),
+    sound(params) {
+      if (rabbit.sleeping) {
+        return asleep();
+      }
+      if (rabbit.player !== null && rabbit.slowPlayer && !lapinLibre()) {
+        rabbit.player = null;
+        return ok();
+      }
+      rabbit.player = params.url ?? params.id;
+      rabbit.heard.push(rabbit.player);
+      return ok();
+    },
+    sound_control(params) {
+      if (rabbit.sleeping) {
+        return asleep();
+      }
+      if (rabbit.player === null) {
+        return refused('No sound currently playing.');
+      }
+      if (params.cmd === 'quit') {
+        rabbit.player = null;
+      }
+      return ok({ cmd: params.cmd });
+    },
     'apps/moods': (params) => ok({ moods: params.id ?? '42' }),
     'apps/clock': () => ok({ hour: '12' }),
     reboot: () => ok(),

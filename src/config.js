@@ -16,7 +16,7 @@ export const DEFAULT_CONFIG = {
   poll_interval: 60,
   // Voice passed to the rabbit's text-to-speech; empty = the rabbit's default.
   tts_voice: '',
-  // Publish a camera device per rabbit.
+  // Give each rabbit device a camera feature.
   camera: true,
 };
 

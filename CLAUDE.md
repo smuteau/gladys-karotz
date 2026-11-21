@@ -69,15 +69,42 @@ decodes nothing, and a percent-encoded URL is silently never fetched.
 
 **What the rabbit cannot report** — ear positions (OpenKarotz needs both ears
 in every `ears` request), the LED to restore after "off" — is kept in
-`/data/karotz-memory.json` (`src/memory.js`), written only on change. Waking
-up (by command, schedule or restart) recalibrates the ears to 0:
-`restoreEars` puts them back. While the LED is off, its pulse switch shows the
-remembered mode (`lastLed.pulse`).
+`/data/karotz-memory.json` (`src/memory.js`), written only on change. While
+the LED is off, its pulse switch shows the remembered mode (`lastLed.pulse`).
+
+**Ears** (OpenKarotz 210 scripts, LapinLibre's `ears-daemon.c`): the
+controller moves an ear to an absolute position (17 steps a turn) counted from
+its last recalibration. Waking up, a mood and the clock recalibrate the ears to
+0, and `ears_reset`, a silent `wakeup` and `apps/clock` answer before the
+recalibration is over; a move sent meanwhile interrupts it and the ears lose
+their zero. So every move waits `EARS_RECALIBRATION_MS` after one
+(`earsSettled`), `afterRecalibration` puts the ears back in the background,
+both at 0 is an `ears_reset`, and ears never placed are recalibrated on the
+first read. OpenKarotz's `ears` passes (right, left) to the controller and its
+`ears_random` (left, right): a random answer is swapped there.
+
+**The player** (OpenKarotz 210 `sound` script): it kills the running player,
+waits one second, and starts the new sound only if no player is left, then
+answers `"0"` either way. A slow-quitting player (a stream, a Gladys voice
+clip) made the next sound silently never start. `playSound` therefore asks it
+to quit first (`stopPlayerFirst`): `sound_control?cmd=get_time_pos` is the
+probe (it answers "No sound currently playing" when there is none), `quit`
+stops it, and the sound goes once the probe says it is gone. A device command
+must answer within 5 s (`COMMAND_TIMEOUT_MS` of the core): the voice of
+Gladys cannot wait for its clip to end.
+
+**Commands run one at a time per rabbit** (`oneAtATime` in `commands.js`): a
+command decides from the state the previous one left. A command calls the
+unqueued helpers (`setLedNow`), never another queued command: it would wait
+for itself. `stopSound` and the sound and speech commands are not queued (a
+stream must stay stoppable).
 
 **Waking up and falling asleep take 6 to 12 s**, and the rabbit answers only
 at the end. `commands.wake` / `sleep` set `rabbit.transition` meanwhile: the
 reading loop skips that rabbit (a read would time out), and the `karotz`
-widget shows the transition with a 10 s TTL instead of buttons.
+widget asks for a 10 s TTL. Its toast (4 s on the dashboard) is answered
+about 3.5 s before the expected end (`answerBeforeEnd`, the duration measured
+on the rabbit's previous one).
 
 ## Architecture
 
@@ -139,7 +166,11 @@ test/                             node --test: SDK fake Gladys + test/helpers/fa
   the raw answer of a Karotz on 127.0.0.1.
 - **A rabbit is identified by its MAC**, read from `/cgi-bin/status` (Wi-Fi
   first, then Ethernet), never by its host: the host is only how to reach it.
-  Do not change that order, nor the `karotz` / `karotz-camera` device types.
+  Do not change that order, nor the `karotz` device type. The camera is a
+  feature of that device (`image`): Gladys finds a camera by its feature, and
+  a second device per rabbit made every widget setting offer two choices for
+  one rabbit. The `karotz-camera` device type was retired on 2026-11-22,
+  before the first release; never bring it back.
 - **One operation, one function in `src/commands.js`.** Features, scene
   actions, widgets and Configuration buttons all call it; none talks to the
   client directly. After a command, `ctx.refresh(rabbit)` reads the rabbit

@@ -121,6 +121,10 @@ export function createRabbit(host, client) {
     // A TRANSITIONS value of commands.js while the rabbit wakes up or falls
     // asleep on our command, else null.
     transition: null,
+    // The commands to this rabbit, one at a time (commands.js), and the time
+    // its last ear recalibration is surely over.
+    commandQueue: null,
+    earsSettleAt: 0,
     // RFID tags by id; null until listed once.
     tags: null,
     // The status tag count the list above was fetched for.

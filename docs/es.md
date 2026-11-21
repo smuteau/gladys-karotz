@@ -33,8 +33,7 @@ LED, orejas, cámara, sueño y etiquetas RFID. Sin cuenta, sin nube.
    `web-password.txt` en su memoria USB de instalación. Varios conejos con
    contraseñas distintas: sepárelas con espacios. Deje el campo vacío para
    OpenKarotz.
-4. Guarde y abra la pestaña **Descubrimiento**: aparece el conejo, junto con su
-   cámara. Añádalos.
+4. Guarde y abra la pestaña **Descubrimiento**: aparece el conejo. Añádalo.
 
 ¿No conoce su dirección? Un Karotz no se anuncia en la red, pero la integración
 puede buscarlo. Pulse **Buscar en mi red**, sin escribir
@@ -59,7 +58,7 @@ Los demás ajustes:
 - **Voz por defecto** — el identificador de voz que usa el conejo al hablar,
   tal como aparece en la página web del Karotz (en los firmwares recientes, un
   número). Vacío: la voz por defecto del propio conejo.
-- **Cámara** — añade un dispositivo de cámara por conejo.
+- **Cámara** — da una cámara al dispositivo del conejo.
 
 ## Dispositivos
 
@@ -77,14 +76,21 @@ conserva su historial, sus escenas y sus paneles si cambia su dirección IP.
 | Volumen                     | de 0 a 100 %, si su firmware lo ofrece          |
 | Almacenamiento, memoria USB | porcentaje usado                                |
 | Etiquetas RFID              | número de etiquetas registradas                 |
-| Cámara (dispositivo aparte) | una foto reciente bajo demanda                  |
+| Cámara                      | una foto reciente bajo demanda                  |
 
 El conejo no dice dónde están sus orejas: la integración muestra la última
-posición pedida y la recuerda incluso tras un reinicio. La primerísima vez, la
-oreja cuya posición se desconoce vuelve a 0 cuando mueve la otra: el botón
-**Ears reset** pone las dos a 0, un punto de partida conocido. Al despertarse,
-el conejo pone sus orejas a 0: la integración las devuelve enseguida a su última
-posición, también cuando se despierta solo o vuelve tras un reinicio.
+posición pedida y la recuerda incluso tras un reinicio. La primera vez que ve un
+conejo, recalibra sus orejas (como el botón **Ears reset**): parten de 0, una
+posición conocida. Los dos controles a 0 es la posición de reposo: la
+integración recalibra en lugar de mover, y las orejas quedan exactamente donde
+las deja el botón **Ears reset**.
+
+El conejo recalibra sus orejas por sí mismo cuando se despierta, reproduce un
+estado de ánimo o dice la hora: vuelven a 0. La integración las devuelve después
+a su última posición, también cuando se despierta solo o vuelve tras un
+reinicio. Un movimiento siempre espera el final de una recalibración (unos
+segundos): enviado durante ella, la interrumpiría, y las orejas perderían su
+referencia.
 
 Apagado, el LED conserva su modo: el interruptor **Pulsación del LED** no se
 mueve, y cambiarlo con el LED apagado prepara el próximo encendido, sin
@@ -116,11 +122,10 @@ Lo que puede reproducir depende de su sistema:
   Traductor, ElevenLabs…). Gladys Plus solo funciona con LapinLibre y Terrier
   OS. Gladys debe funcionar en la red del host (la instalación estándar) para
   que el conejo alcance la dirección del sonido.
-- **Con su propia voz**: la acción **Hacer hablar al conejo (su propia voz)** y
-  el botón **Hablar** del widget. Es la síntesis de voz del conejo, no la de
-  Gladys: un servicio en línea con Free Rabbits OS, que ya no responde en
-  algunos conejos; el servidor configurado en `lapinlibre.txt` con LapinLibre y
-  Terrier OS.
+- **Con su propia voz**: la acción **Hacer hablar al conejo (su propia voz)**.
+  Es la síntesis de voz del conejo, no la de Gladys: un servicio en línea con
+  Free Rabbits OS, que ya no responde en algunos conejos; el servidor
+  configurado en `lapinlibre.txt` con LapinLibre y Terrier OS.
 
 **Internet.** La integración habla con el conejo a través de su red, sin nube.
 El conejo, en cambio, necesita Internet para las radios, para su propia voz (el
@@ -155,13 +160,23 @@ posterior).
   (sin espacios, «&» ni «#»: el conejo la recibe tal cual). Con OpenKarotz, una
   dirección `https://` se rechaza: su reproductor solo lee `http://`. LapinLibre
   y Terrier OS leen las dos.
-- **Detener la radio**.
+- **Detener la radio** — «Reproducir un sonido o una radio» pone en marcha el
+  reproductor del conejo y termina enseguida: una escena que solo la contiene se
+  detiene al momento, y el conejo sigue sonando hasta esta acción u otro sonido.
+  Para escuchar un tiempo dado, ponga «Reproducir un sonido o una radio»,
+  «Esperar» y luego «Detener la radio» en tres bloques uno debajo de otro (botón
+  «Nueva acción»). En un grupo «Al mismo tiempo» («Añadir una acción en
+  paralelo»), las acciones salen juntas: la parada sigue al momento al arranque,
+  y la espera solo retrasa su propio bloque. Una radio web también puede tardar
+  varios segundos en oírse. Un sonido corta lo que ya suena, incluida la voz de
+  Gladys: «Hablar en un altavoz» devuelve el control en cuanto empieza la frase,
+  así que ponga una espera después si sigue un sonido.
 - **Reproducir un estado de ánimo** — al azar, o por su número.
 - **Decir la hora**.
 - **Ajustar el LED** — color en hexadecimal (`FF0000` para rojo), fijo o
   pulsante, con un segundo color y una velocidad.
 - **Mover las orejas** — a una posición, al azar, o de vuelta al reposo.
-- **Tomar una foto** — se convierte en la imagen del dispositivo de cámara:
+- **Tomar una foto** — se convierte en la imagen de la cámara del conejo:
   continúe con la acción de Gladys «enviar la imagen de una cámara» para
   recibirla.
 
@@ -178,21 +193,19 @@ acción estándar «Controlar un dispositivo».
 
 ## Widgets del panel
 
-- **Karotz** — estado del conejo, almacenamiento, número de etiquetas y cuatro
-  botones: dormir, hablar (con su propia voz; se abre un pequeño formulario),
-  estado de ánimo, decir la hora. Cuando duerme, un solo botón: despertarlo. El
-  conejo tarda de 6 a 12 segundos en dormirse o despertarse: mientras tanto, la
-  tarjeta lo indica («Buenas noches, conejo.», «El conejo se despierta.») hasta
-  que aparece el nuevo botón. Estado de ánimo y Decir la hora no muestran
-  mensaje: el conejo responde por sí mismo.
+- **Karotz** — estado del conejo, almacenamiento (en %), número de etiquetas y
+  cuatro botones: dormir, orejas al azar, estado de ánimo, decir la hora. Cuando
+  duerme, un solo botón: despertarlo. El conejo tarda de 6 a 12 segundos en
+  dormirse o despertarse, y el mensaje («Buenas noches, conejo.», «El conejo se
+  despierta.») queda 4 segundos en pantalla: la integración lo envía por eso
+  hacia el final, para que siga ahí cuando aparece el nuevo botón. Para ello
+  toma la duración del despertar anterior de su conejo. Orejas al azar, Estado
+  de ánimo y Decir la hora no muestran mensaje: el conejo responde por sí mismo.
 - **Fotos del Karotz** — las fotos guardadas en el conejo, una a una y enteras,
   de la más reciente a la más antigua: botones **Anterior** y **Siguiente**,
   **Tomar una foto** (se muestra al momento) y **Borrar las fotos**.
 
 Con varios conejos, elija cuál mostrar en los ajustes del widget.
-
-La lista ofrece también la cámara del conejo: Gladys aún no sabe filtrarla, y
-las dos opciones muestran el mismo conejo.
 
 ## Límites
 
@@ -201,7 +214,7 @@ las dos opciones muestran el mismo conejo.
   conejo, y una integración de Gladys no puede ser llamada de esa forma. El
   disparador disponible se refiere al registro de una etiqueta _nueva_.
 - **Con OpenKarotz, cada foto se queda en el conejo**, cuyo almacenamiento es
-  pequeño. Bórrelas de vez en cuando con el botón del widget de cámara. Con
+  pequeño. Bórrelas de vez en cuando con el botón del widget de fotos. Con
   LapinLibre y Terrier OS, el conejo guarda las 10 últimas en memoria y las
   olvida al reiniciarse.
 - **Un conejo dormido rechaza** LED, orejas, sonidos y voz: despiértelo primero

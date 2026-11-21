@@ -8,7 +8,7 @@
 // -----------------------------------------------------------------------------
 
 import { ERROR_KINDS, KarotzError } from './karotz/client.js';
-import { cameraIds } from './devices.js';
+import { rabbitIds } from './devices.js';
 import { forgetPhotos, isPhotoName, rememberPhoto } from './photos.js';
 import { LED_OFF, SYSTEMS } from './rabbits.js';
 
@@ -19,12 +19,31 @@ const WIDGET_IMAGE_MAX_BYTES = 300 * 1024;
 const IDENTIFY_COLOR = '0000FF';
 const IDENTIFY_DURATION_MS = 5000;
 
+// -----------------------------------------------------------------------------
+// One command at a time per rabbit. The rabbit runs one script at a time, and
+// a command decides from the state the previous one left: the pulse switch
+// turned on just after "LED off" must find the LED off, not light it again
+// with the color the rabbit had a second earlier.
+// -----------------------------------------------------------------------------
+
+function queued(rabbit, work) {
+  const run = () => work();
+  const result = (rabbit.commandQueue ?? Promise.resolve()).then(run, run);
+  rabbit.commandQueue = result.catch(() => {});
+  return result;
+}
+
+const oneAtATime =
+  (command) =>
+  (ctx, rabbit, ...args) =>
+    queued(rabbit, () => command(ctx, rabbit, ...args));
+
 /** What a rabbit is busy with while it wakes up or falls asleep. */
 export const TRANSITIONS = { WAKING: 'waking', FALLING_ASLEEP: 'falling_asleep' };
 
 // Waking up takes about 12 s on a real Karotz, falling asleep about 6 s, and
-// the rabbit answers only once it is over. Meanwhile the widget says what is
-// going on, and the reading loop leaves the rabbit alone (see app.js).
+// the rabbit answers only once it is over. Meanwhile the reading loop leaves
+// the rabbit alone (see app.js): a read would wait behind the script.
 async function inTransition(rabbit, transition, work) {
   rabbit.transition = transition;
   try {
@@ -34,43 +53,143 @@ async function inTransition(rabbit, transition, work) {
   }
 }
 
-export function wake(ctx, rabbit, { silent = true } = {}) {
-  return inTransition(rabbit, TRANSITIONS.WAKING, async () => {
+export const wake = oneAtATime((ctx, rabbit, { silent = true } = {}) =>
+  inTransition(rabbit, TRANSITIONS.WAKING, async () => {
+    const startedAt = Date.now();
     await rabbit.client.wakeup({ silent });
-    await restoreEars(ctx, rabbit);
     await ctx.refresh(rabbit);
-  });
-}
+    afterRecalibration(ctx, rabbit, startedAt);
+  }),
+);
 
-export function sleep(ctx, rabbit) {
-  return inTransition(rabbit, TRANSITIONS.FALLING_ASLEEP, async () => {
+export const sleep = oneAtATime((ctx, rabbit) =>
+  inTransition(rabbit, TRANSITIONS.FALLING_ASLEEP, async () => {
+    // The rabbit recalibrates its ears and lowers them: Gladys keeps the
+    // positions of the day, put back when it wakes up.
     await rabbit.client.sleep();
     await ctx.refresh(rabbit);
-  });
+  }),
+);
+
+// -----------------------------------------------------------------------------
+// Ears. The controller moves an ear to an absolute position (17 steps a turn,
+// the shortest way), counted from its last recalibration, which turns the ear
+// backwards to the gap of its encoder. The rabbit recalibrates by itself when
+// it wakes up, plays a mood or tells the time (OpenKarotz 210 scripts), and
+// answers `ears_reset`, `wakeup` without sound and `apps/clock` before the end
+// of it. A move sent meanwhile interrupts the recalibration and the ears lose
+// their zero (LapinLibre's ears-daemon, a rewrite of the Karotz one): every
+// move waits for the end, which the rabbit does not report.
+// -----------------------------------------------------------------------------
+
+const EARS_RECALIBRATION_MS = 8000;
+
+function recalibrating(rabbit, startedAt = Date.now()) {
+  rabbit.earsSettleAt = Math.max(rabbit.earsSettleAt ?? 0, startedAt + EARS_RECALIBRATION_MS);
+}
+
+async function earsSettled(ctx, rabbit) {
+  const wait = (rabbit.earsSettleAt ?? 0) - Date.now();
+  if (wait > 0) {
+    await ctx.sleepMs(wait);
+  }
 }
 
 /**
- * Put the ears back where Gladys last placed them. Waking up (and starting)
- * recalibrates them to 0: without this the rabbit and Gladys disagree, and
- * the rabbit forgets the position it had before the night. A failure is only
- * logged: the rabbit is awake, which is what was asked.
+ * The rabbit recalibrated its ears (waking up, a mood, the clock, a restart):
+ * they are at 0. Ears never placed are known from now on; the others go back
+ * where Gladys placed them once the recalibration is over, in the background,
+ * after the command that caused it has answered.
  */
-export async function restoreEars(ctx, rabbit) {
-  const { left, right } = rabbit.ears;
-  if (left === null || right === null || (left === 0 && right === 0)) {
+export function afterRecalibration(ctx, rabbit, startedAt = Date.now()) {
+  recalibrating(rabbit, startedAt);
+  if (rabbit.ears.left === null || rabbit.ears.right === null) {
+    rabbit.ears = { left: 0, right: 0 };
+    ctx
+      .publishStates(rabbit)
+      .catch((err) => ctx.logger.warn(`publishStates failed: ${err.message}`));
     return;
   }
-  await rabbit.client
-    .ears(left, right)
-    .catch((err) => ctx.logger.warn(`${rabbit.host}: ears not put back: ${err.message}`));
+  if (rabbit.ears.left === 0 && rabbit.ears.right === 0) {
+    return;
+  }
+  queued(rabbit, async () => {
+    await earsSettled(ctx, rabbit);
+    // Read now: a move asked in between is where they belong.
+    const { left, right } = rabbit.ears;
+    if (rabbit.status?.sleeping || (left === 0 && right === 0)) {
+      return;
+    }
+    await rabbit.client.ears(left, right);
+  }).catch((err) => ctx.logger.warn(`${rabbit.host}: ears not put back: ${err.message}`));
 }
+
+/**
+ * Give ears never placed (no memory of them) a known position: a
+ * recalibration, which ends at 0. Done once, on the first read of the rabbit.
+ */
+export const initEars = oneAtATime(async (ctx, rabbit) => {
+  if (rabbit.ears.left !== null && rabbit.ears.right !== null) {
+    return;
+  }
+  await rabbit.client.earsReset();
+  recalibrating(rabbit);
+  rabbit.ears = { left: 0, right: 0 };
+});
+
+export const moveEars = oneAtATime(async (ctx, rabbit, { left, right }) => {
+  const target = {
+    left: left ?? rabbit.ears.left ?? 0,
+    right: right ?? rabbit.ears.right ?? 0,
+  };
+  await earsSettled(ctx, rabbit);
+  if (target.left === 0 && target.right === 0) {
+    // Both at 0 is the rest position: the recalibration lands on it, where a
+    // move can stop a step away (the ear coasts past its zero).
+    await rabbit.client.earsReset();
+    recalibrating(rabbit);
+  } else {
+    await rabbit.client.ears(target.left, target.right);
+  }
+  rabbit.ears = target;
+  await ctx.publishStates(rabbit);
+});
+
+export const resetEars = oneAtATime(async (ctx, rabbit) => {
+  await rabbit.client.earsReset();
+  recalibrating(rabbit);
+  rabbit.ears = { left: 0, right: 0 };
+  await ctx.publishStates(rabbit);
+});
+
+export const randomEars = oneAtATime(async (ctx, rabbit) => {
+  await earsSettled(ctx, rabbit);
+  // ears_random recalibrates first, then moves.
+  recalibrating(rabbit);
+  const answer = await rabbit.client.earsRandom();
+  const left = Number.parseInt(answer.left, 10);
+  const right = Number.parseInt(answer.right, 10);
+  if (Number.isFinite(left) && Number.isFinite(right)) {
+    // OpenKarotz's `ears` hands the controller (right, left) and its
+    // `ears_random` (left, right): the random answer names the ears the other
+    // way round from `ears`, which the sliders drive. LapinLibre agrees with
+    // itself.
+    rabbit.ears =
+      rabbit.status?.system === SYSTEMS.LAPINLIBRE ? { left, right } : { left: right, right: left };
+    await ctx.publishStates(rabbit);
+  }
+});
+
+// -----------------------------------------------------------------------------
+// LED
+// -----------------------------------------------------------------------------
 
 /**
  * Set the LED. Every omitted value keeps what the LED shows, or, when it is
  * off, what it showed last (`lastLed`).
  * @param {{ color?: string|number, pulse?: boolean, speed?: number, color2?: string|number }} led
  */
-export async function setLed(ctx, rabbit, led = {}) {
+async function setLedNow(ctx, rabbit, led = {}) {
   const current = rabbit.status;
   const lit = current !== null && current.ledColor !== LED_OFF;
   await rabbit.client.leds({
@@ -82,59 +201,36 @@ export async function setLed(ctx, rabbit, led = {}) {
   await ctx.refresh(rabbit);
 }
 
+export const setLed = oneAtATime(setLedNow);
+
 /**
  * The LED pulse switch. While the LED is off it is a mode, kept for when the
  * LED comes back on: the switch keeps showing it, and the LED stays off.
  */
-export async function setLedPulse(ctx, rabbit, pulse) {
+export const setLedPulse = oneAtATime(async (ctx, rabbit, pulse) => {
   if (rabbit.status?.ledColor === LED_OFF) {
     rabbit.lastLed = { ...rabbit.lastLed, pulse };
+    ctx.logger.info(`${rabbit.host}: LED off, pulse ${pulse ? 'on' : 'off'} kept for later`);
     await ctx.publishStates(rabbit);
     return;
   }
-  await setLed(ctx, rabbit, { pulse });
-}
+  await setLedNow(ctx, rabbit, { pulse });
+});
 
-export async function switchLed(ctx, rabbit, on) {
+export const switchLed = oneAtATime(async (ctx, rabbit, on) => {
   if (on) {
     // Back to the last LED that was not "off": its color, and its mode.
-    await setLed(ctx, rabbit, { color: rabbit.lastLed.color, pulse: rabbit.lastLed.pulse });
+    await setLedNow(ctx, rabbit, { color: rabbit.lastLed.color, pulse: rabbit.lastLed.pulse });
   } else {
-    await setLed(ctx, rabbit, { color: LED_OFF, pulse: false });
+    await setLedNow(ctx, rabbit, { color: LED_OFF, pulse: false });
   }
-}
+});
 
-export async function moveEars(ctx, rabbit, { left, right }) {
-  const target = {
-    left: left ?? rabbit.ears.left ?? 0,
-    right: right ?? rabbit.ears.right ?? 0,
-  };
-  await rabbit.client.ears(target.left, target.right);
-  rabbit.ears = target;
-  await ctx.publishStates(rabbit);
-}
-
-export async function resetEars(ctx, rabbit) {
-  await rabbit.client.earsReset();
-  rabbit.ears = { left: 0, right: 0 };
-  await ctx.publishStates(rabbit);
-}
-
-export async function randomEars(ctx, rabbit) {
-  const answer = await rabbit.client.earsRandom();
-  const left = Number.parseInt(answer.left, 10);
-  const right = Number.parseInt(answer.right, 10);
-  if (Number.isFinite(left) && Number.isFinite(right)) {
-    rabbit.ears = { left, right };
-    await ctx.publishStates(rabbit);
-  }
-}
-
-export async function setVolume(ctx, rabbit, level) {
+export const setVolume = oneAtATime(async (ctx, rabbit, level) => {
   await rabbit.client.volume(level);
   rabbit.volume = Math.min(100, Math.max(0, Math.round(level)));
   await ctx.publishStates(rabbit);
-}
+});
 
 export function speak(ctx, rabbit, text, voice) {
   const sentence = String(text ?? '').trim();
@@ -144,13 +240,52 @@ export function speak(ctx, rabbit, text, voice) {
   return rabbit.client.tts(sentence, { voice: voice || ctx.config.tts_voice || undefined });
 }
 
+// -----------------------------------------------------------------------------
+// The player. OpenKarotz's `sound` script kills the player, waits one second,
+// and starts the new sound only if no player is left: one slower to quit (a
+// stream, a clip of Gladys' voice) makes it start nothing, and still answer
+// "0". Seen on a real Karotz (its log): a Gladys voice clip, then FIP 2 s
+// later, never heard. So the running player is asked to quit first, and the
+// sound starts once it is gone. `sound_control` answers "No sound currently
+// playing" when there is none: a harmless slave command is the probe.
+// -----------------------------------------------------------------------------
+
+const PLAYER_POLL_MS = 250;
+const PLAYER_POLLS = 8;
+const NO_PLAYER = /no sound currently playing/i;
+
+async function playerRunning(rabbit) {
+  try {
+    await rabbit.client.soundControl('get_time_pos');
+    return true;
+  } catch {
+    // No player, or asleep, or no answer: nothing to stop (the sound request
+    // itself reports a sleeping or silent rabbit).
+    return false;
+  }
+}
+
+async function stopPlayerFirst(ctx, rabbit) {
+  if (rabbit.status?.system === SYSTEMS.LAPINLIBRE || !(await playerRunning(rabbit))) {
+    return;
+  }
+  await rabbit.client.soundControl('quit').catch(() => {});
+  for (let poll = 0; poll < PLAYER_POLLS; poll += 1) {
+    await ctx.sleepMs(PLAYER_POLL_MS);
+    if (!(await playerRunning(rabbit))) {
+      return;
+    }
+  }
+}
+
 /** A sound of the rabbit by its id, or any http(s) stream / MP3 by its URL. */
-export function playSound(ctx, rabbit, sound) {
+export async function playSound(ctx, rabbit, sound) {
   const value = String(sound ?? '').trim();
   if (!value) {
     throw new KarotzError(ERROR_KINDS.REFUSED, 'No sound to play');
   }
   if (!/^https?:\/\//i.test(value)) {
+    await stopPlayerFirst(ctx, rabbit);
     return rabbit.client.playSound(value);
   }
   // OpenKarotz's player (mplayer, 2011) reads no HTTPS: it answers "ok" and
@@ -159,6 +294,7 @@ export function playSound(ctx, rabbit, sound) {
   if (/^https:/i.test(value) && rabbit.status?.system !== SYSTEMS.LAPINLIBRE) {
     throw new KarotzError(ERROR_KINDS.NO_HTTPS, `${rabbit.host} cannot play an https:// URL`);
   }
+  await stopPlayerFirst(ctx, rabbit);
   return rabbit.client.playUrl(value);
 }
 
@@ -183,9 +319,30 @@ export async function playNotification(ctx, rabbit, url) {
   }
 }
 
-export const stopSound = (ctx, rabbit) => rabbit.client.soundControl('quit');
-export const playMood = (ctx, rabbit, id) => rabbit.client.mood(id);
-export const sayTime = (ctx, rabbit) => rabbit.client.clock();
+/** Stop the player. Nothing playing is not a failure: it is already stopped. */
+export async function stopSound(ctx, rabbit) {
+  try {
+    return await rabbit.client.soundControl('quit');
+  } catch (err) {
+    if (NO_PLAYER.test(err.message)) {
+      return undefined;
+    }
+    throw err;
+  }
+}
+// A mood recalibrates the ears before it plays, the clock after it spoke.
+export const playMood = oneAtATime(async (ctx, rabbit, id) => {
+  const startedAt = Date.now();
+  const answer = await rabbit.client.mood(id);
+  afterRecalibration(ctx, rabbit, startedAt);
+  return answer;
+});
+
+export const sayTime = oneAtATime(async (ctx, rabbit) => {
+  const answer = await rabbit.client.clock();
+  afterRecalibration(ctx, rabbit);
+  return answer;
+});
 export const reboot = (ctx, rabbit) => rabbit.client.reboot();
 
 /**
@@ -209,7 +366,7 @@ export async function takeSnapshot(ctx, rabbit, { silent = true } = {}) {
   rabbit.photoShown = null;
   if (ctx.config.camera && jpeg.length <= CAMERA_IMAGE_MAX_BYTES) {
     await ctx.gladys
-      .publishCameraImage(cameraIds(ctx.gladys, rabbit).device, `image/jpg;base64,${base64}`)
+      .publishCameraImage(rabbitIds(ctx.gladys, rabbit).device, `image/jpg;base64,${base64}`)
       .catch((err) => ctx.logger.warn(`publishCameraImage failed: ${err.message}`));
   }
   return { filename, base64, bytes: jpeg.length };
@@ -231,18 +388,21 @@ export async function clearSnapshots(ctx, rabbit) {
 
 /**
  * Make the rabbit signal itself: blue pulsing LED and moving ears for a few
- * seconds, then back to its previous LED.
+ * seconds, then back to its previous LED and ears.
  */
-export async function identify(ctx, rabbit) {
+export const identify = oneAtATime(async (ctx, rabbit) => {
   const before = rabbit.status
     ? { color: rabbit.status.ledColor, pulse: rabbit.status.ledPulse }
     : { ...rabbit.lastLed };
+  await earsSettled(ctx, rabbit);
   await rabbit.client.leds({ color: IDENTIFY_COLOR, pulse: true, speed: 300 });
   await rabbit.client.earsRandom().catch(() => {});
   await ctx.sleepMs(IDENTIFY_DURATION_MS);
   await rabbit.client.leds(before);
   await rabbit.client.earsReset().catch(() => {});
-}
+  // Then back where Gladys had them.
+  afterRecalibration(ctx, rabbit);
+});
 
 /** Bilingual, user-facing reading of a failure (toasts, action messages). */
 export function describeError(err) {

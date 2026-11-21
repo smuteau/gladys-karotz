@@ -160,10 +160,10 @@
         "es": "Cámara"
       },
       "description": {
-        "en": "Add a camera device per rabbit. On OpenKarotz, every picture is also kept on the rabbit's small storage: delete them from time to time with the camera widget.",
-        "fr": "Ajoute un appareil caméra par lapin. Sous OpenKarotz, chaque photo reste aussi sur le petit stockage du lapin : effacez-les de temps en temps avec le widget caméra.",
-        "de": "Fügt pro Hase ein Kameragerät hinzu. Unter OpenKarotz bleibt jedes Foto auch auf dem kleinen Speicher des Hasen: Löschen Sie sie von Zeit zu Zeit mit dem Kamera-Widget.",
-        "es": "Añade un dispositivo de cámara por conejo. Con OpenKarotz, cada foto se queda también en el pequeño almacenamiento del conejo: bórrelas de vez en cuando con el widget de cámara."
+        "en": "Gives each rabbit a camera (a feature of its device), for Gladys' Camera widget and scene actions. On OpenKarotz, every picture is also kept on the rabbit's small storage: delete them from time to time with the photos widget.",
+        "fr": "Donne une caméra à chaque lapin (une fonctionnalité de son appareil), pour le widget Caméra et les actions de scène de Gladys. Sous OpenKarotz, chaque photo reste aussi sur le petit stockage du lapin : effacez-les de temps en temps avec le widget photos.",
+        "de": "Gibt jedem Hasen eine Kamera (eine Funktion seines Geräts), für das Kamera-Widget und die Szenenaktionen von Gladys. Unter OpenKarotz bleibt jedes Foto auch auf dem kleinen Speicher des Hasen: Löschen Sie sie von Zeit zu Zeit mit dem Foto-Widget.",
+        "es": "Da una cámara a cada conejo (una función de su dispositivo), para el widget Cámara y las acciones de escena de Gladys. Con OpenKarotz, cada foto se queda también en el pequeño almacenamiento del conejo: bórrelas de vez en cuando con el widget de fotos."
       },
       "required": false,
       "default": true
