@@ -8,7 +8,8 @@
 // -----------------------------------------------------------------------------
 
 import * as commands from './commands.js';
-import { looksLikeStatus, parseStatus } from './rabbits.js';
+import { ERROR_KINDS } from './karotz/client.js';
+import { firmwareLabel, looksLikeStatus, parseStatus } from './rabbits.js';
 
 /** Every user-facing text exists in these languages. */
 export const LANGUAGES = ['en', 'fr', 'de', 'es'];
@@ -77,11 +78,19 @@ export async function findLocalSubnets(ctx) {
   return subnetsOf(addresses).slice(0, MAX_SUBNETS);
 }
 
+// The search sends NO password: it asks 254 addresses, and a camera or a
+// router that asks for a login must not receive the password of a rabbit.
+// An address that asks for one on /cgi-bin/status is only reported, as a
+// possible LapinLibre or Terrier OS rabbit.
 async function probe(fetchImpl, ip) {
   try {
     const response = await fetchImpl(`http://${ip}/cgi-bin/status`, {
       signal: AbortSignal.timeout(SCAN_TIMEOUT_MS),
     });
+    if (response.status === 401) {
+      await response.body?.cancel().catch(() => {});
+      return { ip, locked: true };
+    }
     if (!response.ok) {
       return null;
     }
@@ -111,7 +120,22 @@ export async function scanSubnet(fetchImpl, subnet) {
   return found.sort((x, y) => x.ip.localeCompare(y.ip, undefined, { numeric: true }));
 }
 
-function describeRabbit(rabbit) {
+function describeRabbit(ctx, rabbit) {
+  if (!rabbit.online && rabbit.lastErrorKind === ERROR_KINDS.AUTH) {
+    return ctx.config.passwords.length === 0
+      ? {
+          en: `${rabbit.host}: asks for a web password`,
+          fr: `${rabbit.host} : demande un mot de passe web`,
+          de: `${rabbit.host}: verlangt ein Web-Passwort`,
+          es: `${rabbit.host}: pide una contraseña web`,
+        }
+      : {
+          en: `${rabbit.host}: web password refused`,
+          fr: `${rabbit.host} : mot de passe web refusé`,
+          de: `${rabbit.host}: Web-Passwort abgelehnt`,
+          es: `${rabbit.host}: contraseña web rechazada`,
+        };
+  }
   if (!rabbit.online) {
     return {
       en: `${rabbit.host}: no answer`,
@@ -120,13 +144,13 @@ function describeRabbit(rabbit) {
       es: `${rabbit.host}: sin respuesta`,
     };
   }
-  const version = rabbit.status.version ?? '?';
+  const firmware = firmwareLabel(rabbit.status);
   const sleeping = rabbit.status.sleeping;
   return {
-    en: `${rabbit.host}: OpenKarotz ${version}, ${sleeping ? 'asleep' : 'awake'}`,
-    fr: `${rabbit.host} : OpenKarotz ${version}, ${sleeping ? 'endormi' : 'réveillé'}`,
-    de: `${rabbit.host}: OpenKarotz ${version}, ${sleeping ? 'schläft' : 'wach'}`,
-    es: `${rabbit.host}: OpenKarotz ${version}, ${sleeping ? 'dormido' : 'despierto'}`,
+    en: `${rabbit.host}: ${firmware}, ${sleeping ? 'asleep' : 'awake'}`,
+    fr: `${rabbit.host} : ${firmware}, ${sleeping ? 'endormi' : 'réveillé'}`,
+    de: `${rabbit.host}: ${firmware}, ${sleeping ? 'schläft' : 'wach'}`,
+    es: `${rabbit.host}: ${firmware}, ${sleeping ? 'dormido' : 'despierto'}`,
   };
 }
 
@@ -172,7 +196,7 @@ export const ACTIONS = {
       });
     }
     await ctx.readAll();
-    const lines = ctx.rabbits.map(describeRabbit);
+    const lines = ctx.rabbits.map((rabbit) => describeRabbit(ctx, rabbit));
     const message = Object.fromEntries(LANGUAGES.map((lang) => [lang, join(lines, lang)]));
     // One silent rabbit is enough to make the test a failure.
     if (ctx.rabbits.some((rabbit) => !rabbit.online)) {
@@ -219,15 +243,40 @@ export const ACTIONS = {
         es: `Ningún conejo ha respondido en ${searched}. ¿Está encendido, se puede abrir su página web?`,
       });
     }
-    const list = found
-      .map(({ ip, status }) => `${ip} (OpenKarotz ${status.version ?? '?'})`)
+    const rabbits = found
+      .filter((hit) => !hit.locked)
+      .map(({ ip, status }) => `${ip} (${firmwareLabel(status)})`)
       .join(', ');
-    return {
-      en: `Found: ${list}. Copy the address into "Rabbit addresses" and save.`,
-      fr: `Trouvé : ${list}. Copiez l'adresse dans « Adresses des lapins » et enregistrez.`,
-      de: `Gefunden: ${list}. Kopieren Sie die Adresse in „Adressen der Hasen“ und speichern Sie.`,
-      es: `Encontrado: ${list}. Copie la dirección en «Direcciones de los conejos» y guarde.`,
-    };
+    const locked = found
+      .filter((hit) => hit.locked)
+      .map(({ ip }) => ip)
+      .join(', ');
+    const parts = [];
+    if (rabbits) {
+      parts.push({
+        en: `Found: ${rabbits}.`,
+        fr: `Trouvé : ${rabbits}.`,
+        de: `Gefunden: ${rabbits}.`,
+        es: `Encontrado: ${rabbits}.`,
+      });
+    }
+    if (locked) {
+      parts.push({
+        en: `Asks for a password, maybe a LapinLibre or Terrier OS rabbit: ${locked}.`,
+        fr: `Demande un mot de passe, peut-être un lapin LapinLibre ou Terrier OS : ${locked}.`,
+        de: `Verlangt ein Passwort, vielleicht ein Hase mit LapinLibre oder Terrier OS: ${locked}.`,
+        es: `Pide una contraseña, quizá un conejo con LapinLibre o Terrier OS: ${locked}.`,
+      });
+    }
+    parts.push({
+      en: 'Copy the address into "Rabbit addresses" and save.',
+      fr: "Copiez l'adresse dans « Adresses des lapins » et enregistrez.",
+      de: 'Kopieren Sie die Adresse in „Adressen der Hasen“ und speichern Sie.',
+      es: 'Copie la dirección en «Direcciones de los conejos» y guarde.',
+    });
+    return Object.fromEntries(
+      LANGUAGES.map((lang) => [lang, parts.map((part) => part[lang]).join(' ')]),
+    );
   },
 
   async identify(ctx, fields) {

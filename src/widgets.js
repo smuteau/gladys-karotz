@@ -15,7 +15,7 @@
 import { WIDGET_COLORS } from '@gladysassistant/integration-sdk';
 import * as commands from './commands.js';
 import { FEATURES, rabbitIds } from './devices.js';
-import { rabbitName } from './rabbits.js';
+import { firmwareLabel, rabbitName } from './rabbits.js';
 
 export const WIDGET_KEYS = { RABBIT: 'karotz', CAMERA: 'karotz_camera' };
 
@@ -90,7 +90,7 @@ function rabbitContent(ctx, rabbit) {
     items.push({
       label: { en: 'Firmware', fr: 'Firmware', de: 'Firmware', es: 'Firmware' },
       icon: 'cpu',
-      value: rabbit.status.version.slice(0, 40),
+      value: firmwareLabel(rabbit.status).slice(0, 40),
       color: WIDGET_COLORS.NEUTRAL,
     });
   }

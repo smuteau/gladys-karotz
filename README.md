@@ -1,13 +1,21 @@
-# OpenKarotz / Free Rabbits for Gladys Assistant
+# Karotz for Gladys Assistant
 
 An **external integration** for [Gladys Assistant](https://gladysassistant.com)
 that drives a [Karotz](https://en.wikipedia.org/wiki/Karotz) rabbit over the
 local network: speech, sounds and web radios, belly LED, ears, webcam, sleep,
 RFID tags.
 
-The rabbit must run **OpenKarotz**, either on the original firmware or on top
-of [Free Rabbits OS](https://www.freerabbits.nl/fros/) (FROS). Everything is
-local: no account, no cloud, works in any country.
+The rabbit must serve the **OpenKarotz API**, which three systems do:
+
+- **OpenKarotz**, on the original firmware or on top of
+  [Free Rabbits OS](https://www.freerabbits.nl/fros/) (FROS);
+- **[LapinLibre](https://github.com/sweetlilmre/LapinLibre)**, a Karotz system
+  built from source, with an OpenKarotz-compatible API and an optional web
+  password;
+- **[Terrier OS](https://terrier.cyberloutre.fr/karotz)**, a LapinLibre with
+  WPA3 and the client of Le Terrier built in: the safest of the three.
+
+Everything is local: no account, no cloud, works in any country.
 
 > User documentation: [English](docs/en.md) · [Français](docs/fr.md) ·
 > [Deutsch](docs/de.md) · [Español](docs/es.md)
@@ -52,7 +60,9 @@ MAC address, in `/cgi-bin/status`. Hence:
   container sits on a Docker bridge and cannot see it, so Gladys runs an SSDP
   search from the host and the answering neighbours give the /24 away), asks
   its 254 addresses for an OpenKarotz status, and lists the rabbits that
-  answered. The network can still be typed when nothing answers SSDP;
+  answered. An address that asks for a password is listed apart, as a possible
+  LapinLibre or Terrier OS rabbit: the search never sends the password. The
+  network can still be typed when nothing answers SSDP;
 - the device identifier is the **MAC address**, so a rabbit keeps its history,
   scenes and dashboards when its IP address changes.
 
@@ -67,8 +77,12 @@ MAC address, in `/cgi-bin/status`. Hence:
   deletes them all.
 - **A sleeping rabbit refuses** LED, ears, sounds and speech. The command fails
   with an explicit message; wake it up first.
-- The OpenKarotz API has **no authentication**: keep the rabbit on a network
+- The OpenKarotz API has **no authentication**; LapinLibre and Terrier OS add
+  an HTTP Basic password, but over plain HTTP. Keep the rabbit on a network
   you trust (see [SECURITY.md](SECURITY.md)).
+- **Speech on LapinLibre and Terrier OS** needs a speech server set on the
+  rabbit (`SERVER=` or `TTS_SERVER=` in `lapinlibre.txt`); without one the
+  rabbit refuses, and the integration says so.
 
 ## Project structure
 
@@ -103,7 +117,7 @@ Run it against a Gladys instance:
 ```bash
 GLADYS_HOST_API_URL="http://localhost:1443" \
 GLADYS_INTEGRATION_TOKEN="<token>" \
-GLADYS_INTEGRATION_SELECTOR="openkarotz-freerabbits" \
+GLADYS_INTEGRATION_SELECTOR="karotz" \
 LOG_LEVEL=debug \
 npm start
 ```
@@ -120,17 +134,21 @@ Built from the official
 [Gladys integration template](https://github.com/GladysAssistant/integration-template-js);
 the code of the integration itself is written from scratch.
 
-It stands on the work of two projects:
+It stands on the work of these projects:
 
 - [Free Rabbits](https://www.freerabbits.nl)
   ([FreeRabbits/KarotzFiles](https://github.com/FreeRabbits/KarotzFiles)) —
   Free Rabbits OS, which keeps the rabbits alive today, and the
   text-to-speech service the rabbit speaks with;
 - **OpenKarotz** (Massalia), which wrote the HTTP API this integration talks
-  to. Its website has been offline for some time.
+  to. Its website has been offline for some time;
+- [LapinLibre](https://github.com/sweetlilmre/LapinLibre), a free Karotz
+  system that keeps that API, documented down to its refusals;
+- [Le Terrier](https://terrier.cyberloutre.fr), whose Terrier OS is a
+  LapinLibre with WPA3.
 
-Not affiliated with Violet, Mindscape, Aldebaran, OpenKarotz or Free Rabbits.
-Karotz is a trademark of its owner.
+Not affiliated with Violet, Mindscape, Aldebaran, OpenKarotz, Free Rabbits,
+LapinLibre or Le Terrier. Karotz is a trademark of its owner.
 
 ## License
 

@@ -42,8 +42,21 @@ restart it, with or without this integration. Keep the rabbit on a network you
 trust and never expose its web page to the Internet. That is a property of the
 rabbit's firmware, not a vulnerability of this integration.
 
-The integration itself stores no secret, only talks to the hosts typed in its
-configuration, and its network search is limited to private address ranges.
-To work out which range that is, it asks Gladys for one SSDP search (declared
-in the manifest and shown on the install screen) and only keeps the addresses
-of the devices that answered; nothing about them is stored.
+LapinLibre and Terrier OS can protect the same API with a web password (HTTP
+Basic, user `admin`) and only answer private addresses. The request still
+travels in plain HTTP, so the password can be read by anyone who can watch the
+local network between Gladys and the rabbit; WPA3 protects it over the air
+only.
+
+The integration keeps that password in a `secret` field of its configuration:
+Gladys never sends it back to the browser once saved and stores it as-is in its
+database, like any setting. The integration never logs it, sends it only to
+the hosts typed in its configuration, and to each of them only after it asked
+for a password: a rabbit without one never receives it.
+
+It only talks to the hosts typed in its configuration, and its network search
+is limited to private address ranges. To work out which range that is, it asks
+Gladys for one SSDP search (declared in the manifest and shown on the install
+screen) and only keeps the addresses of the devices that answered; nothing
+about them is stored. The search sends no password: an address that asks for
+one is only reported as a possible rabbit.

@@ -1,8 +1,8 @@
 {
-  "name": "gladys-openkarotz-freerabbits",
+  "name": "gladys-karotz",
   "version": "0.1.0",
   "private": true,
-  "description": "Gladys Assistant external integration for Karotz rabbits running OpenKarotz / Free Rabbits OS.",
+  "description": "Gladys Assistant external integration for Karotz rabbits running OpenKarotz (stock firmware or Free Rabbits OS), LapinLibre or Terrier OS.",
   "type": "module",
   "main": "index.js",
   "scripts": {

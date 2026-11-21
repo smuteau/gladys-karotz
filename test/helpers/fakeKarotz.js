@@ -1,6 +1,8 @@
 // -----------------------------------------------------------------------------
-// An in-memory Karotz: a `fetch` that answers like the OpenKarotz CGI scripts.
-// Tests never touch the network.
+// An in-memory Karotz: a `fetch` that answers like the OpenKarotz CGI scripts,
+// or, with `system: 'lapinlibre'`, like LapinLibre (and Terrier OS): its
+// status object, its refusal messages, and its web password when `password`
+// is set. Tests never touch the network.
 // -----------------------------------------------------------------------------
 
 import { createFakeGladys } from '@gladysassistant/integration-sdk/testing';
@@ -15,6 +17,14 @@ export const MAC = 'aabbccddeeff';
 export function createFakeKarotz(overrides = {}) {
   const rabbit = {
     online: true,
+    // 'openkarotz' or 'lapinlibre'.
+    system: 'openkarotz',
+    // LapinLibre's web password; null = no login asked.
+    password: null,
+    // LapinLibre: false = no speech server for the rabbit's language.
+    speechServer: true,
+    // LapinLibre: another request holds the rabbit.
+    busy: false,
     sleeping: false,
     ledColor: '00FF00',
     ledPulse: '0',
@@ -22,20 +32,26 @@ export function createFakeKarotz(overrides = {}) {
     tags: [],
     snapshots: 0,
     jpeg: JPEG,
-    // Every request received: `{ path, params }`.
+    // Every request received: `{ path, params, authorization }`.
     calls: [],
     ...overrides,
   };
+  const lapinLibre = () => rabbit.system === 'lapinlibre';
 
   const json = (body) => new Response(JSON.stringify(body), { status: 200 });
   const ok = (extra = {}) => json({ ...extra, return: '0' });
   const refused = (msg) => json({ return: '1', msg });
-  const asleep = () => refused('Unable to perform action, rabbit is sleeping.');
+  const asleep = () =>
+    refused(
+      lapinLibre()
+        ? 'the rabbit is asleep: wake it up first'
+        : 'Unable to perform action, rabbit is sleeping.',
+    );
 
   const handlers = {
     status: () =>
       json({
-        version: '2.0.5',
+        version: lapinLibre() ? '4f2c1a0 (0.2.0)' : '2.0.5',
         ears_disabled: '0',
         sleep: rabbit.sleeping ? '1' : '0',
         sleep_time: '0',
@@ -52,7 +68,17 @@ export function createFakeKarotz(overrides = {}) {
         nb_stories: '0',
         karotz_percent_used_space: '36',
         usb_percent_used_space: '',
-        data_dir: '/usr/openkarotz',
+        data_dir: lapinLibre() ? '/usr/etc/conf/web' : '/usr/openkarotz',
+        ...(lapinLibre()
+          ? {
+              lapinlibre: {
+                build: '0.2.0',
+                build_id: '4f2c1a0',
+                speech_server: rabbit.speechServer ? 'http://192.168.1.10:8081' : '',
+                web_user: rabbit.password ? 'admin' : '',
+              },
+            }
+          : {}),
       }),
     wakeup() {
       rabbit.sleeping = false;
@@ -76,8 +102,20 @@ export function createFakeKarotz(overrides = {}) {
     ears: (params) => (rabbit.sleeping ? asleep() : ok({ left: params.left, right: params.right })),
     ears_reset: () => ok(),
     ears_random: () => ok({ left: '3', right: '11' }),
-    // The Python script of some firmwares answers a boolean.
-    tts: () => (rabbit.sleeping ? json({ return: false }) : json({ return: true, played: true })),
+    tts() {
+      if (lapinLibre()) {
+        if (rabbit.sleeping) {
+          return asleep();
+        }
+        return rabbit.speechServer
+          ? ok({ played: true })
+          : refused(
+              'no speech server is set for fr-FR: set SERVER= (or TTS_SERVER=) in lapinlibre.txt',
+            );
+      }
+      // The Python script of some firmwares answers a boolean.
+      return rabbit.sleeping ? json({ return: false }) : json({ return: true, played: true });
+    },
     sound: () => (rabbit.sleeping ? asleep() : ok()),
     sound_control: () => ok(),
     'apps/moods': (params) => ok({ moods: params.id ?? '42' }),
@@ -101,14 +139,31 @@ export function createFakeKarotz(overrides = {}) {
     rfid_list_ext: () => ok({ tags: rabbit.tags }),
   };
 
-  rabbit.fetch = async (input) => {
+  // The endpoints LapinLibre runs through its lock (`web_hardware`).
+  const HARDWARE = new Set(['leds', 'ears', 'ears_random', 'ears_reset', 'tts', 'sound']);
+
+  rabbit.fetch = async (input, init = {}) => {
     const url = new URL(String(input));
     if (!rabbit.online || url.host !== (rabbit.host ?? HOST)) {
       throw new TypeError('fetch failed');
     }
     const path = url.pathname.replace('/cgi-bin/', '');
     const params = Object.fromEntries(url.searchParams);
-    rabbit.calls.push({ path, params });
+    const authorization = init.headers?.Authorization ?? null;
+    rabbit.calls.push({ path, params, authorization });
+    // httpd checks the login before running any script.
+    if (rabbit.password !== null) {
+      const expected = `Basic ${Buffer.from(`admin:${rabbit.password}`).toString('base64')}`;
+      if (authorization !== expected) {
+        return new Response('<HTML><BODY><H1>401 Unauthorized</H1></BODY></HTML>', {
+          status: 401,
+          headers: { 'WWW-Authenticate': 'Basic realm="Web Server Authentication"' },
+        });
+      }
+    }
+    if (lapinLibre() && rabbit.busy && HARDWARE.has(path)) {
+      return refused('the rabbit is busy with another request: try again');
+    }
     const handler = handlers[path];
     return handler ? handler(params) : new Response('Not found', { status: 404 });
   };

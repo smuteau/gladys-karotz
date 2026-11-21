@@ -229,6 +229,54 @@ test('widget actions answer a toast, also when the rabbit refuses', async () => 
   assert.equal(ack.success, true, 'a sleeping rabbit is a message, not a failure');
 });
 
+test('a LapinLibre or Terrier OS rabbit behind its web password is driven the same way', async () => {
+  const karotz = createFakeKarotz({ system: 'lapinlibre', password: 'carrot-2026' });
+  const { gladys } = await createTestApp({
+    karotz,
+    config: { web_password: 'other-rabbit carrot-2026' },
+  });
+  const [device] = gladys.fake.discoveredDevices;
+  // Same MAC, so the same device as under OpenKarotz.
+  assert.equal(device.external_id, RABBIT);
+  assert.deepEqual(
+    device.params.find((p) => p.name === 'FIRMWARE_VERSION'),
+    {
+      name: 'FIRMWARE_VERSION',
+      value: 'LapinLibre 4f2c1a0 (0.2.0)',
+    },
+  );
+  assert.equal(gladys.fake.connectionStatus.connected, true);
+
+  const ack = await gladys.fake.action('test_connection', {});
+  assert.equal(ack.success, true);
+  assert.match(JSON.stringify(ack.data), /LapinLibre 4f2c1a0 \(0\.2\.0\), awake/);
+
+  // Its own refusals reach the user translated.
+  karotz.speechServer = false;
+  const spoken = await gladys.fake.sceneAction('speak', { text: 'Bonjour' });
+  assert.equal(spoken.success, false);
+  const toast = await gladys.fake.widgetAction(
+    'karotz',
+    'speak',
+    {},
+    { settings: {}, values: { text: 'Bonjour' } },
+  );
+  assert.match(JSON.stringify(toast), /serveur de synthèse vocale/);
+});
+
+test('a rabbit that refuses the web password is reported as such', async () => {
+  const karotz = createFakeKarotz({ system: 'lapinlibre', password: 'carrot-2026' });
+  const { gladys } = await createTestApp({ karotz, config: { web_password: 'wrong-pass' } });
+  assert.deepEqual(gladys.fake.discoveredDevices, []);
+  assert.equal(gladys.fake.connectionStatus.connected, false);
+  assert.match(JSON.stringify(gladys.fake.connectionStatus), /web password/);
+
+  const ack = await gladys.fake.action('test_connection', {});
+  assert.equal(ack.success, false);
+  assert.match(ack.error.fr, /mot de passe web refusé/);
+  assert.doesNotMatch(JSON.stringify(ack.error), /wrong-pass|carrot-2026/);
+});
+
 test('configuration buttons succeed (green) when the operation worked', async () => {
   const { gladys, karotz } = await createTestApp();
 

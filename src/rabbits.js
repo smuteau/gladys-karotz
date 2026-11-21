@@ -10,6 +10,14 @@
 
 import { ERROR_KINDS } from './karotz/client.js';
 
+// What serves the API. Free Rabbits OS runs OpenKarotz; Terrier OS is a
+// LapinLibre and answers as one.
+export const SYSTEMS = {
+  OPENKAROTZ: 'OpenKarotz',
+  LAPINLIBRE: 'LapinLibre',
+};
+
+// LapinLibre always answers this `eth_mac`: it has no Ethernet source.
 const EMPTY_MAC = '000000000000';
 const DEFAULT_LED_COLOR = '00FF00';
 export const LED_OFF = '000000';
@@ -40,8 +48,11 @@ export function parseStatus(raw = {}) {
   const ledColor = /^[0-9a-f]{6}$/i.test(raw.led_color ?? '')
     ? raw.led_color.toUpperCase()
     : DEFAULT_LED_COLOR;
+  // LapinLibre (and Terrier OS, built on it) adds its own status object.
+  const lapinLibre = raw.lapinlibre !== null && typeof raw.lapinlibre === 'object';
   return {
     mac: normalizeMac(raw.wlan_mac) ?? normalizeMac(raw.eth_mac),
+    system: lapinLibre ? SYSTEMS.LAPINLIBRE : SYSTEMS.OPENKAROTZ,
     version: typeof raw.version === 'string' && raw.version !== '0' ? raw.version : null,
     sleeping: String(raw.sleep) === '1',
     ledColor,
@@ -54,6 +65,11 @@ export function parseStatus(raw = {}) {
     soundCount: toInteger(raw.nb_sounds),
     moodCount: toInteger(raw.nb_moods),
   };
+}
+
+/** `OpenKarotz 2.0.5`, `LapinLibre 4f2c1a0 (0.2.0)`: what serves the API, and its version. */
+export function firmwareLabel(status) {
+  return `${status?.system ?? SYSTEMS.OPENKAROTZ} ${status?.version ?? '?'}`;
 }
 
 /** Does this answer look like an OpenKarotz status? Used by the network search. */
@@ -75,6 +91,8 @@ export function createRabbit(host, client) {
     online: null,
     status: null,
     lastError: null,
+    // ERROR_KINDS of the last failed read: tells a wrong password from silence.
+    lastErrorKind: null,
     // null until checked; `false` on the stock OpenKarotz.
     hasVolume: null,
     volume: null,
@@ -115,12 +133,14 @@ export async function readRabbit(rabbit) {
   } catch (err) {
     rabbit.online = false;
     rabbit.lastError = err.message;
+    rabbit.lastErrorKind = err.kind ?? null;
     changes.wentOffline = wasOnline === true;
     return changes;
   }
 
   rabbit.online = true;
   rabbit.lastError = null;
+  rabbit.lastErrorKind = null;
   rabbit.status = status;
   changes.wentOnline = wasOnline === false;
   // A transition needs a baseline: the first read never fires anything.

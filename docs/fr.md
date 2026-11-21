@@ -1,14 +1,24 @@
-# OpenKarotz / Free Rabbits
+# Karotz
 
 Pilotez votre lapin Karotz depuis Gladys, en local : voix, sons et webradios,
 LED, oreilles, caméra, sommeil et tags RFID. Pas de compte, pas de cloud.
 
 ## Avant de commencer
 
-- Votre Karotz doit faire tourner **OpenKarotz**, sur le firmware d'origine ou
-  par-dessus [Free Rabbits OS](https://www.freerabbits.nl/fros/). Vérification
-  rapide : ouvrez `http://<adresse-du-lapin>/` dans un navigateur, vous devez
-  voir la page web d'OpenKarotz.
+- Votre Karotz doit faire tourner l'un de ces systèmes :
+  - **Terrier OS** ([guide d'installation](https://terrier.cyberloutre.fr/karotz)),
+    construit sur LapinLibre. C'est le choix le plus sûr : Wi-Fi WPA3, SSH par
+    clé seulement, page web protégée par un mot de passe ;
+  - **[LapinLibre](https://github.com/sweetlilmre/LapinLibre)**, un système
+    libre pour le Karotz, recompilé depuis ses sources ;
+  - **OpenKarotz**, sur le firmware d'origine ou par-dessus
+    [Free Rabbits OS](https://www.freerabbits.nl/fros/) (WPA2 seulement).
+
+  Les trois exposent la même API locale, celle d'OpenKarotz : l'intégration
+  les pilote de la même façon. Vérification rapide : ouvrez
+  `http://<adresse-du-lapin>/` dans un navigateur, vous devez voir la page web
+  du lapin.
+
 - Le lapin et Gladys doivent être sur le **même réseau local**.
 - Donnez au lapin une **adresse IP fixe** (Free Rabbits OS ne gère de toute
   façon que cela), ou réservez-la dans votre box.
@@ -18,7 +28,12 @@ LED, oreilles, caméra, sommeil et tags RFID. Pas de compte, pas de cloud.
 1. Ouvrez l'onglet **Configuration** de l'intégration.
 2. Saisissez l'**adresse du lapin** : son adresse IP (ex. `192.168.1.70`) ou
    son nom d'hôte. Plusieurs lapins : séparez-les par des virgules.
-3. Enregistrez, puis ouvrez l'onglet **Découverte** : le lapin apparaît, ainsi
+3. **LapinLibre ou Terrier OS** : saisissez le **mot de passe web**, celui que
+   la page web du lapin demande (utilisateur `admin`). Terrier OS l'écrit dans
+   `web-password.txt` sur sa clé USB d'installation. Plusieurs lapins avec des
+   mots de passe différents : séparez-les par des espaces. Laissez le champ
+   vide pour OpenKarotz.
+4. Enregistrez, puis ouvrez l'onglet **Découverte** : le lapin apparaît, ainsi
    que sa caméra. Ajoutez-les.
 
 Vous ne connaissez pas son adresse ? Un Karotz ne s'annonce pas sur le réseau,
@@ -27,6 +42,11 @@ sans rien saisir : Gladys repère votre réseau local grâce aux appareils qui s
 annoncent (box, téléviseur, NAS…), puis l'intégration interroge ses 254
 adresses et liste les lapins qui ont répondu. Copiez l'adresse trouvée dans le
 champ, enregistrez.
+
+La recherche n'envoie jamais votre mot de passe aux appareils du réseau. Un
+lapin LapinLibre ou Terrier OS protégé par un mot de passe apparaît donc à
+part, comme une adresse qui « demande un mot de passe » : ajoutez-la, puis
+utilisez **Tester la connexion**.
 
 Si le réseau n'a pas pu être déterminé, le bouton vous le dit : saisissez alors
 les trois premiers nombres de vos adresses locales (ex. `192.168.1`) dans le
@@ -116,20 +136,39 @@ Avec plusieurs lapins, choisissez lequel afficher dans les réglages du widget.
   réagit à un tag en appelant une adresse web depuis le lapin, et une
   intégration Gladys ne peut pas être appelée de cette façon. Le déclencheur
   disponible concerne l'enregistrement d'un _nouveau_ tag.
-- **Chaque photo reste sur le lapin**, dont le stockage est petit. Effacez-les
-  de temps en temps avec le bouton du widget caméra.
+- **Sous OpenKarotz, chaque photo reste sur le lapin**, dont le stockage est
+  petit. Effacez-les de temps en temps avec le bouton du widget caméra. Sous
+  LapinLibre et Terrier OS, le lapin garde les 10 dernières en mémoire et les
+  oublie à son redémarrage.
 - **Un lapin endormi refuse** LED, oreilles, sons et voix : réveillez-le
   d'abord (dans une scène, commencez par l'action « Contrôler un appareil »).
 - La voix dépend du service de synthèse configuré dans votre lapin, qui a
   besoin d'Internet : si le lapin ne parle plus, testez depuis sa page web.
+  Sous LapinLibre et Terrier OS, ce serveur se règle dans `lapinlibre.txt`
+  (`SERVER=` ou `TTS_SERVER=`) : sans lui, le lapin refuse de parler et
+  l'intégration vous le dit.
+- **L'API du lapin parle en HTTP simple**, quel que soit son système. Sous
+  LapinLibre et Terrier OS, le mot de passe web passe donc lisible sur votre
+  réseau local : le WPA3 le protège sur le Wi-Fi, pas sur le câble entre la
+  box et Gladys. Gardez le lapin sur un réseau de confiance.
+- **Un Karotz sous Terrier OS reste un lapin du Terrier** : Le Terrier et
+  Gladys peuvent le piloter en même temps. S'ils lui parlent au même instant,
+  il répond qu'il est occupé : réessayez.
 
 ## Dépannage
 
 - **« Pas de réponse »** — le lapin est-il allumé ? Sa page web s'ouvre-t-elle
   depuis un ordinateur du même réseau ? Son adresse a-t-elle changé ?
+- **« Demande un mot de passe web »** — le lapin est sous LapinLibre ou
+  Terrier OS : saisissez le mot de passe de sa page web dans la configuration.
+- **« Mot de passe web refusé »** — aucun des mots de passe saisis n'est le
+  bon. Vérifiez-le en ouvrant la page web du lapin (utilisateur `admin`).
+- **« Le lapin est occupé »** — une autre commande, du Terrier par exemple,
+  l'occupait à cet instant : réessayez.
 - **Le lapin n'apparaît pas dans Découverte** — il doit avoir répondu au moins
   une fois : utilisez **Tester la connexion**.
 - **Pas de fonctionnalité Volume** — votre firmware n'a pas ce réglage ; c'est
-  normal sur l'OpenKarotz d'origine.
+  normal sur l'OpenKarotz d'origine et sur LapinLibre.
 
-Non affilié à Violet, Mindscape, OpenKarotz ni Free Rabbits.
+Non affilié à Violet, Mindscape, OpenKarotz, Free Rabbits, LapinLibre ni Le
+Terrier.

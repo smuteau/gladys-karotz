@@ -6,10 +6,18 @@
 // authentication, JSON answers of the form `{"return":"0", ...}` on success
 // and `{"return":"1","msg":"..."}` on failure.
 //
+// LapinLibre, and Terrier OS which is built on it, serve the same API under
+// the same paths, with three differences: an optional web password (HTTP
+// Basic, user `admin`, 401 without it), policy refusals answered with a 4xx
+// status and the usual JSON body, and refusal messages of their own.
+//
 // The API was written as bash scripts in 2013 and its answers are not always
 // valid JSON, so the parsing is tolerant. Endpoints were checked against the
-// CGI scripts of the rabbit themselves (/www/cgi-bin/).
+// CGI scripts of the rabbit themselves (/www/cgi-bin/), and against
+// LapinLibre's docs/web-api.md.
 // -----------------------------------------------------------------------------
+
+import { rabbitFetch } from './http.js';
 
 const DEFAULT_TIMEOUT_MS = 10_000;
 // The rabbit answers once the sound or the sentence has been played.
@@ -21,11 +29,21 @@ export const EAR_MAX = 16;
 
 export const ERROR_KINDS = {
   UNREACHABLE: 'unreachable',
+  // The web page asks for a password (LapinLibre, Terrier OS) and none of the
+  // configured ones was accepted.
+  AUTH: 'auth',
   SLEEPING: 'sleeping',
   EARS_DISABLED: 'ears_disabled',
+  // LapinLibre: another request holds the rabbit, or an application owns it.
+  BUSY: 'busy',
+  // LapinLibre: no speech server is set for the rabbit's language.
+  NO_SPEECH: 'no_speech',
   NOT_SUPPORTED: 'not_supported',
   REFUSED: 'refused',
 };
+
+// The user name of LapinLibre's web page, fixed by its httpd configuration.
+const WEB_USER = 'admin';
 
 export class KarotzError extends Error {
   /**
@@ -73,16 +91,29 @@ function isSuccess(answer) {
   return code === undefined || code === '0' || code === 0 || code === true || code === 'true';
 }
 
+// OpenKarotz says "rabbit is sleeping" and "ears disabled"; LapinLibre says
+// "the rabbit is asleep: wake it up first", "the API's ear moves are
+// disabled (ears_mode)", "the rabbit is busy..." and "no speech server is
+// set for <lang>...".
 function refusal(answer) {
   const message = typeof answer.msg === 'string' && answer.msg ? answer.msg : 'Command refused';
-  if (/sleeping|en veille/i.test(message)) {
+  if (/sleeping|asleep|en veille/i.test(message)) {
     return new KarotzError(ERROR_KINDS.SLEEPING, message);
   }
-  if (/ears disabled/i.test(message)) {
+  if (/ears disabled|ear moves are disabled/i.test(message)) {
     return new KarotzError(ERROR_KINDS.EARS_DISABLED, message);
+  }
+  if (/no speech server/i.test(message)) {
+    return new KarotzError(ERROR_KINDS.NO_SPEECH, message);
+  }
+  if (/\bbusy\b/i.test(message)) {
+    return new KarotzError(ERROR_KINDS.BUSY, message);
   }
   return new KarotzError(ERROR_KINDS.REFUSED, message);
 }
+
+const basicAuth = (password) =>
+  `Basic ${Buffer.from(`${WEB_USER}:${password}`, 'utf8').toString('base64')}`;
 
 /** `#ff0000`, `FF0000` or 16711680 -> `FF0000`. */
 export function toHexColor(color) {
@@ -108,10 +139,57 @@ function earPosition(value) {
 
 /**
  * @param {string} host IP address or host name, optional `:port`
- * @param {{ fetch?: typeof fetch }} [options] `fetch` is injected by the tests
+ * @param {{ fetch?: typeof fetch, passwords?: () => string[] }} [options]
+ *   `fetch` defaults to `rabbitFetch` (see ./http.js: the global `fetch`
+ *   cannot read OpenKarotz's headers) and is injected by the tests.
+ *   `passwords` gives the web passwords of the configuration; it is called at
+ *   each request, so a new configuration applies to the rabbits already known.
  */
-export function createKarotzClient(host, { fetch: fetchImpl = globalThis.fetch } = {}) {
+export function createKarotzClient(
+  host,
+  { fetch: fetchImpl = rabbitFetch, passwords = () => [] } = {},
+) {
   const base = `http://${host}/cgi-bin/`;
+  // What this rabbit accepted last: null for no password, else the password
+  // itself; undefined while unknown.
+  let accepted;
+
+  // No password first: an OpenKarotz rabbit, or a LapinLibre one without a
+  // password, never receives the password of another rabbit.
+  function candidates() {
+    const all = [null, ...new Set(passwords())];
+    return accepted !== undefined && all.includes(accepted)
+      ? [accepted, ...all.filter((candidate) => candidate !== accepted)]
+      : all;
+  }
+
+  async function send(url, timeoutMs) {
+    const tried = candidates();
+    for (const password of tried) {
+      let response;
+      try {
+        response = await fetchImpl(url, {
+          signal: AbortSignal.timeout(timeoutMs),
+          headers: password === null ? {} : { Authorization: basicAuth(password) },
+        });
+      } catch (err) {
+        throw new KarotzError(ERROR_KINDS.UNREACHABLE, `${host} did not answer (${err.message})`);
+      }
+      if (response.status !== 401) {
+        accepted = password;
+        return response;
+      }
+      // httpd checks the login before it runs the script: nothing was done,
+      // so trying the next password is safe, even for a sound or a sentence.
+      await response.body?.cancel().catch(() => {});
+    }
+    accepted = undefined;
+    // Never the password itself: this message ends up in the logs.
+    throw new KarotzError(
+      ERROR_KINDS.AUTH,
+      tried.length > 1 ? `${host} refused the web password` : `${host} asks for a web password`,
+    );
+  }
 
   async function request(path, params = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
     const url = new URL(path, base);
@@ -120,16 +198,17 @@ export function createKarotzClient(host, { fetch: fetchImpl = globalThis.fetch }
         url.searchParams.set(key, String(value));
       }
     }
-    let response;
-    try {
-      response = await fetchImpl(url, { signal: AbortSignal.timeout(timeoutMs) });
-    } catch (err) {
-      throw new KarotzError(ERROR_KINDS.UNREACHABLE, `${host} did not answer (${err.message})`);
-    }
+    const response = await send(url, timeoutMs);
     if (response.status === 404) {
       throw new KarotzError(ERROR_KINDS.NOT_SUPPORTED, `${path} is not available on ${host}`);
     }
     if (!response.ok) {
+      // LapinLibre answers its policy refusals (403, 405, 413, 414) with the
+      // usual JSON body: its reason says more than the status.
+      const answer = parseAnswer(await response.text().catch(() => ''));
+      if (typeof answer.msg === 'string' && answer.msg) {
+        throw refusal(answer);
+      }
       throw new KarotzError(ERROR_KINDS.UNREACHABLE, `${host} answered HTTP ${response.status}`);
     }
     return response;
@@ -147,7 +226,10 @@ export function createKarotzClient(host, { fetch: fetchImpl = globalThis.fetch }
   return {
     host,
 
-    /** Version, sleep state, LED, MAC addresses, storage, counters. */
+    /**
+     * Version, sleep state, LED, MAC addresses, storage, counters; on
+     * LapinLibre, its own status in `lapinlibre` too.
+     */
     status: () => call('status'),
 
     wakeup: ({ silent = false } = {}) => call('wakeup', { silent: silent ? 1 : undefined }),

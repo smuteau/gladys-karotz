@@ -194,6 +194,27 @@ export function describeError(err) {
         de: 'Der Hase antwortet nicht.',
         es: 'El conejo no responde.',
       };
+    case ERROR_KINDS.AUTH:
+      return {
+        en: 'The rabbit refused the web password: check it in the configuration.',
+        fr: 'Le lapin a refusé le mot de passe web : vérifiez-le dans la configuration.',
+        de: 'Der Hase hat das Web-Passwort abgelehnt: Prüfen Sie es in der Konfiguration.',
+        es: 'El conejo ha rechazado la contraseña web: compruébela en la configuración.',
+      };
+    case ERROR_KINDS.BUSY:
+      return {
+        en: 'The rabbit is busy: try again in a moment.',
+        fr: 'Le lapin est occupé : réessayez dans un instant.',
+        de: 'Der Hase ist beschäftigt: Versuchen Sie es gleich noch einmal.',
+        es: 'El conejo está ocupado: inténtelo de nuevo en un momento.',
+      };
+    case ERROR_KINDS.NO_SPEECH:
+      return {
+        en: 'The rabbit has no speech server: set TTS_SERVER in its lapinlibre.txt.',
+        fr: "Le lapin n'a pas de serveur de synthèse vocale : réglez TTS_SERVER dans son lapinlibre.txt.",
+        de: 'Der Hase hat keinen Sprachserver: Setzen Sie TTS_SERVER in seiner lapinlibre.txt.',
+        es: 'El conejo no tiene servidor de voz: configure TTS_SERVER en su lapinlibre.txt.',
+      };
     case ERROR_KINDS.NOT_SUPPORTED:
       return {
         en: 'This firmware does not support that command.',

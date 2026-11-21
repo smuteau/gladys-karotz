@@ -16,7 +16,7 @@ import {
   DEVICE_FEATURE_UNITS,
 } from '@gladysassistant/integration-sdk';
 import { EAR_MAX, EAR_MIN } from './karotz/client.js';
-import { LED_OFF, rabbitName } from './rabbits.js';
+import { LED_OFF, firmwareLabel, rabbitName } from './rabbits.js';
 
 export const DEVICE_TYPES = { RABBIT: 'karotz', CAMERA: 'karotz-camera' };
 
@@ -161,7 +161,7 @@ export function buildDevices(gladys, rabbits, config) {
       params: [
         { name: 'HOST', value: rabbit.host },
         ...(rabbit.status?.version
-          ? [{ name: 'FIRMWARE_VERSION', value: rabbit.status.version }]
+          ? [{ name: 'FIRMWARE_VERSION', value: firmwareLabel(rabbit.status) }]
           : []),
       ],
       features,

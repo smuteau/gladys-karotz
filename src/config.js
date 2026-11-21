@@ -60,7 +60,27 @@ function clamp(value, min, max, fallback) {
 }
 
 /**
- * Merge the user config with the defaults.
+ * Split the `web_password` field (a secret, no default) into the passwords to
+ * try. LapinLibre refuses spaces in a web password, so one space separates
+ * the passwords of rabbits that do not share one. Control characters cannot
+ * be typed in a password: a value carrying one is dropped.
+ * @param {unknown} raw
+ * @returns {string[]}
+ */
+export function parsePasswords(raw) {
+  if (typeof raw !== 'string') {
+    return [];
+  }
+  const passwords = raw
+    .split(/\s+/)
+    // eslint-disable-next-line no-control-regex
+    .filter((password) => password !== '' && !/[\u0000-\u001f\u007f]/.test(password));
+  return [...new Set(passwords)];
+}
+
+/**
+ * Merge the user config with the defaults. The raw `web_password` is not kept:
+ * only the list of passwords, which nothing logs.
  * @param {Record<string, unknown>} raw config returned by the SDK
  */
 export function normalizeConfig(raw = {}) {
@@ -68,6 +88,7 @@ export function normalizeConfig(raw = {}) {
   return {
     hosts,
     hostList: parseHosts(hosts),
+    passwords: parsePasswords(raw.web_password),
     poll_interval: clamp(
       raw.poll_interval ?? DEFAULT_CONFIG.poll_interval,
       POLL_INTERVAL_MIN,

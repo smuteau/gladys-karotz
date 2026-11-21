@@ -12,7 +12,8 @@ import { ACTIONS } from './actions.js';
 import * as commands from './commands.js';
 import { normalizeConfig } from './config.js';
 import { FEATURES, buildDevices, buildStates, featureKey, findRabbitByDevice } from './devices.js';
-import { createKarotzClient } from './karotz/client.js';
+import { ERROR_KINDS, createKarotzClient } from './karotz/client.js';
+import { rabbitFetch } from './karotz/http.js';
 import { createRabbit, readRabbit } from './rabbits.js';
 import { SCENE_ACTIONS } from './scenes.js';
 import { buildSceneEvents } from './triggers.js';
@@ -31,9 +32,14 @@ const defaultSleepMs = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
  */
 export function createApp(gladys, options = {}) {
   const logger = createLogger({ name: 'karotz' });
-  const fetchImpl = options.fetch ?? globalThis.fetch;
+  // Every request to a rabbit, network search included, goes through
+  // rabbitFetch: the global fetch refuses the headers of OpenKarotz.
+  const fetchImpl = options.fetch ?? rabbitFetch;
+  // The passwords are read at each request: a new configuration reaches the
+  // rabbits already known without recreating them.
+  const passwords = () => ctx.config.passwords;
   const createClient =
-    options.createClient ?? ((host) => createKarotzClient(host, { fetch: fetchImpl }));
+    options.createClient ?? ((host) => createKarotzClient(host, { fetch: fetchImpl, passwords }));
 
   let timer = null;
   // Reads never overlap: a slow rabbit must not pile requests up.
@@ -129,7 +135,13 @@ export function createApp(gladys, options = {}) {
 
   // Application-level status of the Configuration screen.
   async function reportConnection() {
-    const offline = ctx.rabbits.filter((rabbit) => !rabbit.online).map((rabbit) => rabbit.host);
+    const silent = ctx.rabbits.filter((rabbit) => !rabbit.online);
+    const locked = silent
+      .filter((rabbit) => rabbit.lastErrorKind === ERROR_KINDS.AUTH)
+      .map((rabbit) => rabbit.host);
+    const offline = silent
+      .filter((rabbit) => rabbit.lastErrorKind !== ERROR_KINDS.AUTH)
+      .map((rabbit) => rabbit.host);
     if (ctx.rabbits.length === 0) {
       await gladys.setConnectionStatus(false, {
         en: 'Enter the address of your rabbit.',
@@ -144,6 +156,14 @@ export function createApp(gladys, options = {}) {
         fr: `Pas de réponse de ${list}.`,
         de: `Keine Antwort von ${list}.`,
         es: `Sin respuesta de ${list}.`,
+      });
+    } else if (locked.length > 0) {
+      const list = locked.join(', ').slice(0, 150);
+      await gladys.setConnectionStatus(false, {
+        en: `${list}: check the web password.`,
+        fr: `${list} : vérifiez le mot de passe web.`,
+        de: `${list}: Prüfen Sie das Web-Passwort.`,
+        es: `${list}: compruebe la contraseña web.`,
       });
     } else {
       await gladys.setConnectionStatus(true);

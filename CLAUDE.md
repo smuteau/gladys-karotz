@@ -36,12 +36,32 @@ unauthenticated HTTP GET on `http://<host>/cgi-bin/<script>`, answers
 A rabbit is a 2011 ARM9 running bash CGI scripts: one request at a time, slow,
 and it answers a sound or speech request only once it has finished playing.
 
+Also Karotz rabbits running **LapinLibre** or **Terrier OS** (a LapinLibre
+with WPA3 and the client of Le Terrier): the same paths and answer shapes
+(reference: LapinLibre's `docs/web-api.md`), plus an optional HTTP Basic
+password (user `admin`, 401 without it), policy refusals as 4xx with the usual
+JSON body, their own refusal messages ("the rabbit is asleep...", "busy..."),
+a `lapinlibre` object in `status`, `eth_mac` always zero, no
+`/cgi-bin/volume`. On Terrier OS the Terrier client drives the same API, so a
+command can meet "the rabbit is busy with another request". LapinLibre refuses
+a change whose `Sec-Fetch-Site`, `Origin` or `Referer` names another site;
+`rabbitFetch` sends none of them: never add them.
+
+**Every request to a rabbit goes through `rabbitFetch`** (`src/karotz/http.js`),
+never the global `fetch`. OpenKarotz's web server ends its header lines with a
+bare LF: Node's strict parser (and so `fetch`) rejects every answer with
+`HPE_CR_EXPECTED` / `HPE_INVALID_HEADER_TOKEN`, and the rabbit looks offline
+while curl and a browser reach it. `rabbitFetch` is `node:http` with
+`insecureHTTPParser`, kept to the rabbits: GET, plain HTTP, no redirect, a
+bounded answer.
+
 ## Architecture
 
 ```
 index.js                          SDK wiring only: createApp(gladys).register(), then connect()
 src/app.js                        ctx (config, rabbits), reading loop, handler registration
 src/karotz/client.js              OpenKarotz HTTP client: tolerant parsing, KarotzError kinds
+src/karotz/http.js                rabbitFetch: node:http with the lenient parser OpenKarotz needs
 src/rabbits.js                    one rabbit: parseStatus, readRabbit -> detected changes
 src/devices.js                    devices, features (FEATURES keys) and states
 src/commands.js                   every operation on a rabbit, shared by all surfaces
@@ -89,7 +109,8 @@ test/                             node --test: SDK fake Gladys + test/helpers/fa
   documentation, kept in sync: `docs/en.md`, `docs/fr.md`, `docs/de.md`,
   `docs/es.md`. A new text is written in the four at once.
 - **Style.** Prettier formats, ESLint catches mistakes. Comments explain why,
-  in English. Tests never touch the network.
+  in English. Tests never leave the machine: the one transport test serves
+  the raw answer of a Karotz on 127.0.0.1.
 - **A rabbit is identified by its MAC**, read from `/cgi-bin/status` (Wi-Fi
   first, then Ethernet), never by its host: the host is only how to reach it.
   Do not change that order, nor the `karotz` / `karotz-camera` device types.
@@ -104,8 +125,9 @@ test/                             node --test: SDK fake Gladys + test/helpers/fa
   request per read without a reason (the tag list is only fetched when the
   count moves), no periodic snapshot: every picture stays on its storage.
 - **A new endpoint must be checked against the CGI scripts of the rabbit**
-  (`/www/cgi-bin/`), on both the stock OpenKarotz and its variants; an
-  endpoint only some of them have is feature-detected (see `hasVolume`).
+  (`/www/cgi-bin/`), on both the stock OpenKarotz and its variants, and
+  against LapinLibre's `docs/web-api.md`; an endpoint only some of them have
+  is feature-detected (see `hasVolume`).
 - **No "RFID tag presented" trigger**: the rabbit would have to call the
   integration, which the sandbox does not allow. Do not fake it by polling.
 - **The network search finds the LAN through Gladys.** The container is on a
@@ -117,6 +139,12 @@ test/                             node --test: SDK fake Gladys + test/helpers/fa
 - **The network search only scans private /24 ranges** (`parseSubnet`), and
   hosts from the configuration are validated before they reach a URL
   (`parseHosts`). Keep both.
+- **The web password goes only where it is asked for.** It lives in the
+  `web_password` secret, split by `parsePasswords`; the client tries no
+  password first and a password only after a 401, then sticks to what the
+  rabbit accepted. Never send it from the network search (an address that
+  answers 401 is only reported), never put it in a log line, an error message,
+  a URL or a widget.
 - **Configuration buttons: green or red.** The Configuration screen shows a
   resolved message as a success and a thrown error as a failure. A handler of
   `src/actions.js` therefore resolves only when the operation worked, and

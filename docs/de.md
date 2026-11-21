@@ -1,14 +1,24 @@
-# OpenKarotz / Free Rabbits
+# Karotz
 
 Steuern Sie Ihren Karotz-Hasen lokal aus Gladys: Sprache, Töne und Webradios,
 LED, Ohren, Kamera, Schlaf und RFID-Tags. Kein Konto, keine Cloud.
 
 ## Bevor Sie beginnen
 
-- Auf Ihrem Karotz muss **OpenKarotz** laufen, auf der Original-Firmware oder
-  auf [Free Rabbits OS](https://www.freerabbits.nl/fros/). Schnelltest: Öffnen
-  Sie `http://<adresse-des-hasen>/` im Browser, Sie sollten die Webseite von
-  OpenKarotz sehen.
+- Auf Ihrem Karotz muss eines dieser Systeme laufen:
+  - **Terrier OS** ([Installationsanleitung](https://terrier.cyberloutre.fr/karotz)),
+    auf LapinLibre aufgebaut. Es ist die sicherste Wahl: WLAN mit WPA3, SSH
+    nur mit Schlüssel, eine durch ein Passwort geschützte Webseite;
+  - **[LapinLibre](https://github.com/sweetlilmre/LapinLibre)**, ein freies
+    System für den Karotz, aus seinen Quellen gebaut;
+  - **OpenKarotz**, auf der Original-Firmware oder auf
+    [Free Rabbits OS](https://www.freerabbits.nl/fros/) (nur WPA2).
+
+  Alle drei bieten dieselbe lokale API, die von OpenKarotz: Die Integration
+  steuert sie auf dieselbe Weise. Schnelltest: Öffnen Sie
+  `http://<adresse-des-hasen>/` im Browser, Sie sollten die Webseite des Hasen
+  sehen.
+
 - Der Hase und Gladys müssen sich im **selben lokalen Netzwerk** befinden.
 - Geben Sie dem Hasen eine **feste IP-Adresse** (Free Rabbits OS unterstützt
   ohnehin nur das) oder reservieren Sie sie in Ihrem Router.
@@ -18,7 +28,12 @@ LED, Ohren, Kamera, Schlaf und RFID-Tags. Kein Konto, keine Cloud.
 1. Öffnen Sie den Reiter **Konfiguration** der Integration.
 2. Tragen Sie die **Adresse des Hasen** ein: seine IP-Adresse (z. B.
    `192.168.1.70`) oder seinen Hostnamen. Mehrere Hasen: mit Kommas trennen.
-3. Speichern Sie und öffnen Sie dann den Reiter **Erkennung**: Der Hase
+3. **LapinLibre oder Terrier OS**: Tragen Sie das **Web-Passwort** ein, das die
+   Webseite des Hasen verlangt (Benutzer `admin`). Terrier OS schreibt es in
+   `web-password.txt` auf seinem Installations-USB-Stick. Mehrere Hasen mit
+   unterschiedlichen Passwörtern: durch Leerzeichen trennen. Für OpenKarotz
+   lassen Sie das Feld leer.
+4. Speichern Sie und öffnen Sie dann den Reiter **Erkennung**: Der Hase
    erscheint dort zusammen mit seiner Kamera. Fügen Sie beide hinzu.
 
 Sie kennen seine Adresse nicht? Ein Karotz meldet sich nicht im Netzwerk an,
@@ -28,6 +43,11 @@ lokales Netzwerk an den Geräten, die sich dort melden (Router, Fernseher,
 NAS…), dann fragt die Integration dessen 254 Adressen ab und listet die Hasen
 auf, die geantwortet haben. Kopieren Sie die gefundene Adresse in das Feld und
 speichern Sie.
+
+Die Suche sendet Ihr Passwort nie an die Geräte des Netzwerks. Ein Hase mit
+LapinLibre oder Terrier OS, der durch ein Passwort geschützt ist, erscheint
+daher getrennt, als Adresse, die „ein Passwort verlangt“: Fügen Sie sie hinzu
+und nutzen Sie dann **Verbindung testen**.
 
 Konnte das Netzwerk nicht ermittelt werden, sagt Ihnen die Schaltfläche das:
 Tragen Sie dann die ersten drei Zahlen Ihrer lokalen Adressen (z. B.
@@ -123,22 +143,41 @@ wird.
   reagiert auf einen Tag, indem der Hase selbst eine Webadresse aufruft, und
   eine Gladys-Integration kann auf diese Weise nicht aufgerufen werden. Der
   verfügbare Auslöser betrifft das Speichern eines _neuen_ Tags.
-- **Jedes Foto bleibt auf dem Hasen**, dessen Speicher klein ist. Löschen Sie
-  sie von Zeit zu Zeit mit der Schaltfläche des Kamera-Widgets.
+- **Unter OpenKarotz bleibt jedes Foto auf dem Hasen**, dessen Speicher klein
+  ist. Löschen Sie sie von Zeit zu Zeit mit der Schaltfläche des
+  Kamera-Widgets. Unter LapinLibre und Terrier OS behält der Hase die letzten 10
+  im Arbeitsspeicher und vergisst sie beim Neustart.
 - **Ein schlafender Hase verweigert** LED, Ohren, Töne und Sprache: Wecken Sie
   ihn zuerst auf (in einer Szene mit der Aktion „Ein Gerät steuern“ beginnen).
 - Die Sprachausgabe hängt vom Sprachsynthese-Dienst ab, der in Ihrem Hasen
   eingestellt ist und Internet benötigt: Spricht der Hase nicht mehr, testen
-  Sie es über seine Webseite.
+  Sie es über seine Webseite. Unter LapinLibre und Terrier OS wird dieser
+  Server in `lapinlibre.txt` eingestellt (`SERVER=` oder `TTS_SERVER=`): Ohne
+  ihn verweigert der Hase das Sprechen, und die Integration sagt es Ihnen.
+- **Die API des Hasen spricht einfaches HTTP**, welches System er auch hat.
+  Unter LapinLibre und Terrier OS geht das Web-Passwort daher lesbar über Ihr
+  lokales Netzwerk: WPA3 schützt es im WLAN, nicht auf dem Kabel zwischen
+  Router und Gladys. Lassen Sie den Hasen in einem Netzwerk, dem Sie vertrauen.
+- **Ein Karotz mit Terrier OS bleibt ein Hase von Le Terrier**: Le Terrier und
+  Gladys können ihn gleichzeitig steuern. Sprechen beide im selben Moment mit
+  ihm, antwortet er, dass er beschäftigt ist: Versuchen Sie es erneut.
 
 ## Fehlerbehebung
 
 - **„Keine Antwort“** — Ist der Hase eingeschaltet? Öffnet sich
   seine Webseite von einem Computer im selben Netzwerk? Hat sich seine Adresse
   geändert?
+- **„Verlangt ein Web-Passwort“** — auf dem Hasen läuft LapinLibre oder
+  Terrier OS: Tragen Sie das Passwort seiner Webseite in der Konfiguration ein.
+- **„Web-Passwort abgelehnt“** — keines der eingetragenen Passwörter ist das
+  richtige. Prüfen Sie es, indem Sie die Webseite des Hasen öffnen (Benutzer
+  `admin`).
+- **„Der Hase ist beschäftigt“** — ein anderer Befehl, zum Beispiel von Le
+  Terrier, nutzte ihn in diesem Moment: Versuchen Sie es erneut.
 - **Der Hase erscheint nicht unter Erkennung** — er muss mindestens einmal
   geantwortet haben: Nutzen Sie **Verbindung testen**.
 - **Keine Funktion „Lautstärke“** — Ihre Firmware hat diese Einstellung nicht;
-  beim ursprünglichen OpenKarotz ist das normal.
+  beim ursprünglichen OpenKarotz und bei LapinLibre ist das normal.
 
-Nicht verbunden mit Violet, Mindscape, OpenKarotz oder Free Rabbits.
+Nicht verbunden mit Violet, Mindscape, OpenKarotz, Free Rabbits, LapinLibre
+oder Le Terrier.

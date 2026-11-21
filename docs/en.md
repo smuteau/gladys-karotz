@@ -1,14 +1,23 @@
-# OpenKarotz / Free Rabbits
+# Karotz
 
 Drive your Karotz rabbit from Gladys, locally: speech, sounds and web radios,
 LED, ears, camera, sleep and RFID tags. No account, no cloud.
 
 ## Before you start
 
-- Your Karotz must run **OpenKarotz**, on the original firmware or on top of
-  [Free Rabbits OS](https://www.freerabbits.nl/fros/). Quick check: open
-  `http://<rabbit-address>/` in a browser, you should see the OpenKarotz web
-  page.
+- Your Karotz must run one of these systems:
+  - **Terrier OS** ([install guide](https://terrier.cyberloutre.fr/karotz)),
+    built on LapinLibre. It is the safest choice: WPA3 Wi-Fi, SSH by key only,
+    a web page protected by a password;
+  - **[LapinLibre](https://github.com/sweetlilmre/LapinLibre)**, a free system
+    for the Karotz, built from its sources;
+  - **OpenKarotz**, on the original firmware or on top of
+    [Free Rabbits OS](https://www.freerabbits.nl/fros/) (WPA2 only).
+
+  All three serve the same local API, the OpenKarotz one: the integration
+  drives them the same way. Quick check: open `http://<rabbit-address>/` in a
+  browser, you should see the web page of the rabbit.
+
 - The rabbit and Gladys must be on the **same local network**.
 - Give the rabbit a **fixed IP address** (Free Rabbits OS only supports that
   anyway), or reserve it in your router.
@@ -18,7 +27,11 @@ LED, ears, camera, sleep and RFID tags. No account, no cloud.
 1. Open the **Configuration** tab of the integration.
 2. Enter the **rabbit address**: its IP address (e.g. `192.168.1.70`) or its
    host name. Several rabbits: separate them with commas.
-3. Save, then open the **Discovery** tab: the rabbit shows up, along with its
+3. **LapinLibre or Terrier OS**: enter the **web password**, the one the web
+   page of the rabbit asks for (user `admin`). Terrier OS writes it in
+   `web-password.txt` on its install USB key. Several rabbits with different
+   passwords: separate them with spaces. Leave the field empty for OpenKarotz.
+4. Save, then open the **Discovery** tab: the rabbit shows up, along with its
    camera. Add them.
 
 You do not know its address? A Karotz does not announce itself on the network,
@@ -27,6 +40,11 @@ typing anything: Gladys spots your local network from the devices that announce
 themselves on it (router, TV, NAS…), then the integration asks its 254
 addresses and lists the rabbits that answered. Copy the address into the field
 and save.
+
+The search never sends your password to the devices of the network. A
+LapinLibre or Terrier OS rabbit protected by a password therefore shows up
+apart, as an address that "asks for a password": add it, then use **Test the
+connection**.
 
 If the network could not be worked out, the button says so: enter the first
 three numbers of your local addresses (e.g. `192.168.1`) in the **Local
@@ -114,20 +132,39 @@ With several rabbits, pick which one to show in the widget settings.
   reacts to a tag by calling a web address from the rabbit, and a Gladys
   integration cannot be called that way. The available trigger is about a _new_
   tag being recorded.
-- **Every picture stays on the rabbit**, whose storage is small. Delete them
-  from time to time with the button of the camera widget.
+- **On OpenKarotz, every picture stays on the rabbit**, whose storage is
+  small. Delete them from time to time with the button of the camera widget. On
+  LapinLibre and Terrier OS, the rabbit keeps the last 10 in memory and forgets
+  them when it restarts.
 - **A sleeping rabbit refuses** LED, ears, sounds and speech: wake it up first
   (in a scene, start with the "Control a device" action).
 - Speech relies on the text-to-speech service configured in your rabbit, which
-  needs the Internet: if the rabbit stops speaking, test from its web page.
+  needs the Internet: if the rabbit stops speaking, test from its web page. On
+  LapinLibre and Terrier OS, that server is set in `lapinlibre.txt` (`SERVER=`
+  or `TTS_SERVER=`): without it, the rabbit refuses to speak and the
+  integration tells you so.
+- **The API of the rabbit speaks plain HTTP**, whatever its system. On
+  LapinLibre and Terrier OS, the web password therefore travels readable on
+  your local network: WPA3 protects it on the Wi-Fi, not on the cable between
+  the router and Gladys. Keep the rabbit on a network you trust.
+- **A Karotz on Terrier OS stays a rabbit of Le Terrier**: Le Terrier and Gladys
+  can drive it at the same time. When both talk to it at the same instant, it
+  answers that it is busy: try again.
 
 ## Troubleshooting
 
 - **"No answer"** — is the rabbit powered? Does its web page open from a
   computer on the same network? Did its address change?
+- **"Asks for a web password"** — the rabbit runs LapinLibre or Terrier OS:
+  enter the password of its web page in the configuration.
+- **"Web password refused"** — none of the passwords entered is the right one.
+  Check it by opening the web page of the rabbit (user `admin`).
+- **"The rabbit is busy"** — another command, from Le Terrier for instance, was
+  using it at that instant: try again.
 - **The rabbit does not show up in Discovery** — it must have answered at least
   once: use **Test the connection**.
 - **No Volume feature** — your firmware does not have that setting; this is
-  expected on the original OpenKarotz.
+  expected on the original OpenKarotz and on LapinLibre.
 
-Not affiliated with Violet, Mindscape, OpenKarotz or Free Rabbits.
+Not affiliated with Violet, Mindscape, OpenKarotz, Free Rabbits, LapinLibre or
+Le Terrier.

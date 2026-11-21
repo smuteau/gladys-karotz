@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------------
-// Entry point of the OpenKarotz / Free Rabbits integration for Gladys.
+// Entry point of the Karotz integration for Gladys.
 //
 // SDK wiring only: everything else lives in src/ (see CLAUDE.md for the map).
 //
@@ -18,7 +18,7 @@ const gladys = new GladysIntegration();
 // Handlers are registered BEFORE connect().
 createApp(gladys).register();
 
-logger.info('Starting the OpenKarotz / Free Rabbits integration...');
+logger.info('Starting the Karotz integration...');
 gladys.connect().catch((err) => {
   logger.error('Initial connection failed', err);
   process.exit(1);

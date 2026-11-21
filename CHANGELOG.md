@@ -27,5 +27,21 @@ the notes of the version's GitHub Release.
   network by itself.
 - Everything the user reads is in English, French, German and Spanish: the
   integration itself and its documentation.
+- LapinLibre and Terrier OS: the same rabbits, driven through their
+  OpenKarotz-compatible API, with an optional web password (one per rabbit,
+  separated by spaces), their own refusals read as such (asleep, ears off,
+  busy, no speech server), and their name in the connection test. The network
+  search reports the addresses that ask for a password without sending it.
 
-[Unreleased]: https://github.com/smuteau/gladys-openkarotz-freerabbits/commits/main
+### Changed
+
+- The integration is now called Karotz, and its repository `gladys-karotz`:
+  it covers OpenKarotz, LapinLibre and Terrier OS.
+
+### Fixed
+
+- A rabbit on OpenKarotz looked offline, and the network search found
+  nothing: its web server ends its header lines with a bare line feed, which
+  the HTTP parser of Node refuses. The integration now reads those answers.
+
+[Unreleased]: https://github.com/smuteau/gladys-karotz/commits/main
