@@ -19,6 +19,12 @@ LED, Ohren, Kamera, Schlaf und RFID-Tags. Kein Konto, keine Cloud.
   `http://<adresse-des-hasen>/` im Browser, Sie sollten die Webseite des Hasen
   sehen.
 
+  **Bisher getestet**: ein echter Karotz mit Free Rabbits OS (OpenKarotz 210).
+  LapinLibre und Terrier OS werden nach der Dokumentation ihrer API
+  unterstützt, wurden aber noch nicht auf einem echten Hasen getestet: Wenn
+  etwas nicht funktioniert, [melden Sie
+  es](https://github.com/smuteau/gladys-karotz/issues).
+
 - Der Hase und Gladys müssen sich im **selben lokalen Netzwerk** befinden.
 - Geben Sie dem Hasen eine **feste IP-Adresse** (Free Rabbits OS unterstützt
   ohnehin nur das) oder reservieren Sie sie in Ihrem Router.

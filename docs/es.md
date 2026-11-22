@@ -19,6 +19,11 @@ LED, orejas, cámara, sueño y etiquetas RFID. Sin cuenta, sin nube.
   `http://<dirección-del-conejo>/` en un navegador, debe ver la página web del
   conejo.
 
+  **Probado hasta ahora**: un Karotz real con Free Rabbits OS (OpenKarotz
+  210). LapinLibre y Terrier OS son compatibles según la documentación de su
+  API, pero todavía no se han probado en un conejo real: si algo no funciona,
+  [avise](https://github.com/smuteau/gladys-karotz/issues).
+
 - El conejo y Gladys deben estar en la **misma red local**.
 - Dé al conejo una **dirección IP fija** (Free Rabbits OS solo admite eso de
   todos modos), o resérvela en su router.

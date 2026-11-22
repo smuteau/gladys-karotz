@@ -10,6 +10,11 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+### Changed
+
+- The documentation says which systems have been tested on a real rabbit: so
+  far OpenKarotz on Free Rabbits OS, not LapinLibre nor Terrier OS.
+
 ## [1.0.0] - 2026-11-22
 
 ### Added

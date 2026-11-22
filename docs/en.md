@@ -18,6 +18,11 @@ LED, ears, camera, sleep and RFID tags. No account, no cloud.
   drives them the same way. Quick check: open `http://<rabbit-address>/` in a
   browser, you should see the web page of the rabbit.
 
+  **Tested so far**: a real Karotz on Free Rabbits OS (OpenKarotz 210).
+  LapinLibre and Terrier OS are supported from the documentation of their API,
+  but have not been tested on a real rabbit yet: if something does not work,
+  [report it](https://github.com/smuteau/gladys-karotz/issues).
+
 - The rabbit and Gladys must be on the **same local network**.
 - Give the rabbit a **fixed IP address** (Free Rabbits OS only supports that
   anyway), or reserve it in your router.

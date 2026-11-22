@@ -15,6 +15,10 @@ The rabbit must serve the **OpenKarotz API**, which three systems do:
 - **[Terrier OS](https://terrier.cyberloutre.fr/karotz)**, a LapinLibre with
   WPA3 and the client of Le Terrier built in: the safest of the three.
 
+Tested on a real rabbit so far: OpenKarotz 210 on Free Rabbits OS. LapinLibre
+and Terrier OS follow their documented API and have not run on a real rabbit
+yet.
+
 Everything is local: no account, no cloud, works in any country.
 
 > User documentation: [English](docs/en.md) · [Français](docs/fr.md) ·

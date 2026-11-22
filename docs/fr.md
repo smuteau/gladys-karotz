@@ -19,6 +19,12 @@ LED, oreilles, caméra, sommeil et tags RFID. Pas de compte, pas de cloud.
   `http://<adresse-du-lapin>/` dans un navigateur, vous devez voir la page web
   du lapin.
 
+  **Testé à ce jour** : un vrai Karotz sous Free Rabbits OS (OpenKarotz 210).
+  LapinLibre et Terrier OS sont pris en charge d'après la documentation de
+  leur API, mais n'ont pas encore été testés sur un vrai lapin : si quelque
+  chose ne marche pas,
+  [signalez-le](https://github.com/smuteau/gladys-karotz/issues).
+
 - Le lapin et Gladys doivent être sur le **même réseau local**.
 - Donnez au lapin une **adresse IP fixe** (Free Rabbits OS ne gère de toute
   façon que cela), ou réservez-la dans votre box.
