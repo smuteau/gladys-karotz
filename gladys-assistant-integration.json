@@ -902,10 +902,10 @@
         "es": "Tomar una foto"
       },
       "description": {
-        "en": "Take a picture with the rabbit's webcam; it becomes the image of its camera device.",
-        "fr": "Prend une photo avec la webcam du lapin ; elle devient l'image de son appareil caméra.",
-        "de": "Nimmt ein Foto mit der Webcam des Hasen auf; es wird zum Bild seines Kamerageräts.",
-        "es": "Toma una foto con la webcam del conejo; se convierte en la imagen de su dispositivo de cámara."
+        "en": "Take a picture with the rabbit's webcam; it becomes the image of its camera.",
+        "fr": "Prend une photo avec la webcam du lapin ; elle devient l'image de sa caméra.",
+        "de": "Nimmt ein Foto mit der Webcam des Hasen auf; es wird zum Bild seiner Kamera.",
+        "es": "Toma una foto con la webcam del conejo; se convierte en la imagen de su cámara."
       },
       "timeout_seconds": 45,
       "fields": [
@@ -958,10 +958,10 @@
         "es": "Karotz"
       },
       "description": {
-        "en": "State of a rabbit, with buttons to wake it, make it speak, play a mood or tell the time.",
-        "fr": "État d'un lapin, avec des boutons pour le réveiller, le faire parler, une humeur ou l'heure.",
-        "de": "Zustand eines Hasen, mit Schaltflächen zum Wecken, Sprechen, für Stimmung und Uhrzeit.",
-        "es": "Estado de un conejo, con botones para despertarlo, hacerlo hablar, un estado de ánimo o la hora."
+        "en": "State of a rabbit, with buttons: sleep or wake up, mood, time, ears at random.",
+        "fr": "État d'un lapin, avec des boutons : endormir ou réveiller, humeur, heure, oreilles au hasard.",
+        "de": "Zustand eines Hasen, mit Schaltflächen: schlafen oder wecken, Stimmung, Uhrzeit, Ohren zufällig.",
+        "es": "Estado de un conejo, con botones: dormir o despertar, estado de ánimo, hora, orejas al azar."
       },
       "icon": "rabbit",
       "settings": [

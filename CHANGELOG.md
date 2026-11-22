@@ -15,6 +15,12 @@ the notes of the version's GitHub Release.
 - The documentation says which systems have been tested on a real rabbit: so
   far OpenKarotz on Free Rabbits OS, not LapinLibre nor Terrier OS.
 
+### Fixed
+
+- Two descriptions of 1.0.0 were out of date: the `Karotz` widget no longer has
+  a Speak button, and a picture becomes the image of the rabbit's camera, not
+  of a separate camera device.
+
 ## [1.0.0] - 2026-11-22
 
 ### Added
