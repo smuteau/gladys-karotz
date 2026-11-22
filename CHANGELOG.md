@@ -21,7 +21,9 @@ the notes of the version's GitHub Release.
   tell the time, set the LED, move the ears, take a picture.
 - Scene triggers: rabbit unreachable, back online, fell asleep or woke up, new
   RFID tag recorded.
-- Dashboard widgets: `Karotz` and `Karotz camera`.
+- Dashboard widgets: `Karotz`, and `Karotz photos` (the pictures stored on the
+  rabbit, one at a time and whole, with Previous / Next, Take a picture and
+  Delete pictures).
 - Configuration buttons: test the connection, search the local network,
   identify a rabbit, restart a rabbit. The network search works out the local
   network by itself.
@@ -42,9 +44,6 @@ the notes of the version's GitHub Release.
 - The documentation says what each system plays: `http://` only on
   OpenKarotz, `https://` too on LapinLibre and Terrier OS, and what needs the
   Internet.
-- The `Karotz camera` widget becomes `Karotz photos`: the pictures stored on
-  the rabbit, one at a time and whole, with Previous / Next, Take a picture
-  and Delete pictures.
 
 ### Changed
 
@@ -113,8 +112,6 @@ speak (its own voice)`, and says where to find the voice of Gladys: the
 - Moving one ear no longer sends the other back to 0 after a restart.
 - A rabbit that misses one read is asked again before it is declared
   unreachable, so a busy rabbit no longer fires the "unreachable" trigger.
-- Waking the rabbit or putting it to sleep from the widget answers at once,
-  instead of after the 6 to 12 seconds the rabbit takes.
 - Icons of the `Karotz` widget and of its Mood button: the previous ones do
   not exist in the icon font of Gladys.
 - Playing a sound or a stream by URL did nothing on OpenKarotz: its `sound`
