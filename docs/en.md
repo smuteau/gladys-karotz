@@ -166,7 +166,10 @@ The integration adds its own cards to the scene editor (Gladys 5.1 or later).
   voice of Gladys included: "Talk on a speaker" hands over as soon as the
   sentence starts, so put a wait after it when a sound follows.
 - **Play a mood** — a random one, or by its number.
-- **Tell the time**.
+- **Tell the time** — on OpenKarotz, the rabbit plays a recording picked at
+  random among those of the current hour: not all of them say the time. It is
+  not its text-to-speech. The integration gives it the hour of Gladys (its own
+  clock is in UTC). LapinLibre and Terrier OS announce the time of the moment.
 - **Set the LED** — hexadecimal color (`FF0000` for red), steady or pulsing,
   with a second color and a speed.
 - **Move the ears** — to a position, at random, or back to rest.
@@ -187,12 +190,12 @@ the standard "Control a device" action.
 ## Dashboard widgets
 
 - **Karotz** — state of the rabbit, storage (in %), tag count, and four buttons:
-  sleep, ears at random, mood, tell the time. When it sleeps, a single button:
+  sleep, mood, tell the time, ears at random. When it sleeps, a single button:
   wake it up. The rabbit takes 6 to 12 seconds to fall asleep or wake up, and
   the message ("Good night, rabbit.", "The rabbit is waking up.") stays 4
   seconds on screen: the integration sends it near the end, so it is still there
   when the new button shows up. For that it takes how long your rabbit's
-  previous wake-up took. Ears at random, Mood and Tell the time show no message:
+  previous wake-up took. Mood, Tell the time and Ears at random show no message:
   the rabbit answers by itself.
 - **Karotz photos** — the pictures stored on the rabbit, one by one and whole,
   newest first: **Previous** and **Next** buttons, **Take a picture** (shown at

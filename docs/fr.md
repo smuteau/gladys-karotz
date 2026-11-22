@@ -175,7 +175,10 @@ plus récent).
   dès que la phrase commence, alors mettez une attente après elle si un son
   suit.
 - **Jouer une humeur** — au hasard, ou par son numéro.
-- **Dire l'heure**.
+- **Dire l'heure** — sous OpenKarotz, le lapin joue un enregistrement tiré au
+  hasard parmi ceux de l'heure en cours : tous ne disent pas l'heure. Ce n'est
+  pas sa voix de synthèse. L'intégration lui donne l'heure de Gladys (son
+  horloge est en UTC). LapinLibre et Terrier OS annoncent l'heure du moment.
 - **Régler la LED** — couleur en hexadécimal (`FF0000` pour rouge), fixe ou
   pulsée, avec une seconde couleur et une vitesse.
 - **Bouger les oreilles** — vers une position, au hasard, ou retour au repos.
@@ -196,13 +199,13 @@ l'appareil, utilisez l'action standard « Contrôler un appareil ».
 ## Widgets du tableau de bord
 
 - **Karotz** — état du lapin, stockage (en %), nombre de tags, et quatre boutons :
-  endormir, oreilles au hasard, humeur, dire l'heure. Quand il dort, un seul
+  endormir, humeur, dire l'heure, oreilles au hasard. Quand il dort, un seul
   bouton : le réveiller. Le lapin met 6 à 12 secondes à s'endormir ou à se
   réveiller, et le message (« Bonne nuit, lapin. », « Le lapin se réveille. »)
   reste 4 secondes à l'écran : l'intégration l'envoie donc vers la fin, pour
   qu'il soit encore là quand le nouveau bouton arrive. Elle prend pour cela la
-  durée du réveil précédent de votre lapin. Oreilles au hasard, Humeur et Dire
-  l'heure n'affichent pas de message : le lapin répond lui-même.
+  durée du réveil précédent de votre lapin. Humeur, Dire l'heure et Oreilles au
+  hasard n'affichent pas de message : le lapin répond lui-même.
 - **Photos du Karotz** — les photos stockées sur le lapin, une à une et en
   entier, de la plus récente à la plus ancienne : boutons **Précédente** et
   **Suivante**, **Prendre une photo** (elle s'affiche aussitôt) et **Effacer les

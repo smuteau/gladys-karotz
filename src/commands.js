@@ -338,8 +338,16 @@ export const playMood = oneAtATime(async (ctx, rabbit, id) => {
   return answer;
 });
 
+/**
+ * Tell the time. OpenKarotz plays a recording picked at random among those of
+ * the hour, which its scripts read in UTC (an hour or two off in France): the
+ * hour is given, in the timezone of Gladys (the core sets the container's
+ * TZ). Without it LapinLibre says the time now, so it gets none.
+ */
 export const sayTime = oneAtATime(async (ctx, rabbit) => {
-  const answer = await rabbit.client.clock();
+  const answer = await rabbit.client.clock(
+    rabbit.status?.system === SYSTEMS.LAPINLIBRE ? undefined : ctx.now().getHours(),
+  );
   afterRecalibration(ctx, rabbit);
   return answer;
 });

@@ -59,7 +59,8 @@ the notes of the version's GitHub Release.
 - The camera is a feature of the rabbit's device instead of a second device:
   every widget setting now offers one device per rabbit, and Gladys' Camera
   widget and camera scene actions work on the rabbit itself.
-- The `Karotz` widget has an Ears at random button, where Speak was.
+- The `Karotz` widget has an Ears at random button, in last position (after
+  Mood and Tell the time), where Speak was.
 - The scene action `Make the rabbit speak` is now called `Make the rabbit
 speak (its own voice)`, and says where to find the voice of Gladys: the
   "Talk on a speaker" action. When the rabbit's own speech fails, the message
@@ -97,6 +98,8 @@ speak (its own voice)`, and says where to find the voice of Gladys: the
   move the integration swapped them. And a move sent while the rabbit was
   still recalibrating its ears interrupted it, so they lost their zero: every
   move now waits for the end of a recalibration.
+- Tell the time on OpenKarotz used the rabbit's clock, which is in UTC: an
+  hour or two off in France. The integration now gives it the hour of Gladys.
 - A sound or a radio played right after another one (a clip of Gladys'
   voice, say) never started on OpenKarotz, though the rabbit answered "ok":
   its `sound` script gives the running player one second to quit. The

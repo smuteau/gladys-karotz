@@ -57,6 +57,8 @@ export function createApp(gladys, options = {}) {
     config: normalizeConfig(),
     memory: createMemory(options.memoryFile ?? null, logger),
     // How long a widget waits for a long command before answering (tests).
+    // The wall clock, in the timezone of Gladys (TZ of the container).
+    now: options.now ?? (() => new Date()),
     quickAnswerMs: options.quickAnswerMs,
     // Tests: how long a wake-up and a falling asleep are expected to take.
     transitionMs: options.transitionMs,

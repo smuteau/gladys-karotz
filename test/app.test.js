@@ -218,7 +218,7 @@ test('waking up from the widget: a toast, and the card keeps its buttons', async
 
   await new Promise((resolve) => setTimeout(resolve, 300));
   assert.equal(ctx.rabbits[0].status.sleeping, false);
-  assert.deepEqual(buttonsOf(await cardOf(gladys)), ['sleep', 'ears_random', 'mood', 'time']);
+  assert.deepEqual(buttonsOf(await cardOf(gladys)), ['sleep', 'mood', 'time', 'ears_random']);
 });
 
 test('the wake-up toast is timed to last until the rabbit is done', async () => {
@@ -246,7 +246,7 @@ test('falling asleep from the widget: "Good night", then Wake up', async () => {
   });
   const ack = await gladys.fake.widgetAction('karotz', 'sleep', {}, { settings: {}, values: {} });
   assert.match(JSON.stringify(ack.data), /Bonne nuit, lapin/);
-  assert.deepEqual(buttonsOf(await cardOf(gladys)), ['sleep', 'ears_random', 'mood', 'time']);
+  assert.deepEqual(buttonsOf(await cardOf(gladys)), ['sleep', 'mood', 'time', 'ears_random']);
   await new Promise((resolve) => setTimeout(resolve, 300));
   assert.deepEqual(buttonsOf(await cardOf(gladys)), ['wake']);
 });
@@ -358,6 +358,24 @@ test('the ears go back where they were after waking up, a mood or the clock', as
   await set('awake', 1);
   await settled();
   assert.equal(karotz.callsTo('ears').length, afterReset);
+});
+
+test('the rabbit is told the hour of Gladys, not its own UTC clock', async () => {
+  const options = { now: () => new Date(2026, 10, 22, 13, 9) };
+  const open = await createTestApp({ options });
+  await open.gladys.fake.widgetAction('karotz', 'time', {}, { settings: {}, values: {} });
+  await open.gladys.fake.sceneAction('say_time', { rabbit: RABBIT });
+  assert.deepEqual(
+    open.karotz.callsTo('apps/clock').map((call) => call.params.hour),
+    ['13', '13'],
+  );
+  // LapinLibre says the time now when it gets no hour.
+  const lapin = await createTestApp({
+    karotz: createFakeKarotz({ system: 'lapinlibre' }),
+    options,
+  });
+  await lapin.gladys.fake.sceneAction('say_time', { rabbit: RABBIT });
+  assert.equal(lapin.karotz.callsTo('apps/clock')[0].params.hour, undefined);
 });
 
 test('the storage gauge shows its percentage with its unit', async () => {

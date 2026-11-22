@@ -180,7 +180,10 @@ neuer).
   Lautsprecher sprechen“ gibt weiter, sobald der Satz beginnt; setzen Sie danach
   eine Wartezeit, wenn ein Ton folgt.
 - **Eine Stimmung abspielen** — zufällig oder über ihre Nummer.
-- **Die Uhrzeit ansagen**.
+- **Die Uhrzeit ansagen** — unter OpenKarotz spielt der Hase eine zufällig
+  gewählte Aufnahme der aktuellen Stunde: Nicht alle sagen die Uhrzeit. Das ist
+  nicht seine Sprachausgabe. Die Integration gibt ihm die Stunde von Gladys
+  (seine Uhr läuft in UTC). LapinLibre und Terrier OS sagen die aktuelle Uhrzeit an.
 - **Die LED einstellen** — Farbe hexadezimal (`FF0000` für Rot), dauerhaft
   oder pulsierend, mit einer zweiten Farbe und einer Geschwindigkeit.
 - **Die Ohren bewegen** — auf eine Position, zufällig oder zurück in die
@@ -203,13 +206,13 @@ Sie dafür die Standardaktion „Ein Gerät steuern“.
 ## Dashboard-Widgets
 
 - **Karotz** — Zustand des Hasen, Speicher (in %), Anzahl der Tags und vier
-  Schaltflächen: schlafen legen, Ohren zufällig, Stimmung, Uhrzeit ansagen. Wenn
+  Schaltflächen: schlafen legen, Stimmung, Uhrzeit ansagen, Ohren zufällig. Wenn
   er schläft, nur eine Schaltfläche: aufwecken. Der Hase braucht 6 bis 12
   Sekunden zum Einschlafen oder Aufwachen, und die Meldung („Gute Nacht, Hase.“,
   „Der Hase wacht auf.“) bleibt 4 Sekunden sichtbar: Die Integration sendet sie
   deshalb gegen Ende, damit sie noch da ist, wenn die neue Schaltfläche
-  erscheint. Dafür nimmt sie die Dauer des vorigen Aufwachens Ihres Hasen. Ohren
-  zufällig, Stimmung und Uhrzeit ansagen zeigen keine Meldung: Der Hase
+  erscheint. Dafür nimmt sie die Dauer des vorigen Aufwachens Ihres Hasen.
+  Stimmung, Uhrzeit ansagen und Ohren zufällig zeigen keine Meldung: Der Hase
   antwortet selbst.
 - **Karotz-Fotos** — die auf dem Hasen gespeicherten Fotos, einzeln und ganz,
   das neueste zuerst: Schaltflächen **Vorheriges** und **Nächstes**, **Foto

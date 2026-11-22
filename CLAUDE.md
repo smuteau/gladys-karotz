@@ -93,6 +93,12 @@ stops it, and the sound goes once the probe says it is gone. A device command
 must answer within 5 s (`COMMAND_TIMEOUT_MS` of the core): the voice of
 Gladys cannot wait for its clip to end.
 
+**The clock** (`apps/clock`): OpenKarotz plays a random recording (MP3) of the
+hour, which it reads in UTC unless the request carries `hour`; `sayTime` sends
+the hour of Gladys (`ctx.now()`, the core sets the container's `TZ`).
+LapinLibre gets no hour: without one it says the time now. A
+widget shows four buttons at most: the core drops the fifth.
+
 **Commands run one at a time per rabbit** (`oneAtATime` in `commands.js`): a
 command decides from the state the previous one left. A command calls the
 unqueued helpers (`setLedNow`), never another queued command: it would wait

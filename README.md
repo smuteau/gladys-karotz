@@ -45,7 +45,7 @@ move the ears (position, random, rest), take a picture.
 or woke up, new RFID tag recorded.
 
 **Dashboard widgets** — `Karotz` (state, storage in %, tags, and buttons:
-sleep / wake up first, then ears at random, mood, time; the wake-up toast is timed to last
+sleep / wake up first, then mood, time, ears at random; the wake-up toast is timed to last
 until the new button) and `Karotz photos` (the pictures stored on the rabbit,
 one at a time: previous, next, take one, delete them all).
 

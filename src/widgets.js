@@ -143,6 +143,9 @@ function rabbitContent(ctx, rabbit) {
   if (!rabbit.online) {
     return { ttl_seconds, components };
   }
+  // No Speak button: the rabbit's own speech service fails on many Free Rabbits
+  // OS rabbits, and an integration cannot use the voice of Gladys yet (only its
+  // "Talk on a speaker" scene action can). The core shows at most four buttons.
   // Sleep and Wake up stay the first button, whatever the state.
   if (rabbit.status.sleeping) {
     components.push({
@@ -161,21 +164,6 @@ function rabbitContent(ctx, rabbit) {
       icon: 'moon',
       style: 'secondary',
       action: { key: ACTIONS.SLEEP },
-    },
-    // No Speak button: the rabbit's own speech service fails on many
-    // Free Rabbits OS rabbits, and an integration cannot use the voice of
-    // Gladys yet (only its "Talk on a speaker" scene action can).
-    {
-      type: 'button',
-      label: {
-        en: 'Ears at random',
-        fr: 'Oreilles au hasard',
-        de: 'Ohren zufällig',
-        es: 'Orejas al azar',
-      },
-      icon: 'shuffle',
-      style: 'secondary',
-      action: { key: ACTIONS.EARS_RANDOM },
     },
     {
       type: 'button',
@@ -196,6 +184,18 @@ function rabbitContent(ctx, rabbit) {
       icon: 'clock',
       style: 'secondary',
       action: { key: ACTIONS.TIME },
+    },
+    {
+      type: 'button',
+      label: {
+        en: 'Ears at random',
+        fr: 'Oreilles au hasard',
+        de: 'Ohren zufällig',
+        es: 'Orejas al azar',
+      },
+      icon: 'shuffle',
+      style: 'secondary',
+      action: { key: ACTIONS.EARS_RANDOM },
     },
   );
   return { ttl_seconds, components };

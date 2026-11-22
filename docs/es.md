@@ -172,7 +172,10 @@ posterior).
   Gladys: «Hablar en un altavoz» devuelve el control en cuanto empieza la frase,
   así que ponga una espera después si sigue un sonido.
 - **Reproducir un estado de ánimo** — al azar, o por su número.
-- **Decir la hora**.
+- **Decir la hora** — con OpenKarotz, el conejo reproduce una grabación elegida
+  al azar entre las de la hora actual: no todas dicen la hora. No es su síntesis
+  de voz. La integración le da la hora de Gladys (su reloj está en UTC).
+  LapinLibre y Terrier OS anuncian la hora del momento.
 - **Ajustar el LED** — color en hexadecimal (`FF0000` para rojo), fijo o
   pulsante, con un segundo color y una velocidad.
 - **Mover las orejas** — a una posición, al azar, o de vuelta al reposo.
@@ -194,13 +197,13 @@ acción estándar «Controlar un dispositivo».
 ## Widgets del panel
 
 - **Karotz** — estado del conejo, almacenamiento (en %), número de etiquetas y
-  cuatro botones: dormir, orejas al azar, estado de ánimo, decir la hora. Cuando
+  cuatro botones: dormir, estado de ánimo, decir la hora, orejas al azar. Cuando
   duerme, un solo botón: despertarlo. El conejo tarda de 6 a 12 segundos en
   dormirse o despertarse, y el mensaje («Buenas noches, conejo.», «El conejo se
   despierta.») queda 4 segundos en pantalla: la integración lo envía por eso
   hacia el final, para que siga ahí cuando aparece el nuevo botón. Para ello
-  toma la duración del despertar anterior de su conejo. Orejas al azar, Estado
-  de ánimo y Decir la hora no muestran mensaje: el conejo responde por sí mismo.
+  toma la duración del despertar anterior de su conejo. Estado de ánimo, Decir
+  la hora y Orejas al azar no muestran mensaje: el conejo responde por sí mismo.
 - **Fotos del Karotz** — las fotos guardadas en el conejo, una a una y enteras,
   de la más reciente a la más antigua: botones **Anterior** y **Siguiente**,
   **Tomar una foto** (se muestra al momento) y **Borrar las fotos**.
