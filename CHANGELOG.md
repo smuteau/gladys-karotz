@@ -12,6 +12,7 @@ the notes of the version's GitHub Release.
 
 ### Changed
 
+- The cover names LapinLibre and Le Terrier next to OpenKarotz and Free Rabbits.
 - The documentation says which systems have been tested on a real rabbit: so
   far OpenKarotz on Free Rabbits OS, not LapinLibre nor Terrier OS.
 
