@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-22
+
 ### Added
 
 - First version: Karotz rabbits running OpenKarotz (stock firmware or Free
@@ -127,4 +129,5 @@ speak (its own voice)`, and says where to find the voice of Gladys: the
   integration now reads `/cgi-bin/get_version`, with the version of the
   system.
 
-[Unreleased]: https://github.com/smuteau/gladys-karotz/commits/main
+[Unreleased]: https://github.com/smuteau/gladys-karotz/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/smuteau/gladys-karotz/releases/tag/v1.0.0
