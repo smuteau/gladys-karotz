@@ -22,6 +22,12 @@ the notes of the version's GitHub Release.
 
 ### Fixed
 
+- Waking the rabbit up or putting it to sleep through its Awake switch (the
+  dashboard, the "Control a device" scene action, Gladys' assistant) reported
+  an error although the rabbit did it: Gladys waits 5 seconds for an answer,
+  the rabbit takes up to 12. The answer now comes within 4 seconds, while the
+  rabbit finishes, and the speech, sounds, LED and ears asked meanwhile wait
+  until it is awake.
 - The network search showed the frozen version of the rabbit's status (200 on
   Free Rabbits OS) instead of its real one: it now shows the same version as
   the rest of the integration, e.g. `OpenKarotz 210 (2.0.r8)`.

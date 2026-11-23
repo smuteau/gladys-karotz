@@ -409,6 +409,103 @@ test('a command refused by a sleeping rabbit fails the acknowledgement', async (
   assert.equal(ack.success, false);
 });
 
+async function eventually(check, what) {
+  for (let i = 0; i < 100; i += 1) {
+    if (check()) {
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+  assert.fail(`never happened: ${what}`);
+}
+
+test('the Awake switch is answered before Gladys gives up, however long the rabbit takes', async () => {
+  // Gladys gives up after 5 s and a real wake-up takes 12: 4 s are 50 ms here.
+  const karotz = createFakeKarotz({ sleeping: true, delays: { wakeup: 300 } });
+  const { gladys, ctx } = await createTestApp({ karotz, options: { setValueAnswerMs: 50 } });
+  let started = Date.now();
+  let ack = await gladys.fake.setValue(
+    { external_id: RABBIT },
+    { external_id: `${RABBIT}:awake` },
+    1,
+  );
+  const answeredAfter = Date.now() - started;
+  assert.equal(ack.success, true);
+  assert.ok(answeredAfter >= 40 && answeredAfter < 250, `answered after ${answeredAfter} ms`);
+  assert.equal(karotz.sleeping, true, 'still waking up when Gladys gets its answer');
+
+  await ctx.rabbits[0].transitionDone;
+  assert.equal(karotz.sleeping, false);
+  assert.equal(stateOf(gladys, 'awake'), 1);
+
+  // A quick command is answered as soon as it is done, not at the deadline.
+  ctx.setValueAnswerMs = 5000;
+  started = Date.now();
+  ack = await gladys.fake.setValue(
+    { external_id: RABBIT },
+    { external_id: `${RABBIT}:led-color` },
+    0xff0000,
+  );
+  assert.equal(ack.success, true);
+  assert.ok(Date.now() - started < 1000, 'not held until the deadline');
+});
+
+test("Gladys' assistant turning every switch of a sleeping rabbit on at once", async () => {
+  // Its "turn on the Karotz" sets Awake, LED and LED pulse to 1 together.
+  const karotz = createFakeKarotz({ sleeping: true, delays: { wakeup: 200 } });
+  const { gladys, ctx } = await createTestApp({ karotz, options: { setValueAnswerMs: 50 } });
+  const on = (key) =>
+    gladys.fake.setValue({ external_id: RABBIT }, { external_id: `${RABBIT}:${key}` }, 1);
+  const started = Date.now();
+  const acks = await Promise.all(['awake', 'led', 'led-pulse'].map(on));
+  assert.ok(Date.now() - started < 180, 'every answer before the end of the wake-up');
+  assert.deepEqual(
+    acks.map((ack) => ack.success),
+    [true, true, true],
+  );
+
+  await ctx.rabbits[0].commandQueue;
+  const paths = karotz.calls.map((call) => call.path);
+  assert.ok(paths.lastIndexOf('wakeup') < paths.indexOf('leds'), 'the LED waits for the wake-up');
+  assert.equal(karotz.sleeping, false);
+  assert.equal(karotz.ledPulse, '1');
+});
+
+test('a command that fails after its answer has the rabbit read again', async () => {
+  // Falling asleep, and a LED color queued behind it: the sleeping rabbit
+  // refuses the color after Gladys was told it was under way.
+  const karotz = createFakeKarotz({ delays: { sleep: 150 } });
+  const { gladys } = await createTestApp({ karotz, options: { setValueAnswerMs: 30 } });
+  const reads = karotz.callsTo('status').length;
+  const set = (key, value) =>
+    gladys.fake.setValue({ external_id: RABBIT }, { external_id: `${RABBIT}:${key}` }, value);
+  const acks = await Promise.all([set('awake', 0), set('led-color', 0xff0000)]);
+  assert.deepEqual(
+    acks.map((ack) => ack.success),
+    [true, true],
+  );
+  // One read after falling asleep, one after the refused color.
+  await eventually(() => karotz.callsTo('status').length >= reads + 2, 'the rabbit read again');
+  assert.equal(karotz.ledColor, '00FF00');
+  assert.equal(stateOf(gladys, 'awake'), 0);
+});
+
+test('speech and sounds wait for a wake-up in progress', async () => {
+  const karotz = createFakeKarotz({ sleeping: true, delays: { wakeup: 150 } });
+  const { gladys } = await createTestApp({ karotz, options: { setValueAnswerMs: 30 } });
+  // A scene: wake the rabbit up (answered while it is at it), then speak and
+  // play a sound. Sent at once, both would meet a rabbit still asleep.
+  await gladys.fake.setValue({ external_id: RABBIT }, { external_id: `${RABBIT}:awake` }, 1);
+  assert.equal(karotz.sleeping, true);
+  const [spoken, played] = await Promise.all([
+    gladys.fake.sceneAction('speak', { rabbit: RABBIT, text: 'Bonjour' }),
+    gladys.fake.sceneAction('play_sound', { rabbit: RABBIT, sound: 'bip1' }),
+  ]);
+  assert.equal(spoken.success, true, 'spoken once awake, not refused');
+  assert.equal(played.success, true, 'played once awake, not refused');
+  assert.deepEqual(karotz.heard, ['bip1']);
+});
+
 test('the reading loop fires one scene event per transition', async () => {
   const { gladys, ctx, karotz } = await createTestApp();
   await ctx.readAll({ events: true });

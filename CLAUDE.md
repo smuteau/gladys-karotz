@@ -103,14 +103,21 @@ widget shows four buttons at most: the core drops the fifth.
 command decides from the state the previous one left. A command calls the
 unqueued helpers (`setLedNow`), never another queued command: it would wait
 for itself. `stopSound` and the sound and speech commands are not queued (a
-stream must stay stoppable).
+stream must stay stoppable), but `speak` and `playSound` wait for a wake-up or
+a falling asleep asked before them (`afterTransition`).
 
 **Waking up and falling asleep take 6 to 12 s**, and the rabbit answers only at
 the end. `commands.wake` / `sleep` set `rabbit.transition` meanwhile: the
 reading loop skips that rabbit (a read would time out), and the `karotz` widget
 asks for a 10 s TTL. Its toast is answered one second after the click
 (`answerAfterASecond`), while the rabbit is still at it: timing it on the end
-showed too much delay, and the duration varies too much.
+showed too much delay, and the duration varies too much. Gladys waits 5 s for
+the answer to a device command (`COMMAND_TIMEOUT_MS` of the core), then
+reports a failure: `onSetValue` answers once the command is over, or after
+`SET_VALUE_ANSWER_MS` (4 s) as under way (`answerInTime` in `app.js`); a later
+failure is logged and the rabbit read again. Gladys' assistant turns every
+switch of the rabbit on at once (Awake, LED, LED pulse): the LED ones wait in
+the queue behind the wake-up.
 
 ## Architecture
 

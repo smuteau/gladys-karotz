@@ -192,7 +192,10 @@ plus récent).
   avec l'action Gladys « envoyer l'image d'une caméra » pour la recevoir.
 
 Réveiller, endormir, allumer la LED : ce sont des fonctionnalités de
-l'appareil, utilisez l'action standard « Contrôler un appareil ».
+l'appareil, utilisez l'action standard « Contrôler un appareil ». Le lapin met
+jusqu'à 12 secondes à se réveiller : la scène passe à l'action suivante au bout
+de 4 secondes au plus, et la voix, les sons, la LED et les oreilles attendent
+qu'il soit réveillé.
 
 **Déclencheurs**
 

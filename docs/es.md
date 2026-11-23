@@ -189,7 +189,9 @@ posterior).
   recibirla.
 
 Despertar, dormir, encender el LED: son funciones del dispositivo, use la
-acción estándar «Controlar un dispositivo».
+acción estándar «Controlar un dispositivo». El conejo tarda hasta 12 segundos en
+despertarse: la escena pasa a la acción siguiente en 4 segundos como máximo, y
+la voz, los sonidos, el LED y las orejas esperan a que esté despierto.
 
 **Disparadores**
 

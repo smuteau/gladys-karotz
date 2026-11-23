@@ -53,23 +53,36 @@ async function inTransition(rabbit, transition, work) {
   }
 }
 
-export const wake = oneAtATime((ctx, rabbit, { silent = true } = {}) =>
-  inTransition(rabbit, TRANSITIONS.WAKING, async () => {
+// A wake-up or a falling asleep, queued like any command. Speech and sounds do
+// not wait in that queue, but they wait for it: Gladys gets the answer to a
+// wake-up before it is over (see SET_VALUE_ANSWER_MS in app.js), so a scene
+// that wakes the rabbit then makes it speak would reach a rabbit still asleep.
+function transition(rabbit, kind, work) {
+  const done = queued(rabbit, () => inTransition(rabbit, kind, work));
+  rabbit.transitionDone = done.catch(() => {});
+  return done;
+}
+
+/** Wait for a wake-up or a falling asleep asked before, if any. */
+async function afterTransition(rabbit) {
+  await rabbit.transitionDone;
+}
+
+export const wake = (ctx, rabbit, { silent = true } = {}) =>
+  transition(rabbit, TRANSITIONS.WAKING, async () => {
     const startedAt = Date.now();
     await rabbit.client.wakeup({ silent });
     await ctx.refresh(rabbit);
     afterRecalibration(ctx, rabbit, startedAt);
-  }),
-);
+  });
 
-export const sleep = oneAtATime((ctx, rabbit) =>
-  inTransition(rabbit, TRANSITIONS.FALLING_ASLEEP, async () => {
+export const sleep = (ctx, rabbit) =>
+  transition(rabbit, TRANSITIONS.FALLING_ASLEEP, async () => {
     // The rabbit recalibrates its ears and lowers them: Gladys keeps the
     // positions of the day, put back when it wakes up.
     await rabbit.client.sleep();
     await ctx.refresh(rabbit);
-  }),
-);
+  });
 
 // -----------------------------------------------------------------------------
 // Ears. The controller moves an ear to an absolute position (17 steps a turn,
@@ -232,11 +245,12 @@ export const setVolume = oneAtATime(async (ctx, rabbit, level) => {
   await ctx.publishStates(rabbit);
 });
 
-export function speak(ctx, rabbit, text, voice) {
+export async function speak(ctx, rabbit, text, voice) {
   const sentence = String(text ?? '').trim();
   if (!sentence) {
     throw new KarotzError(ERROR_KINDS.REFUSED, 'Nothing to say');
   }
+  await afterTransition(rabbit);
   return rabbit.client.tts(sentence, { voice: voice || ctx.config.tts_voice || undefined });
 }
 
@@ -284,6 +298,7 @@ export async function playSound(ctx, rabbit, sound) {
   if (!value) {
     throw new KarotzError(ERROR_KINDS.REFUSED, 'No sound to play');
   }
+  await afterTransition(rabbit);
   if (!/^https?:\/\//i.test(value)) {
     await stopPlayerFirst(ctx, rabbit);
     return rabbit.client.playSound(value);

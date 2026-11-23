@@ -182,7 +182,9 @@ The integration adds its own cards to the scene editor (Gladys 5.1 or later).
   Gladys' "send a camera image" action to receive it.
 
 Waking up, putting to sleep, turning the LED on: these are device features, use
-the standard "Control a device" action.
+the standard "Control a device" action. The rabbit takes up to 12 seconds to
+wake up: the scene moves on after 4 seconds at most, and speech, sounds, the LED
+and the ears wait until it is awake.
 
 **Triggers**
 

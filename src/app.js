@@ -24,6 +24,16 @@ import { WIDGETS, getWidgetImage, refreshWidgets } from './widgets.js';
 // of the device in Gladys does not look dead.
 const STATE_HEARTBEAT_MS = 30 * 60 * 1000;
 
+// Gladys waits 5 s for the answer to a device command (COMMAND_TIMEOUT_MS of
+// the core), then reports a failure, even if the command goes on. Waking up
+// takes a real Karotz about 12 s, falling asleep about 6 s, and a command can
+// wait behind them in the rabbit's queue (Gladys' assistant turns every switch
+// of the rabbit on at once). Past SET_VALUE_ANSWER_MS the command is answered
+// as under way, and goes on: its own read-back shows Gladys how it went, and a
+// later failure is logged and the rabbit read again.
+const SET_VALUE_ANSWER_MS = 4000;
+const STILL_RUNNING = Symbol('still running');
+
 const defaultSleepMs = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
@@ -56,11 +66,12 @@ export function createApp(gladys, options = {}) {
     sleepMs: options.sleepMs ?? defaultSleepMs,
     config: normalizeConfig(),
     memory: createMemory(options.memoryFile ?? null, logger),
-    // How long a widget waits for a long command before answering (tests).
     // The wall clock, in the timezone of Gladys (TZ of the container).
     now: options.now ?? (() => new Date()),
     // Tests: when the wake and sleep buttons of the widget answer (1 s).
     answerAfterMs: options.answerAfterMs,
+    // Tests: when a long device command is answered as under way (4 s).
+    setValueAnswerMs: options.setValueAnswerMs ?? SET_VALUE_ANSWER_MS,
     /** @type {ReturnType<typeof createRabbit>[]} */
     rabbits: [],
 
@@ -273,6 +284,33 @@ export function createApp(gladys, options = {}) {
     }
   }
 
+  /**
+   * Run a device command; answer when it is over, or once SET_VALUE_ANSWER_MS
+   * have gone by, as under way. A failure before that is the answer.
+   */
+  async function answerInTime(device, work) {
+    const running = work();
+    let timer;
+    const answerBy = new Promise((resolve) => {
+      timer = setTimeout(resolve, ctx.setValueAnswerMs, STILL_RUNNING);
+    });
+    try {
+      if ((await Promise.race([running, answerBy])) !== STILL_RUNNING) {
+        return;
+      }
+    } finally {
+      clearTimeout(timer);
+    }
+    running.catch(async (err) => {
+      logger.warn(`A device command failed after Gladys got its answer: ${err.message}`);
+      const rabbit = ctx.findRabbit(device.external_id, { optional: true });
+      // Gladys shows the value it asked for: the rabbit tells the real one.
+      if (rabbit) {
+        await ctx.refresh(rabbit).catch(() => {});
+      }
+    });
+  }
+
   /** Register every handler. Call it BEFORE gladys.connect(). */
   function register() {
     gladys.onScanRequest(async () => {
@@ -284,7 +322,7 @@ export function createApp(gladys, options = {}) {
       // A notification is the one-time URL of a voice clip: not for the logs.
       const shown = typeof value === 'string' ? '(text)' : value;
       logger.info(`onSetValue <- ${feature.external_id} = ${shown}`);
-      await setValue(device, feature, value);
+      await answerInTime(device, () => setValue(device, feature, value));
     });
 
     gladys.onGetImage((device) =>

@@ -198,7 +198,9 @@ neuer).
   Gladys-Aktion „Kamerabild senden“ folgen, um es zu erhalten.
 
 Aufwecken, schlafen legen, LED einschalten: Das sind Gerätefunktionen, nutzen
-Sie dafür die Standardaktion „Ein Gerät steuern“.
+Sie dafür die Standardaktion „Ein Gerät steuern“. Der Hase braucht bis zu 12
+Sekunden zum Aufwachen: Die Szene geht nach höchstens 4 Sekunden weiter, und
+Sprache, Töne, LED und Ohren warten, bis er wach ist.
 
 **Auslöser**
 
