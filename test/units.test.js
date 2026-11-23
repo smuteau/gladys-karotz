@@ -255,8 +255,12 @@ test('a LapinLibre status is recognised, and keeps the Wi-Fi MAC', () => {
 test('the network search reports a locked address and never sends a password', async () => {
   const seen = [];
   const fetch = async (input, init = {}) => {
-    const { hostname } = new URL(String(input));
-    seen.push(init.headers?.Authorization ?? null);
+    const { hostname, pathname } = new URL(String(input));
+    seen.push({
+      host: hostname,
+      path: pathname,
+      authorization: init.headers?.Authorization ?? null,
+    });
     if (hostname === '192.168.1.70') {
       return createFakeKarotz().fetch(input, init);
     }
@@ -273,8 +277,14 @@ test('the network search reports a locked address and never sends a password', a
       ['192.168.1.71', true],
     ],
   );
-  assert.equal(seen.length, 254);
-  assert.ok(seen.every((authorization) => authorization === null));
+  // One status per address, then the real version of the rabbit found only:
+  // never of the locked address.
+  assert.equal(seen.filter((request) => request.path === '/cgi-bin/status').length, 254);
+  assert.deepEqual(
+    seen.filter((request) => request.path !== '/cgi-bin/status').map((r) => `${r.host}${r.path}`),
+    ['192.168.1.70/cgi-bin/get_version'],
+  );
+  assert.ok(seen.every((request) => request.authorization === null));
 });
 
 test('only private /24 networks are searched', () => {

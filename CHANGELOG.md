@@ -18,6 +18,9 @@ the notes of the version's GitHub Release.
 
 ### Fixed
 
+- The network search showed the frozen version of the rabbit's status (200 on
+  Free Rabbits OS) instead of its real one: it now shows the same version as
+  the rest of the integration, e.g. `OpenKarotz 210 (2.0.r8)`.
 - Two descriptions of 1.0.0 were out of date: the `Karotz` widget no longer has
   a Speak button, and a picture becomes the image of the rabbit's camera, not
   of a separate camera device.

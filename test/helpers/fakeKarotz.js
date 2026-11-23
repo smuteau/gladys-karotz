@@ -31,6 +31,9 @@ export function createFakeKarotz(overrides = {}) {
     busy: false,
     // OpenKarotz on Free Rabbits OS: false = its online speech service fails.
     speechService: true,
+    // Free Rabbits OS: the frozen `version` of its status (its get_version
+    // still tells the truth). null: the status tells the truth too.
+    frozenStatusVersion: null,
     // The next N requests get no answer at all.
     dropNext: 0,
     // Milliseconds some scripts take to answer, e.g. `{ wakeup: 50 }`.
@@ -72,7 +75,7 @@ export function createFakeKarotz(overrides = {}) {
   const handlers = {
     status: () =>
       json({
-        version: lapinLibre() ? '4f2c1a0 (0.2.0)' : '2.0.5',
+        version: lapinLibre() ? '4f2c1a0 (0.2.0)' : (rabbit.frozenStatusVersion ?? '2.0.5'),
         ears_disabled: '0',
         sleep: rabbit.sleeping ? '1' : '0',
         sleep_time: '0',

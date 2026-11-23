@@ -705,6 +705,17 @@ test('the version comes from get_version, with the version of the system', async
   );
 });
 
+test('the network search shows the real version, not the frozen one of the status', async () => {
+  // Free Rabbits OS: its status says 200, its get_version says 210.
+  const { gladys } = await createTestApp({
+    karotz: createFakeKarotz({ frozenStatusVersion: '200' }),
+  });
+  const ack = await gladys.fake.action('find_rabbits', { subnet: '192.168.1' });
+  assert.equal(ack.success, true);
+  assert.match(JSON.stringify(ack.data), /192\.168\.1\.70 \(OpenKarotz 2\.0\.5 \(2\.0\.r8\)\)/);
+  assert.doesNotMatch(JSON.stringify(ack.data), /OpenKarotz 200/);
+});
+
 test('a LapinLibre or Terrier OS rabbit behind its web password is driven the same way', async () => {
   const karotz = createFakeKarotz({ system: 'lapinlibre', password: 'carrot-2026' });
   const { gladys, ctx } = await createTestApp({
@@ -758,12 +769,12 @@ test('configuration buttons succeed (green) when the operation worked', async ()
 
   ack = await gladys.fake.action('find_rabbits', { subnet: '192.168.1' });
   assert.equal(ack.success, true);
-  assert.match(JSON.stringify(ack.data), /192\.168\.1\.70 \(OpenKarotz 2\.0\.5\)/);
+  assert.match(JSON.stringify(ack.data), /192\.168\.1\.70 \(OpenKarotz 2\.0\.5 \(2\.0\.r8\)\)/);
 
   // Nothing typed: the network of the configured rabbit is searched.
   ack = await gladys.fake.action('find_rabbits', {});
   assert.equal(ack.success, true);
-  assert.match(JSON.stringify(ack.data), /192\.168\.1\.70 \(OpenKarotz 2\.0\.5\)/);
+  assert.match(JSON.stringify(ack.data), /192\.168\.1\.70 \(OpenKarotz 2\.0\.5 \(2\.0\.r8\)\)/);
 
   ack = await gladys.fake.action('identify', { rabbit: RABBIT });
   assert.equal(ack.success, true);

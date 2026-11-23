@@ -8,8 +8,8 @@
 // -----------------------------------------------------------------------------
 
 import * as commands from './commands.js';
-import { ERROR_KINDS } from './karotz/client.js';
-import { firmwareLabel, looksLikeStatus, parseStatus } from './rabbits.js';
+import { ERROR_KINDS, parseAnswer } from './karotz/client.js';
+import { firmwareLabel, looksLikeStatus, parseStatus, parseVersions } from './rabbits.js';
 
 /** Every user-facing text exists in these languages. */
 export const LANGUAGES = ['en', 'fr', 'de', 'es'];
@@ -101,6 +101,27 @@ async function probe(fetchImpl, ip) {
   }
 }
 
+/**
+ * The real version of a rabbit the search found. The `version` of its status
+ * is frozen on some firmwares (Free Rabbits OS says 200 where its web page
+ * says 210); get_version tells the truth, with the version of the system.
+ * Asked only of the addresses that answered as a rabbit, without a password.
+ */
+async function readVersions(fetchImpl, ip) {
+  try {
+    const response = await fetchImpl(`http://${ip}/cgi-bin/get_version`, {
+      signal: AbortSignal.timeout(SCAN_TIMEOUT_MS),
+    });
+    if (!response.ok) {
+      await response.body?.cancel().catch(() => {});
+      return null;
+    }
+    return parseVersions(parseAnswer(await response.text()));
+  } catch {
+    return null;
+  }
+}
+
 /** Ask every address of a /24 for an OpenKarotz status. */
 export async function scanSubnet(fetchImpl, subnet) {
   const addresses = Array.from({ length: 254 }, (_, index) => `${subnet}.${index + 1}`);
@@ -117,6 +138,9 @@ export async function scanSubnet(fetchImpl, subnet) {
     }
   }
   await Promise.all(Array.from({ length: SCAN_CONCURRENCY }, worker));
+  for (const hit of found.filter((rabbit) => !rabbit.locked)) {
+    hit.versions = await readVersions(fetchImpl, hit.ip);
+  }
   return found.sort((x, y) => x.ip.localeCompare(y.ip, undefined, { numeric: true }));
 }
 
@@ -245,7 +269,7 @@ export const ACTIONS = {
     }
     const rabbits = found
       .filter((hit) => !hit.locked)
-      .map(({ ip, status }) => `${ip} (${firmwareLabel(status)})`)
+      .map(({ ip, status, versions }) => `${ip} (${firmwareLabel(status, versions)})`)
       .join(', ');
     const locked = found
       .filter((hit) => hit.locked)
