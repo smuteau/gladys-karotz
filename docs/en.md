@@ -200,7 +200,8 @@ and the ears wait until it is awake.
   sleep, mood, tell the time, ears at random. When it sleeps, a single button:
   wake it up. The rabbit takes 6 to 12 seconds to fall asleep or wake up: the
   message ("Good night, rabbit.", "The rabbit is waking up.") shows one second
-  after the click, while it is at it, and the button changes once it is done.
+  after the click, while it is at it. The button's icon spins until it is done,
+  then the button changes.
   Mood, Tell the time and Ears at random show no message: the rabbit answers by
   itself.
 - **Karotz photos** — the pictures stored on the rabbit, one by one and whole,

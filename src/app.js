@@ -108,6 +108,11 @@ export function createApp(gladys, options = {}) {
       refreshWidgets(gladys);
     },
 
+    /** Ask every widget of the integration to be fetched again. */
+    refreshWidgets() {
+      refreshWidgets(gladys);
+    },
+
     /** One pass of the reading loop over every rabbit. */
     readAll({ events = false } = {}) {
       reading = reading.then(() => readAllNow(events)).catch((err) => logger.error(err));

@@ -210,6 +210,13 @@ test('waking up from the widget: a toast, and the card keeps its buttons', async
   const waking = await cardOf(gladys);
   assert.deepEqual(buttonsOf(waking), ['wake'], 'the card is the one of before, buttons included');
   assert.equal(waking.ttl_seconds, 10, 'asked again soon, even without a nudge');
+  const firstButton = (content) => content.components.find((c) => c.type === 'button');
+  assert.equal(firstButton(waking).icon, 'loader', 'the button keeps spinning until the end');
+
+  // A click on the spinning button sends nothing more to the rabbit.
+  const again = await gladys.fake.widgetAction('karotz', 'wake', {}, { settings: {}, values: {} });
+  assert.match(JSON.stringify(again.data), /Le lapin se réveille/);
+  assert.equal(karotz.callsTo('wakeup').length, 1);
 
   // The reading loop leaves a waking rabbit alone.
   const reads = karotz.callsTo('status').length;
@@ -218,7 +225,9 @@ test('waking up from the widget: a toast, and the card keeps its buttons', async
 
   await new Promise((resolve) => setTimeout(resolve, 300));
   assert.equal(ctx.rabbits[0].status.sleeping, false);
-  assert.deepEqual(buttonsOf(await cardOf(gladys)), ['sleep', 'mood', 'time', 'ears_random']);
+  const awake = await cardOf(gladys);
+  assert.deepEqual(buttonsOf(awake), ['sleep', 'mood', 'time', 'ears_random']);
+  assert.equal(firstButton(awake).icon, 'moon');
 });
 
 test('the wake-up toast comes one second after the click, however long the rabbit takes', async () => {

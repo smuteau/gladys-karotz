@@ -44,12 +44,16 @@ export const TRANSITIONS = { WAKING: 'waking', FALLING_ASLEEP: 'falling_asleep' 
 // Waking up takes about 12 s on a real Karotz, falling asleep about 6 s, and
 // the rabbit answers only once it is over. Meanwhile the reading loop leaves
 // the rabbit alone (see app.js): a read would wait behind the script.
-async function inTransition(rabbit, transition, work) {
+// The `karotz` widget shows a spinning icon meanwhile: it is asked again when a
+// transition starts and when it ends, whoever asked for it.
+async function inTransition(ctx, rabbit, transition, work) {
   rabbit.transition = transition;
+  ctx.refreshWidgets();
   try {
     return await work();
   } finally {
     rabbit.transition = null;
+    ctx.refreshWidgets();
   }
 }
 
@@ -57,8 +61,8 @@ async function inTransition(rabbit, transition, work) {
 // not wait in that queue, but they wait for it: Gladys gets the answer to a
 // wake-up before it is over (see SET_VALUE_ANSWER_MS in app.js), so a scene
 // that wakes the rabbit then makes it speak would reach a rabbit still asleep.
-function transition(rabbit, kind, work) {
-  const done = queued(rabbit, () => inTransition(rabbit, kind, work));
+function transition(ctx, rabbit, kind, work) {
+  const done = queued(rabbit, () => inTransition(ctx, rabbit, kind, work));
   rabbit.transitionDone = done.catch(() => {});
   return done;
 }
@@ -69,7 +73,7 @@ async function afterTransition(rabbit) {
 }
 
 export const wake = (ctx, rabbit, { silent = true } = {}) =>
-  transition(rabbit, TRANSITIONS.WAKING, async () => {
+  transition(ctx, rabbit, TRANSITIONS.WAKING, async () => {
     const startedAt = Date.now();
     await rabbit.client.wakeup({ silent });
     await ctx.refresh(rabbit);
@@ -77,7 +81,7 @@ export const wake = (ctx, rabbit, { silent = true } = {}) =>
   });
 
 export const sleep = (ctx, rabbit) =>
-  transition(rabbit, TRANSITIONS.FALLING_ASLEEP, async () => {
+  transition(ctx, rabbit, TRANSITIONS.FALLING_ASLEEP, async () => {
     // The rabbit recalibrates its ears and lowers them: Gladys keeps the
     // positions of the day, put back when it wakes up.
     await rabbit.client.sleep();

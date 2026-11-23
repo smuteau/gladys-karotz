@@ -211,9 +211,10 @@ qu'il soit réveillé.
   boutons : endormir, humeur, dire l'heure, oreilles au hasard. Quand il dort,
   un seul bouton : le réveiller. Le lapin met 6 à 12 secondes à s'endormir ou à
   se réveiller : le message (« Bonne nuit, lapin. », « Le lapin se réveille. »)
-  s'affiche une seconde après le clic, pendant qu'il s'exécute, et le bouton
-  change quand il a fini. Humeur, Dire l'heure et Oreilles au hasard n'affichent
-  pas de message : le lapin répond lui-même.
+  s'affiche une seconde après le clic, pendant qu'il s'exécute. L'icône du
+  bouton tourne jusqu'à ce qu'il ait fini, puis le bouton change. Humeur, Dire
+  l'heure et Oreilles au hasard n'affichent pas de message : le lapin répond
+  lui-même.
 - **Photos du Karotz** — les photos stockées sur le lapin, une à une et en
   entier, de la plus récente à la plus ancienne : boutons **Précédente** et
   **Suivante**, **Prendre une photo** (elle s'affiche aussitôt) et **Effacer les

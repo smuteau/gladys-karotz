@@ -207,9 +207,10 @@ la voz, los sonidos, el LED y las orejas esperan a que esté despierto.
   cuatro botones: dormir, estado de ánimo, decir la hora, orejas al azar. Cuando
   duerme, un solo botón: despertarlo. El conejo tarda de 6 a 12 segundos en
   dormirse o despertarse: el mensaje («Buenas noches, conejo.», «El conejo se
-  despierta.») aparece un segundo después del clic, mientras lo hace, y el botón
-  cambia cuando ha terminado. Estado de ánimo, Decir la hora y Orejas al azar no
-  muestran mensaje: el conejo responde por sí mismo.
+  despierta.») aparece un segundo después del clic, mientras lo hace. El icono
+  del botón gira hasta que termina, y luego el botón cambia. Estado de ánimo,
+  Decir la hora y Orejas al azar no muestran mensaje: el conejo responde por sí
+  mismo.
 - **Fotos del Karotz** — las fotos guardadas en el conejo, una a una y enteras,
   de la más reciente a la más antigua: botones **Anterior** y **Siguiente**,
   **Tomar una foto** (se muestra al momento) y **Borrar las fotos**.

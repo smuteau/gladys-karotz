@@ -10,6 +10,12 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+### Changed
+
+- The `Karotz` widget: the icon of the Wake up or Sleep button keeps spinning
+  until the rabbit is done, instead of stopping when the message shows, one
+  second after the click. A click on it meanwhile sends nothing more.
+
 ## [1.1.0] - 2026-11-23
 
 ### Changed

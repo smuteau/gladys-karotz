@@ -146,12 +146,15 @@ function rabbitContent(ctx, rabbit) {
   // No Speak button: the rabbit's own speech service fails on many Free Rabbits
   // OS rabbits, and an integration cannot use the voice of Gladys yet (only its
   // "Talk on a speaker" scene action can). The core shows at most four buttons.
-  // Sleep and Wake up stay the first button, whatever the state.
+  // Sleep and Wake up stay the first button, whatever the state. While the
+  // rabbit wakes up or falls asleep, its icon is the core's spinning `loader`
+  // (the one of a pending click), from the click to the end.
+  const busy = Boolean(rabbit.transition);
   if (rabbit.status.sleeping) {
     components.push({
       type: 'button',
       label: { en: 'Wake up', fr: 'Réveiller', de: 'Aufwecken', es: 'Despertar' },
-      icon: 'sun',
+      icon: busy ? 'loader' : 'sun',
       style: 'primary',
       action: { key: ACTIONS.WAKE },
     });
@@ -161,7 +164,7 @@ function rabbitContent(ctx, rabbit) {
     {
       type: 'button',
       label: { en: 'Sleep', fr: 'Endormir', de: 'Schlafen legen', es: 'Dormir' },
-      icon: 'moon',
+      icon: busy ? 'loader' : 'moon',
       style: 'secondary',
       action: { key: ACTIONS.SLEEP },
     },
@@ -356,7 +359,10 @@ async function answerAfterASecond(ctx, work) {
 async function runAction(ctx, rabbit, actionKey) {
   switch (actionKey) {
     case ACTIONS.WAKE:
-      await answerAfterASecond(ctx, () => commands.wake(ctx, rabbit, { silent: false }));
+      // A click on the spinning button: the rabbit is already at it.
+      if (!rabbit.transition) {
+        await answerAfterASecond(ctx, () => commands.wake(ctx, rabbit, { silent: false }));
+      }
       return {
         en: 'The rabbit is waking up.',
         fr: 'Le lapin se réveille.',
@@ -364,7 +370,9 @@ async function runAction(ctx, rabbit, actionKey) {
         es: 'El conejo se despierta.',
       };
     case ACTIONS.SLEEP:
-      await answerAfterASecond(ctx, () => commands.sleep(ctx, rabbit));
+      if (!rabbit.transition) {
+        await answerAfterASecond(ctx, () => commands.sleep(ctx, rabbit));
+      }
       return {
         en: 'Good night, rabbit.',
         fr: 'Bonne nuit, lapin.',

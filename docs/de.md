@@ -218,9 +218,9 @@ Sprache, Töne, LED und Ohren warten, bis er wach ist.
   er schläft, nur eine Schaltfläche: aufwecken. Der Hase braucht 6 bis 12
   Sekunden zum Einschlafen oder Aufwachen: Die Meldung („Gute Nacht, Hase.“,
   „Der Hase wacht auf.“) erscheint eine Sekunde nach dem Klick, während er noch
-  dabei ist, und die Schaltfläche wechselt, sobald er fertig ist. Stimmung,
-  Uhrzeit ansagen und Ohren zufällig zeigen keine Meldung: Der Hase antwortet
-  selbst.
+  dabei ist. Das Symbol der Schaltfläche dreht sich, bis er fertig ist, dann
+  wechselt die Schaltfläche. Stimmung, Uhrzeit ansagen und Ohren zufällig zeigen
+  keine Meldung: Der Hase antwortet selbst.
 - **Karotz-Fotos** — die auf dem Hasen gespeicherten Fotos, einzeln und ganz,
   das neueste zuerst: Schaltflächen **Vorheriges** und **Nächstes**, **Foto
   aufnehmen** (sofort angezeigt) und **Fotos löschen**.
