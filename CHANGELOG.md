@@ -12,6 +12,10 @@ the notes of the version's GitHub Release.
 
 ### Changed
 
+- The `Karotz` widget: "The rabbit is waking up" and "Good night, rabbit" now
+  show one second after the click, instead of near the end of the 6 to 12
+  seconds the rabbit takes, which came late and at a different moment each
+  time. The button still changes once the rabbit is done.
 - The cover names LapinLibre and Le Terrier next to OpenKarotz and Free Rabbits.
 - The documentation says which systems have been tested on a real rabbit: so
   far OpenKarotz on Free Rabbits OS, not LapinLibre nor Terrier OS.

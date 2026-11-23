@@ -262,6 +262,8 @@ export async function createTestApp({
     fetch: karotz.fetch,
     sleepMs: async () => {},
     timers: false,
+    // The wake and sleep buttons answer after a second: not in every test.
+    answerAfterMs: 0,
     ...options,
   });
   app.register();

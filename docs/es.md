@@ -204,11 +204,10 @@ acción estándar «Controlar un dispositivo».
 - **Karotz** — estado del conejo, almacenamiento (en %), número de etiquetas y
   cuatro botones: dormir, estado de ánimo, decir la hora, orejas al azar. Cuando
   duerme, un solo botón: despertarlo. El conejo tarda de 6 a 12 segundos en
-  dormirse o despertarse, y el mensaje («Buenas noches, conejo.», «El conejo se
-  despierta.») queda 4 segundos en pantalla: la integración lo envía por eso
-  hacia el final, para que siga ahí cuando aparece el nuevo botón. Para ello
-  toma la duración del despertar anterior de su conejo. Estado de ánimo, Decir
-  la hora y Orejas al azar no muestran mensaje: el conejo responde por sí mismo.
+  dormirse o despertarse: el mensaje («Buenas noches, conejo.», «El conejo se
+  despierta.») aparece un segundo después del clic, mientras lo hace, y el botón
+  cambia cuando ha terminado. Estado de ánimo, Decir la hora y Orejas al azar no
+  muestran mensaje: el conejo responde por sí mismo.
 - **Fotos del Karotz** — las fotos guardadas en el conejo, una a una y enteras,
   de la más reciente a la más antigua: botones **Anterior** y **Siguiente**,
   **Tomar una foto** (se muestra al momento) y **Borrar las fotos**.

@@ -323,37 +323,28 @@ async function showPhoto(rabbit, step) {
 
 const LOCALES = { en: 'en-GB', fr: 'fr-FR', de: 'de-DE', es: 'es-ES' };
 
-// The dashboard shows a toast for 4 s (ACTION_MESSAGE_MS of the core), from
-// the moment the action answers. Waking up takes about 12 s on a real Karotz
-// (a sound, the ears), falling asleep about 6 s: answered at once, the toast
-// was gone long before the new button. The action answers instead about
-// TOAST_LEAD_MS before the expected end, so the toast is still there when the
-// button changes; the expected end is how long the last one took. A refusal
-// (asleep, no answer, wrong password) still comes at once.
-const TOAST_LEAD_MS = 3500;
-const EXPECTED_MS = { wake: 12000, sleep: 6000 };
-const QUICK_ANSWER_MS = 1500;
+// Waking up takes a real Karotz 6 to 12 s, and how long varies too much from
+// one time to the next to time the toast (4 s on the dashboard) on the end.
+// The action answers ANSWER_AFTER_MS after the click instead, while the
+// rabbit is still at it. A refusal within that second (asleep, no answer,
+// wrong password) is the toast, in red, as usual.
+const ANSWER_AFTER_MS = 1000;
 
 /**
- * Run a wake-up or a falling asleep, and answer so that the toast lasts until
- * the rabbit is done. A failure before the answer is the toast, as usual; a
- * later one is only logged, and the widgets are refreshed once the command
- * is over, so the card shows the state the rabbit really reached.
+ * Run a wake-up or a falling asleep, and answer one second after the click.
+ * A failure before the answer is the toast; a later one is only logged, and
+ * the widgets are refreshed once the command is over, so the card shows the
+ * state the rabbit really reached.
  */
-async function answerBeforeEnd(ctx, rabbit, kind, work) {
-  const expected = rabbit.transitionMs?.[kind] ?? ctx.transitionMs?.[kind] ?? EXPECTED_MS[kind];
-  const delay = Math.max(ctx.quickAnswerMs ?? QUICK_ANSWER_MS, expected - TOAST_LEAD_MS);
-  const started = Date.now();
-  const running = work().then(() => {
-    rabbit.transitionMs = { ...rabbit.transitionMs, [kind]: Date.now() - started };
-  });
+async function answerAfterASecond(ctx, work) {
+  const running = work();
   let timer;
-  const late = new Promise((resolve) => {
-    timer = setTimeout(resolve, delay);
-    timer.unref?.();
+  const second = new Promise((resolve) => {
+    timer = setTimeout(resolve, ctx.answerAfterMs ?? ANSWER_AFTER_MS);
   });
   try {
-    await Promise.race([running, late]);
+    // A rabbit faster than a second still answers at the second.
+    await Promise.race([running.then(() => second), second]);
   } finally {
     clearTimeout(timer);
   }
@@ -365,9 +356,7 @@ async function answerBeforeEnd(ctx, rabbit, kind, work) {
 async function runAction(ctx, rabbit, actionKey) {
   switch (actionKey) {
     case ACTIONS.WAKE:
-      await answerBeforeEnd(ctx, rabbit, 'wake', () =>
-        commands.wake(ctx, rabbit, { silent: false }),
-      );
+      await answerAfterASecond(ctx, () => commands.wake(ctx, rabbit, { silent: false }));
       return {
         en: 'The rabbit is waking up.',
         fr: 'Le lapin se réveille.',
@@ -375,7 +364,7 @@ async function runAction(ctx, rabbit, actionKey) {
         es: 'El conejo se despierta.',
       };
     case ACTIONS.SLEEP:
-      await answerBeforeEnd(ctx, rabbit, 'sleep', () => commands.sleep(ctx, rabbit));
+      await answerAfterASecond(ctx, () => commands.sleep(ctx, rabbit));
       return {
         en: 'Good night, rabbit.',
         fr: 'Bonne nuit, lapin.',

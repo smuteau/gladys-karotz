@@ -105,12 +105,12 @@ unqueued helpers (`setLedNow`), never another queued command: it would wait
 for itself. `stopSound` and the sound and speech commands are not queued (a
 stream must stay stoppable).
 
-**Waking up and falling asleep take 6 to 12 s**, and the rabbit answers only
-at the end. `commands.wake` / `sleep` set `rabbit.transition` meanwhile: the
-reading loop skips that rabbit (a read would time out), and the `karotz`
-widget asks for a 10 s TTL. Its toast (4 s on the dashboard) is answered
-about 3.5 s before the expected end (`answerBeforeEnd`, the duration measured
-on the rabbit's previous one).
+**Waking up and falling asleep take 6 to 12 s**, and the rabbit answers only at
+the end. `commands.wake` / `sleep` set `rabbit.transition` meanwhile: the
+reading loop skips that rabbit (a read would time out), and the `karotz` widget
+asks for a 10 s TTL. Its toast is answered one second after the click
+(`answerAfterASecond`), while the rabbit is still at it: timing it on the end
+showed too much delay, and the duration varies too much.
 
 ## Architecture
 

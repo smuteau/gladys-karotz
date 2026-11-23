@@ -214,12 +214,11 @@ Sie dafür die Standardaktion „Ein Gerät steuern“.
 - **Karotz** — Zustand des Hasen, Speicher (in %), Anzahl der Tags und vier
   Schaltflächen: schlafen legen, Stimmung, Uhrzeit ansagen, Ohren zufällig. Wenn
   er schläft, nur eine Schaltfläche: aufwecken. Der Hase braucht 6 bis 12
-  Sekunden zum Einschlafen oder Aufwachen, und die Meldung („Gute Nacht, Hase.“,
-  „Der Hase wacht auf.“) bleibt 4 Sekunden sichtbar: Die Integration sendet sie
-  deshalb gegen Ende, damit sie noch da ist, wenn die neue Schaltfläche
-  erscheint. Dafür nimmt sie die Dauer des vorigen Aufwachens Ihres Hasen.
-  Stimmung, Uhrzeit ansagen und Ohren zufällig zeigen keine Meldung: Der Hase
-  antwortet selbst.
+  Sekunden zum Einschlafen oder Aufwachen: Die Meldung („Gute Nacht, Hase.“,
+  „Der Hase wacht auf.“) erscheint eine Sekunde nach dem Klick, während er noch
+  dabei ist, und die Schaltfläche wechselt, sobald er fertig ist. Stimmung,
+  Uhrzeit ansagen und Ohren zufällig zeigen keine Meldung: Der Hase antwortet
+  selbst.
 - **Karotz-Fotos** — die auf dem Hasen gespeicherten Fotos, einzeln und ganz,
   das neueste zuerst: Schaltflächen **Vorheriges** und **Nächstes**, **Foto
   aufnehmen** (sofort angezeigt) und **Fotos löschen**.

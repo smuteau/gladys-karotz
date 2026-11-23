@@ -200,7 +200,7 @@ test('waking up from the widget: a toast, and the card keeps its buttons', async
   const karotz = createFakeKarotz({ sleeping: true, delays: { wakeup: 200 } });
   const { gladys, ctx } = await createTestApp({
     karotz,
-    options: { quickAnswerMs: 20, transitionMs: { wake: 0 } },
+    options: { answerAfterMs: 20 },
   });
 
   const started = Date.now();
@@ -221,28 +221,40 @@ test('waking up from the widget: a toast, and the card keeps its buttons', async
   assert.deepEqual(buttonsOf(await cardOf(gladys)), ['sleep', 'mood', 'time', 'ears_random']);
 });
 
-test('the wake-up toast is timed to last until the rabbit is done', async () => {
-  const karotz = createFakeKarotz({ sleeping: true, delays: { wakeup: 300 } });
-  // Expected to take 3.6 s: answered 3.5 s before, at 0.1 s.
-  const { gladys, ctx } = await createTestApp({
-    karotz,
-    options: { quickAnswerMs: 20, transitionMs: { wake: 3600 } },
-  });
-  const started = Date.now();
-  const ack = await gladys.fake.widgetAction('karotz', 'wake', {}, { settings: {}, values: {} });
-  const answeredAfter = Date.now() - started;
+test('the wake-up toast comes one second after the click, however long the rabbit takes', async () => {
+  // A second is 100 ms here. A slow rabbit: answered at the second, not at its end.
+  let karotz = createFakeKarotz({ sleeping: true, delays: { wakeup: 400 } });
+  let { gladys } = await createTestApp({ karotz, options: { answerAfterMs: 100 } });
+  let started = Date.now();
+  let ack = await gladys.fake.widgetAction('karotz', 'wake', {}, { settings: {}, values: {} });
+  let answeredAfter = Date.now() - started;
   assert.match(JSON.stringify(ack.data), /Le lapin se réveille/);
-  assert.ok(answeredAfter >= 90 && answeredAfter < 280, `answered after ${answeredAfter} ms`);
-  await new Promise((resolve) => setTimeout(resolve, 400));
-  // Next time, the duration measured on this rabbit.
-  assert.ok(ctx.rabbits[0].transitionMs.wake >= 290);
+  assert.ok(answeredAfter >= 90 && answeredAfter < 300, `answered after ${answeredAfter} ms`);
+
+  // A quick one: still answered at the second, not before.
+  karotz = createFakeKarotz({ sleeping: true });
+  ({ gladys } = await createTestApp({ karotz, options: { answerAfterMs: 100 } }));
+  started = Date.now();
+  ack = await gladys.fake.widgetAction('karotz', 'wake', {}, { settings: {}, values: {} });
+  answeredAfter = Date.now() - started;
+  assert.match(JSON.stringify(ack.data), /Le lapin se réveille/);
+  assert.ok(answeredAfter >= 90, `answered after ${answeredAfter} ms`);
+
+  // A refusal does not wait for the second: it is the toast, at once.
+  karotz = createFakeKarotz({ sleeping: true });
+  ({ gladys } = await createTestApp({ karotz, options: { answerAfterMs: 5000 } }));
+  karotz.online = false;
+  started = Date.now();
+  ack = await gladys.fake.widgetAction('karotz', 'wake', {}, { settings: {}, values: {} });
+  assert.ok(Date.now() - started < 4000, 'a failure answers before the second');
+  assert.doesNotMatch(JSON.stringify(ack), /Le lapin se réveille/);
 });
 
 test('falling asleep from the widget: "Good night", then Wake up', async () => {
   const karotz = createFakeKarotz({ delays: { sleep: 200 } });
   const { gladys } = await createTestApp({
     karotz,
-    options: { quickAnswerMs: 20, transitionMs: { sleep: 0 } },
+    options: { answerAfterMs: 20 },
   });
   const ack = await gladys.fake.widgetAction('karotz', 'sleep', {}, { settings: {}, values: {} });
   assert.match(JSON.stringify(ack.data), /Bonne nuit, lapin/);

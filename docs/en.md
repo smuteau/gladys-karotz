@@ -196,12 +196,11 @@ the standard "Control a device" action.
 
 - **Karotz** — state of the rabbit, storage (in %), tag count, and four buttons:
   sleep, mood, tell the time, ears at random. When it sleeps, a single button:
-  wake it up. The rabbit takes 6 to 12 seconds to fall asleep or wake up, and
-  the message ("Good night, rabbit.", "The rabbit is waking up.") stays 4
-  seconds on screen: the integration sends it near the end, so it is still there
-  when the new button shows up. For that it takes how long your rabbit's
-  previous wake-up took. Mood, Tell the time and Ears at random show no message:
-  the rabbit answers by itself.
+  wake it up. The rabbit takes 6 to 12 seconds to fall asleep or wake up: the
+  message ("Good night, rabbit.", "The rabbit is waking up.") shows one second
+  after the click, while it is at it, and the button changes once it is done.
+  Mood, Tell the time and Ears at random show no message: the rabbit answers by
+  itself.
 - **Karotz photos** — the pictures stored on the rabbit, one by one and whole,
   newest first: **Previous** and **Next** buttons, **Take a picture** (shown at
   once) and **Delete pictures**.

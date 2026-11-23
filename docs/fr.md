@@ -204,14 +204,13 @@ l'appareil, utilisez l'action standard « Contrôler un appareil ».
 
 ## Widgets du tableau de bord
 
-- **Karotz** — état du lapin, stockage (en %), nombre de tags, et quatre boutons :
-  endormir, humeur, dire l'heure, oreilles au hasard. Quand il dort, un seul
-  bouton : le réveiller. Le lapin met 6 à 12 secondes à s'endormir ou à se
-  réveiller, et le message (« Bonne nuit, lapin. », « Le lapin se réveille. »)
-  reste 4 secondes à l'écran : l'intégration l'envoie donc vers la fin, pour
-  qu'il soit encore là quand le nouveau bouton arrive. Elle prend pour cela la
-  durée du réveil précédent de votre lapin. Humeur, Dire l'heure et Oreilles au
-  hasard n'affichent pas de message : le lapin répond lui-même.
+- **Karotz** — état du lapin, stockage (en %), nombre de tags, et quatre
+  boutons : endormir, humeur, dire l'heure, oreilles au hasard. Quand il dort,
+  un seul bouton : le réveiller. Le lapin met 6 à 12 secondes à s'endormir ou à
+  se réveiller : le message (« Bonne nuit, lapin. », « Le lapin se réveille. »)
+  s'affiche une seconde après le clic, pendant qu'il s'exécute, et le bouton
+  change quand il a fini. Humeur, Dire l'heure et Oreilles au hasard n'affichent
+  pas de message : le lapin répond lui-même.
 - **Photos du Karotz** — les photos stockées sur le lapin, une à une et en
   entier, de la plus récente à la plus ancienne : boutons **Précédente** et
   **Suivante**, **Prendre une photo** (elle s'affiche aussitôt) et **Effacer les
