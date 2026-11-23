@@ -10,6 +10,8 @@ the notes of the version's GitHub Release.
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-23
+
 ### Changed
 
 - The `Karotz` widget: "The rabbit is waking up" and "Good night, rabbit" now
@@ -154,5 +156,6 @@ speak (its own voice)`, and says where to find the voice of Gladys: the
   integration now reads `/cgi-bin/get_version`, with the version of the
   system.
 
-[Unreleased]: https://github.com/smuteau/gladys-karotz/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/smuteau/gladys-karotz/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/smuteau/gladys-karotz/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/smuteau/gladys-karotz/releases/tag/v1.0.0
